@@ -1,33 +1,32 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 
 public class BattleManager : MonoBehaviour
 {
+    [SerializeField] public Player player;
+    [SerializeField] public List<Enemy> enemies = new List<Enemy>();
     [SerializeField] public List<Character> allCharacters = new List<Character>();
-    [SerializeField] private List<string> battleLog = new List<string>();
-    [SerializeField] private int turnCount = 1;
+    [SerializeField] public List<string> battleLog = new List<string>();
+    [SerializeField] public ChatAI chatAI;
 
-    private float gaugeThreshold = 1000f;
-    private bool battleActive = true;
+    [SerializeField] public int turnCount = 1;
+    public float gaugeThreshold = 1000f;
+    public bool battleActive = true;
 
-    [SerializeField] private bool isActionPhase = false;
-    [SerializeField] private Character currentActingCharacter = null;
-
+    [SerializeField] public bool isActionPhase = false;
+    [SerializeField] public Character currentActingCharacter = null;
 
     private void Start()
     {
-        // ตัวอย่าง: เพิ่มตัวละคร
-        var player = new Player("NetRunner", "Astra", "Cyber-hacker with high focus", 25, 25, 18, 70, 100, 60);
-        var enemy = new Enemy("MechaWolf", "A brutal cybernetic wolf", 30, 20, 10, 80, 50, 40, EnemyArchetype.Attacker);
-
+        player.turnGauge = 0f;
         allCharacters.Add(player);
-        allCharacters.Add(enemy);
 
-        // Init Turn Gauge ทุกตัว
-        foreach (var c in allCharacters)
+        foreach (var e in enemies)
         {
-            c.TurnGauge = 0f;
+            e.turnGauge = 0f;
+            allCharacters.Add(e);
         }
     }
 
@@ -35,7 +34,6 @@ public class BattleManager : MonoBehaviour
     {
         if (!battleActive) return;
 
-        // ถ้ายังมีตัวละครกำลังทำ Action → รอให้เสร็จก่อน
         if (isActionPhase)
             return;
 
@@ -43,36 +41,46 @@ public class BattleManager : MonoBehaviour
         {
             if (!character.IsAlive()) continue;
 
-            character.TurnGauge += character.Speed * Time.deltaTime * 10; // ปรับ scale ได้
+            character.turnGauge += character.speed * Time.deltaTime * 10;
 
-            if (character.TurnGauge >= gaugeThreshold)
+            if (character.turnGauge >= gaugeThreshold)
             {
                 currentActingCharacter = character;
                 isActionPhase = true;
-                character.TurnGauge = 0f;
+                character.turnGauge = 0f;
 
-                // เริ่ม Action (ถ้าอยากทำเป็น Coroutine รอ animation ก็ทำได้)
+                // Show or hide UI depending on who is acting
+                if (character is Player)
+                {
+                    chatAI.ShowInputUI();
+                }
+                else
+                {
+                    chatAI.HideInputUI();
+                }
+
                 StartCoroutine(DoAction(character));
-                break; // หลังมีคนได้เทิร์น ให้หยุด loop ไปก่อน
+                break;
             }
         }
     }
 
     private Character GetRandomOpponent(Character self)
     {
-        List<Character> possibleTargets = new List<Character>();
-
-        foreach (var c in allCharacters)
+        if (self is Player)
         {
-            if (c != self && c.IsAlive())
+            List<Enemy> aliveEnemies = enemies.FindAll(e => e.IsAlive());
+            if (aliveEnemies.Count > 0)
             {
-                possibleTargets.Add(c);
+                return aliveEnemies[Random.Range(0, aliveEnemies.Count)];
             }
         }
-
-        if (possibleTargets.Count > 0)
+        else if (self is Enemy)
         {
-            return possibleTargets[Random.Range(0, possibleTargets.Count)];
+            if (player.IsAlive())
+            {
+                return player;
+            }
         }
 
         return null;
@@ -80,23 +88,30 @@ public class BattleManager : MonoBehaviour
 
     private bool CheckBattleEnd()
     {
-        // ตรวจถ้าเหลือผู้รอดชีวิตเพียงฝั่งเดียว
-        int alivePlayers = 0;
-        int aliveEnemies = 0;
-
-        foreach (var c in allCharacters)
+        if (!player.IsAlive())
         {
-            if (c.IsAlive())
+            Debug.Log("Player Defeated!");
+            return true;
+        }
+
+        bool anyEnemyAlive = false;
+        foreach (var e in enemies)
+        {
+            if (e.IsAlive())
             {
-                if (c is Player) alivePlayers++;
-                else if (c is Enemy) aliveEnemies++;
+                anyEnemyAlive = true;
+                break;
             }
         }
 
-        return alivePlayers == 0 || aliveEnemies == 0;
+        if (!anyEnemyAlive)
+        {
+            Debug.Log("All Enemies Defeated!");
+        }
+
+        return !anyEnemyAlive;
     }
 
-    // สำหรับดึง battle log ไปโชว์
     public string GetBattleLog()
     {
         StringBuilder sb = new StringBuilder();
@@ -107,23 +122,64 @@ public class BattleManager : MonoBehaviour
         return sb.ToString();
     }
 
-    private System.Collections.IEnumerator DoAction(Character character)
+    private IEnumerator DoAction(Character character)
     {
-        Debug.Log($"=== {character.Name}'s Turn ===");
-        //battleLog.Add($"{character.Name}'s Turn");
+        Debug.Log($"=== {character.characterName}'s Turn ===");
 
-        // ทำ action เช่น เลือกเป้าหมาย
-        Character target = GetRandomOpponent(character);
-        if (target != null)
+        if (character is Player)
         {
-            target.TakeDamage(character.Attack);
-            battleLog.Add($"{character.Name}'s Turn {character} Attack {target} with Damage {character.Attack} make {target.CurrentHP}");
+            Debug.Log("Player's turn: waiting for player to choose action.");
+            chatAI.ShowInputUI();
+            yield break;
+        }
+        else
+        {
+            Character target = GetRandomOpponent(character);
+            if (target != null)
+            {
+                target.TakeDamage(character.attack);
+                battleLog.Add($"{character.characterName} attacked {target.characterName} for {character.attack} damage. {target.characterName} HP: {target.currentHP}");
+            }
+
+            yield return new WaitForSeconds(2.0f);
+
+            if (CheckBattleEnd())
+            {
+                battleActive = false;
+                Debug.Log("Battle Finished!");
+            }
+
+            turnCount++;
+            isActionPhase = false;
+            currentActingCharacter = null;
+
+            chatAI.HideInputUI();
+        }
+    }
+
+    public void PlayerAttack()
+    {
+        if (!(currentActingCharacter is Player))
+        {
+            Debug.LogWarning("Not player's turn!");
+            return;
         }
 
-        // ทำ delay เล็กน้อยจำลองแสดง animation
+        Character target = GetRandomOpponent(currentActingCharacter);
+
+        if (target != null)
+        {
+            target.TakeDamage(currentActingCharacter.attack);
+            battleLog.Add($"{currentActingCharacter.characterName} attacked {target.characterName} for {currentActingCharacter.attack} damage. {target.characterName} HP: {target.currentHP}");
+        }
+
+        StartCoroutine(EndPlayerTurn());
+    }
+
+    private IEnumerator EndPlayerTurn()
+    {
         yield return new WaitForSeconds(2.0f);
 
-        // ตรวจจบการต่อสู้
         if (CheckBattleEnd())
         {
             battleActive = false;
@@ -131,9 +187,11 @@ public class BattleManager : MonoBehaviour
         }
 
         turnCount++;
-
-        // จบ action phase
         isActionPhase = false;
         currentActingCharacter = null;
+
+        chatAI.HideInputUI();
     }
+
+
 }

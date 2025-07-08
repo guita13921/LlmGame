@@ -1,50 +1,67 @@
-using System;
+using UnityEngine;
 
-public class Character
+public class Character : MonoBehaviour
 {
-    public string Name;
-    public string Description;
-    public int Attack;
-    public int Defense;
-    public int Focus;
-    public int MaxHP;
-    public int MaxMP;
-    public int Speed;
-    public int CurrentHP;
-    public int CurrentMP;
-    public string LLMprompt;
-    public float TurnGauge = 0f;
+    [Header("Basic Info")]
+    public string characterName;
+    public Sprite sprite;
+    [TextArea] public string description;
 
-    public Character(string name, string description, int attack, int defense, int focus, int maxHP, int maxMP, int speed)
+    [Header("Stats")]
+    public int attack;
+    public int defense;
+    public int focus;
+    public int maxHP;
+    public int maxMP;
+    public int speed;
+
+    [Header("Runtime")]
+    public int currentHP;
+    public int currentMP;
+    public float turnGauge = 0f;
+
+
+    public virtual void Awake()
     {
-        Name = name;
-        Description = description;
-        Attack = attack;
-        Defense = defense;
-        Focus = focus;
-        MaxHP = maxHP;
-        MaxMP = maxMP;
-        Speed = speed;
-
-        CurrentHP = maxHP;
-        CurrentMP = maxMP;
+        currentHP = maxHP;
+        currentMP = maxMP;
     }
 
     public virtual void TakeDamage(int dmg)
     {
-        int finalDamage = Math.Max(dmg - Defense, 0);
-        CurrentHP -= finalDamage;
-        if (CurrentHP < 0) CurrentHP = 0;
-        Console.WriteLine($"{Name} takes {finalDamage} damage! (HP left: {CurrentHP})");
+        int finalDamage = Mathf.Max(dmg - defense, 0);
+        currentHP -= finalDamage;
+        if (currentHP < 0) currentHP = 0;
+
+        Debug.Log($"{characterName} takes {finalDamage} damage! (HP left: {currentHP})");
+
+        if (currentHP <= 0)
+        {
+            OnDeath();
+        }
     }
+
+    public virtual void OnDeath()
+    {
+        Debug.Log($"{characterName} has died!");
+    }
+
 
     public virtual bool IsAlive()
     {
-        return CurrentHP > 0;
+        return currentHP > 0;
+    }
+
+    public virtual bool IsDead()
+    {
+        return currentHP <= 0;
     }
 
     public string GetStatus()
     {
-        return $"HP: {CurrentHP}/{MaxHP}, MP: {CurrentMP}/{MaxMP}";
+        return $"HP: {currentHP}/{maxHP}, MP: {currentMP}/{maxMP}";
     }
+
+
+
 }

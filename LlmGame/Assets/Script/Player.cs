@@ -1,93 +1,88 @@
-using System.Diagnostics;
+using System;
+using UnityEngine;
 
 public class Player : Character
 {
-    public string ClassType;
-    public int CurrentEXP;
-    public int Level;
-    public int StatPoints;
+    [Header("Player Info")]
+    public string classType;
+    public int level = 1;
+    public int currentEXP = 0;
+    public int statPoints = 0;
+
+    [Header("Player Inventory")]
+    public string itemName;
+    [TextArea] public string itemDescription;
+
+
+    public int maxLevel = 10;
     private int baseEXP = 100;
     private double growth = 1.5;
-    public int MaxLevel = 10;
-
-    public Player(string classType, string name, string description, int attack, int defense, int focus, int maxHP, int maxMP, int speed)
-        : base(name, description, attack, defense, focus, maxHP, maxMP, speed)
-    {
-        ClassType = classType;
-        Level = 1;
-        CurrentEXP = 0;
-        StatPoints = 0;
-    }
 
     public int EXPToNextLevel()
     {
-        return (int)(baseEXP * System.Math.Pow(Level, growth));
+        return (int)(baseEXP * Mathf.Pow(level, (float)growth));
     }
 
     public void GainEXP(int amount)
     {
-        if (Level >= MaxLevel)
+        if (level >= maxLevel)
         {
-            Debug.WriteLine($"{Name} is already at max level!");
+            Debug.Log($"{characterName} is already at max level!");
             return;
         }
 
-        CurrentEXP += amount;
-        Debug.WriteLine($"{Name} gained {amount} EXP! (Current EXP: {CurrentEXP}/{EXPToNextLevel()})");
+        currentEXP += amount;
+        Debug.Log($"{characterName} gained {amount} EXP! (Current EXP: {currentEXP}/{EXPToNextLevel()})");
 
-        while (CurrentEXP >= EXPToNextLevel() && Level < MaxLevel)
+        while (currentEXP >= EXPToNextLevel() && level < maxLevel)
         {
-            CurrentEXP -= EXPToNextLevel();
+            currentEXP -= EXPToNextLevel();
             LevelUp();
         }
     }
 
     private void LevelUp()
     {
-        Level++;
-        StatPoints += 3; // เช่น ได้ 3 แต้มต่อเลเวลอัป
-        Debug.WriteLine($"{Name} leveled up to LV.{Level}! You gained 3 stat points.");
+        level++;
+        statPoints += 3;
+        Debug.Log($"{characterName} leveled up to LV.{level}! You gained 3 stat points.");
     }
 
     public void AllocateStat(string stat, int points)
     {
-        if (points > StatPoints)
+        if (points > statPoints)
         {
-            Debug.WriteLine("Not enough stat points!");
+            Debug.Log("Not enough stat points!");
             return;
         }
 
         switch (stat.ToLower())
         {
             case "hp":
-                MaxHP += points * 10;
-                CurrentHP += points * 10; // เพิ่ม HP ปัจจุบันด้วย
+                maxHP += points * 10;
+                currentHP += points * 10;
                 break;
-
             case "mp":
-                MaxMP += points * 10;
-                CurrentMP += points * 10;
+                maxMP += points * 10;
+                currentMP += points * 10;
                 break;
-
             case "speed":
-                Speed += points;
+                speed += points;
                 break;
-
             case "focus":
                 if (points % 2 != 0)
                 {
-                    Debug.WriteLine("Focus: ต้องใช้เป็นจำนวนคู่ (2 แต้มต่อ +1 Focus)");
+                    Debug.Log("Focus: ต้องใช้เป็นจำนวนคู่ (2 แต้มต่อ +1 Focus)");
                     return;
                 }
-                Focus += points / 2;
+                focus += points / 2;
                 break;
-
             default:
-                Debug.WriteLine("Unknown stat name!");
+                Debug.Log("Unknown stat name!");
                 return;
         }
 
-        StatPoints -= points;
-        Debug.WriteLine($"{points} point(s) allocated to {stat}.");
+        statPoints -= points;
+        Debug.Log($"{points} point(s) allocated to {stat}.");
     }
 }
