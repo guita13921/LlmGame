@@ -28,6 +28,10 @@ public class ChatAI : MonoBehaviour
             Debug.LogWarning("Empty message, skipping API call");
             return;
         }
+
+        // Store the user message in BattleManager for damage calculation
+        battleManager.SetUserMessage(userMessage);
+
         StartCoroutine(SendMessageToAI(userMessage));
     }
 
@@ -61,46 +65,46 @@ public class ChatAI : MonoBehaviour
         // Compose the prompt with complete JSON format specification
         string prompt = $@"You are a video game AI that determines the effect of proposed actions in a battle.
 
-                Characters:
-                - {battleManager.player.characterName}
-                - {targetEnemy.characterName}
+            Characters:
+            - {battleManager.player.characterName}
+            - {targetEnemy.characterName}
 
-                {battleManager.player.characterName} is attacking {targetEnemy.characterName}.
+            {battleManager.player.characterName} is attacking {targetEnemy.characterName}.
 
-                Player description: {battleManager.player.description}
-                Enemy description: {targetEnemy.description}
-                Player items: {battleManager.player.itemDescription}
+            Player description: {battleManager.player.description}
+            Enemy description: {targetEnemy.description}
+            Player items: {battleManager.player.itemDescription}
 
-                Recent battle history:
-                {history}
+            Recent battle history:
+            {history}
 
-                Proposed action: {userMessage}
+            Proposed action: {userMessage}
 
-                Determine what happens next. Consider battle history, character HP, and available items. Repeated actions from battle history should have reduced damage.
+            Determine what happens next. Consider battle history, character HP, and available items. Repeated actions should have reduced damage.
 
-                The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
+            The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
-                Output in this exact JSON format:
-                {{
-                ""properties"": {{
-                    ""feasibility"": {{
-                    ""maximum"": 10.0,
-                    ""minimum"": 0.0,
-                    ""value"": 0.0,
-                    ""description"": ""description here""
-                    }},
-                    ""potential_damage"": {{
-                                        ""maximum"": 10.0,
-                    ""minimum"": 0.0,
-                    ""value"": 0.0,
-                    ""description"": ""description here""
-                    }},
-                    ""effect_description"": {{
-                    ""value"": ""effect description here"",
-                    ""description"": ""additional details""
+                    Output in this exact JSON format:
+                    {{
+                    ""properties"": {{
+                        ""feasibility"": {{
+                        ""maximum"": 10.0,
+                        ""minimum"": 0.0,
+                        ""value"": 0.0,
+                        ""description"": ""description here""
+                        }},
+                        ""potential_damage"": {{
+                        ""maximum"": 10.0,
+                        ""minimum"": 0.0,
+                        ""value"": 0.0,
+                        ""description"": ""description here""
+                        }},
+                        ""effect_description"": {{
+                        ""value"": ""effect description here"",
+                        ""description"": ""additional details""
+                        }}
                     }}
-                }}
-                }}";
+                    }}";
 
         // Create proper JSON payload
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
@@ -157,8 +161,8 @@ public class ChatAI : MonoBehaviour
 
                 Debug.Log(responseText.text);
 
-                // Call PlayerAttack after successful response
-                battleManager.PlayerAttack();
+                // Call PlayerAttack with feasibility and potential values
+                battleManager.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc);
             }
             catch (System.Exception e)
             {

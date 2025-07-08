@@ -33,8 +33,6 @@ public class Character : MonoBehaviour
         currentHP -= finalDamage;
         if (currentHP < 0) currentHP = 0;
 
-        Debug.Log($"{characterName} takes {finalDamage} damage! (HP left: {currentHP})");
-
         if (currentHP <= 0)
         {
             OnDeath();
