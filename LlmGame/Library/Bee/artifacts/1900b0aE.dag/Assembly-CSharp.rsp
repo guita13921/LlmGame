@@ -365,10 +365,13 @@
 "Assets/Script/ChatAI.cs"
 "Assets/Script/DialogueUI.cs"
 "Assets/Script/Enemy.cs"
+"Assets/Script/enum.cs"
+"Assets/Script/Item.cs"
 "Assets/Script/NPCDecisionResponse.cs"
 "Assets/Script/NPCManager.cs"
 "Assets/Script/Player.cs"
 "Assets/Script/SpriteBillBoard.cs"
+"Assets/Script/Weapon.cs"
 -langversion:9.0
 
 /deterministic

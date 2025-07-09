@@ -190,6 +190,8 @@ public class BattleManager : MonoBehaviour
         return messages;
     }
 
+    #region Calculate Damage
+
     private float CalculateCreativityBonus(string userMessage)
     {
         if (string.IsNullOrEmpty(userMessage))
@@ -266,6 +268,10 @@ public class BattleManager : MonoBehaviour
         return llmScaledBaseDamage;
     }
 
+    #endregion
+
+    #region Player/Enemy
+
     public void PlayerAttack(float feasibility, float potential, string effectValue, string effectDesc)
     {
         if (!(currentActingCharacter is Player))
@@ -298,7 +304,6 @@ public class BattleManager : MonoBehaviour
         StartCoroutine(EndPlayerTurn());
     }
 
-    // Keep the old method for backward compatibility
     public void PlayerAttack()
     {
         PlayerAttack(1f, 1f, "DefaultEffect", "DefaultDesc");
@@ -361,4 +366,5 @@ public class BattleManager : MonoBehaviour
         currentActingCharacter = null;
     }
 
+    #endregion
 }

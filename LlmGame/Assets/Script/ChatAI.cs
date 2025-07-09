@@ -117,7 +117,7 @@ public class ChatAI : MonoBehaviour
 
             Player description: {battleManager.player.description}
             Enemy description: {targetEnemy.description}
-            Player items: {battleManager.player.itemDescription}
+            Player items: {battleManager.player.item.itemName}
 
             Recent battle history:
             {history}
@@ -254,7 +254,7 @@ public class ChatAI : MonoBehaviour
             {enemy.description}
 
             {battleManager.player.characterName} items in inventory:
-            {battleManager.player.itemDescription}
+            {battleManager.player.item.itemName}
 
             Battle history:
             {history}

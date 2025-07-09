@@ -20,6 +20,9 @@ public class Character : MonoBehaviour
     public int currentMP;
     public float turnGauge = 0f;
 
+    [Header("Item")]
+    public Item item;
+
 
     public virtual void Awake()
     {

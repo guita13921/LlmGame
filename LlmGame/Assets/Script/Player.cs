@@ -9,11 +9,6 @@ public class Player : Character
     public int currentEXP = 0;
     public int statPoints = 0;
 
-    [Header("Player Inventory")]
-    public string itemName;
-    [TextArea] public string itemDescription;
-
-
     public int maxLevel = 10;
     private int baseEXP = 100;
     private double growth = 1.5;
