@@ -141,9 +141,8 @@ public class BattleManager : MonoBehaviour
             Character target = GetRandomOpponent(character);
             if (target != null)
             {
-                target.TakeDamage(character.attack);
-                //Enemy Log
-                battleLog.Add($"{character.characterName} attacked {target.characterName} for {character.attack} damage. {target.characterName} HP: {target.currentHP}");
+                string enemyAction = "Punch"; // or generate random move description
+                EnemyAttack(character, target, enemyAction);
             }
 
             yield return new WaitForSeconds(2.0f);
@@ -154,7 +153,6 @@ public class BattleManager : MonoBehaviour
                 Debug.Log("Battle Finished!");
             }
 
-            turnCount++;
             isActionPhase = false;
             currentActingCharacter = null;
 
@@ -191,7 +189,6 @@ public class BattleManager : MonoBehaviour
 
         return messages;
     }
-
 
     private float CalculateCreativityBonus(string userMessage)
     {
@@ -256,6 +253,18 @@ public class BattleManager : MonoBehaviour
         return totalDamage;
     }
 
+    private float CalculateDamageNoCreativity(float feasibility, float potential, float baseDamage)
+    {
+        const float constant = 2f;
+
+        float llmDamageModifier = ((feasibility / 10) * (potential / 10)) * constant;
+        float llmScaledBaseDamage = baseDamage * llmDamageModifier;
+
+        Debug.Log($"Enemy Damage Calculation: Feasibility={feasibility}, Potential={potential}, BaseDamage={baseDamage}");
+        Debug.Log($"LLMDamageModifier={llmDamageModifier}, LLMScaledBaseDamage={llmScaledBaseDamage}");
+
+        return llmScaledBaseDamage;
+    }
 
     public void PlayerAttack(float feasibility, float potential, string effectValue, string effectDesc)
     {
@@ -279,7 +288,7 @@ public class BattleManager : MonoBehaviour
             // Build new formatted log
             string log = $"Turn {turnCount}: {currentActingCharacter.characterName} (HP: {currentActingCharacter.currentHP}) " +
                          $"used \"{lastUserMessage}\" [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
-                         $"for {finalDamage} damage → Target: {target.characterName} (HP: {target.currentHP})";
+                         $"for {finalDamage} damage → Target: {target.characterName} (HP: {target.currentHP} / {target.maxHP})";
 
             battleLog.Add(log);
 
@@ -288,7 +297,6 @@ public class BattleManager : MonoBehaviour
 
         StartCoroutine(EndPlayerTurn());
     }
-
 
     // Keep the old method for backward compatibility
     public void PlayerAttack()
@@ -312,4 +320,45 @@ public class BattleManager : MonoBehaviour
 
         chatAI.HideInputUI();
     }
+
+    public void EnemyAttack(Character enemy, Character target, string proposedAction)
+    {
+        StartCoroutine(chatAI.SendEnemyMessage(enemy, target, proposedAction));
+    }
+
+    public void ResolveEnemyAttack(Character enemy, Character target, float feasibility, float potential, string effectValue, string effectDesc)
+    {
+        float baseDamage = enemy.attack;
+        float calculatedDamage = CalculateDamageNoCreativity(feasibility, potential, baseDamage);
+
+        int finalDamage = Mathf.RoundToInt(calculatedDamage);
+
+        target.TakeDamage(finalDamage);
+
+        string log = $"Turn {turnCount}: {enemy.characterName} (HP: {enemy.currentHP}) " +
+                     $"used [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
+                     $"for {finalDamage} damage → Target: {target.characterName} (HP: {target.currentHP})";
+
+        battleLog.Add(log);
+
+        Debug.Log(log);
+
+        StartCoroutine(EndEnemyTurn());
+    }
+
+    private IEnumerator EndEnemyTurn()
+    {
+        yield return new WaitForSeconds(2.0f);
+
+        if (CheckBattleEnd())
+        {
+            battleActive = false;
+            Debug.Log("Battle Finished!");
+        }
+
+        turnCount++;
+        isActionPhase = false;
+        currentActingCharacter = null;
+    }
+
 }
