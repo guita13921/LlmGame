@@ -9,66 +9,66 @@ public static class PromptBuilder
     public static string BuildPlayerPrompt(BattleManager battleManager, Enemy targetEnemy, string userMessage)
     {
         string history = GetBattleHistory(battleManager);
-        string activeItemsJson = GetActiveItemsJson(battleManager, userMessage);
 
+        // Format active items
+        string activeItemsText = FormatActiveItems(battleManager.player.activeItem);
 
         StringBuilder sb = new StringBuilder();
         sb.Append($@"
-            You are a video game AI that determines the effect of proposed actions in a battle
-            between two characters.
+        You are a video game AI that determines the effect of proposed actions in a battle
+        between two characters.
 
-            All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
+        All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
 
-            Characters:
-            - {battleManager.player.characterName} (HP: {battleManager.player.currentHP} / {battleManager.player.maxHP})
-            - {targetEnemy.characterName} (HP: {targetEnemy.currentHP} / {targetEnemy.maxHP})
+        Characters:
+        - {battleManager.player.characterName} (HP: {battleManager.player.currentHP} / {battleManager.player.maxHP})
+        - {targetEnemy.characterName} (HP: {targetEnemy.currentHP} / {targetEnemy.maxHP})
 
-            {battleManager.player.characterName} is engaging {targetEnemy.characterName} in a fantasy battle.
+        {battleManager.player.characterName} is engaging {targetEnemy.characterName} in a fantasy battle.
 
-            Player description: {battleManager.player.description}
-            Enemy description: {targetEnemy.description}
+        Player description: {battleManager.player.description}
+        Enemy description: {targetEnemy.description}
 
-            Player items active (JSON):
-            {activeItemsJson}
+        Player items active:
+        {activeItemsText}
 
-            Recent battle history:
-            {history}
+        Recent battle history:
+        {history}
 
-            Proposed action by {battleManager.player.characterName}:
-            {userMessage}
+        Proposed action by {battleManager.player.characterName}:
+        {userMessage}
 
-            You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
-            Also consider the current HP and descriptions of both characters.
+        You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
+        Also consider the current HP and descriptions of both characters.
 
-            Especially pay attention to the items of {battleManager.player.characterName}.
-            They should only use items that are active (marked true in the JSON) and present in their inventory.
-            Usage of inactive or non-inventory items is infeasible.
+        Especially pay attention to the items of {battleManager.player.characterName}.
+        They should only use items that are active (marked true in the JSON) and present in their inventory.
+        Usage of inactive or non-inventory items is infeasible.
 
-            The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
+        The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
-            Output in this exact JSON format:
-            {{
-                ""properties"": {{
-                    ""feasibility"": {{
-                        ""maximum"": 10.0,
-                        ""minimum"": 0.0,
-                        ""value"": 0.0,
-                        ""description"": ""description here""
-                    }},
-                    ""potential_damage"": {{
-                        ""maximum"": 10.0,
-                        ""minimum"": 0.0,
-                        ""value"": 0.0,
-                        ""description"": ""description here""
-                    }},
-                    ""effect_description"": {{
-                        ""value"": ""effect description here"",
-                        ""description"": ""additional details""
-                    }}
+        Output in this exact JSON format:
+        {{
+            ""properties"": {{
+                ""feasibility"": {{
+                    ""maximum"": 10.0,
+                    ""minimum"": 0.0,
+                    ""value"": 0.0,
+                    ""description"": ""description here""
+                }},
+                ""potential_damage"": {{
+                    ""maximum"": 10.0,
+                    ""minimum"": 0.0,
+                    ""value"": 0.0,
+                    ""description"": ""description here""
+                }},
+                ""effect_description"": {{
+                    ""value"": ""effect description here"",
+                    ""description"": ""additional details""
                 }}
             }}
-            ");
-
+        }}
+        ");
 
         return sb.ToString();
     }
@@ -188,157 +188,98 @@ public static class PromptBuilder
         return sanitized;
     }
 
-    public static void ActivateItemFromMessage(Character player, string userMessage)
-    {
-        if (string.IsNullOrEmpty(userMessage) || player.inventoryItems == null) return;
-
-        // Clear previously active items
-        player.activeItem.Clear();
-
-        // Split user message into words (remove punctuation and lowercase)
-        string[] words = userMessage.ToLower().Split(new char[] { ' ', ',', '.', '!', '?', ';', ':' }, System.StringSplitOptions.RemoveEmptyEntries);
-
-        foreach (var item in player.inventoryItems)
-        {
-            if (item == null || item.keyWords == null) continue;
-
-            foreach (var keyword in item.keyWords)
-            {
-                if (string.IsNullOrEmpty(keyword)) continue;
-
-                if (words.Contains(keyword.ToLower()))
-                {
-                    if (!player.activeItem.Contains(item))
-                    {
-                        player.activeItem.Add(item);
-                        Debug.Log($"Activated item: {item.itemName} (matched keyword: {keyword})");
-                    }
-                    break; // Stop checking more keywords for this item
-                }
-            }
-        }
-    }
-
     #region Active Item
 
-    public static string GetActiveItemsJson(BattleManager battleManager, string userMessage)
+    private static string FormatActiveItems(List<Item> activeItems)
     {
-        var itemsStatus = new List<ItemStatus>();
+        if (activeItems == null || activeItems.Count == 0)
+        {
+            return "No active items";
+        }
 
+        StringBuilder itemsText = new StringBuilder();
+        for (int i = 0; i < activeItems.Count; i++)
+        {
+            var item = activeItems[i];
+            itemsText.AppendLine($"- {item.itemName}: {item.itemDescription}");
+        }
+
+        return itemsText.ToString();
+    }
+
+    public static void CheckAndActivateItems(BattleManager battleManager, string userMessage)
+    {
+        // Convert user message to lowercase for case-insensitive matching
+        string lowerMessage = userMessage.ToLower();
+
+        // Reset all items to inactive first
         foreach (var item in battleManager.player.inventoryItems)
         {
-            bool isActive = false;
+            item.isActive = false;
+        }
 
-            if (item.keyWords != null && item.keyWords.Count > 0)
+        // Clear the active items list
+        battleManager.player.activeItem.Clear();
+
+        // Check each item's keywords against the user message
+        foreach (var item in battleManager.player.inventoryItems)
+        {
+            bool keywordFound = false;
+
+            foreach (string keyword in item.keyWords)
             {
-                foreach (var keyword in item.keyWords)
+                if (!string.IsNullOrEmpty(keyword) && lowerMessage.Contains(keyword.ToLower()))
                 {
-                    if (userMessage.ToLower().Contains(keyword.ToLower()))
-                    {
-                        isActive = true;
-                        break;
-                    }
+                    item.isActive = true;
+                    keywordFound = true;
+
+                    // Add to active items list
+                    battleManager.player.activeItem.Add(item);
+
+                    Debug.Log($"Item '{item.itemName}' activated by keyword: '{keyword}'");
+                    break; // Found a matching keyword, no need to check others for this item
                 }
             }
 
-            // Update isActive on the item itself
-            item.isActive = isActive;
-
-            // Prepare for JSON
-            itemsStatus.Add(new ItemStatus
+            if (!keywordFound)
             {
-                name = item.itemName,
-                description = item.itemDescription,
-                active = isActive
-            });
+                Debug.Log($"Item '{item.itemName}' remains inactive - no keywords matched");
+            }
         }
 
-        return JsonUtility.ToJson(new ItemStatusList { items = itemsStatus }, true);
+        Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
     }
 
-    [System.Serializable]
-    public class ItemStatus
+    public static void UpdateItemActiveStatus(BattleManager battleManager, string jsonString)
     {
-        public string name;
-        public string description;
-        public bool active;
-    }
+        // Clear the active items list first
+        battleManager.player.activeItem.Clear();
 
-    [System.Serializable]
-    public class ItemStatusList
-    {
-        public List<ItemStatus> items;
-    }
+        var itemList = JsonUtility.FromJson<PromptBuilder.ItemActivationList>(jsonString);
 
-
-    public static string BuildItemKeywordJson(BattleManager battleManager)
-    {
-        var itemsKeyword = new List<ItemKeyword>();
-
-        foreach (var item in battleManager.player.inventoryItems)
+        foreach (var activation in itemList.items)
         {
-            itemsKeyword.Add(new ItemKeyword
+            var item = battleManager.player.inventoryItems.FirstOrDefault(i => i.itemName == activation.name);
+            if (item != null)
             {
-                name = item.itemName,
-                description = item.itemDescription,
-                keyword = item.keyWords // ✔️ pass keywords here
-            });
+                item.isActive = activation.active;
+                Debug.Log($"Item '{item.itemName}' active status set to: {activation.active}");
+
+                // Add to active items list if it's active
+                if (activation.active)
+                {
+                    battleManager.player.activeItem.Add(item);
+                }
+            }
         }
 
-        return JsonUtility.ToJson(new ItemKeywordList { items = itemsKeyword }, true);
-    }
-
-
-    public static string BuildItemActivationPrompt(string userMessage, string itemsKeywordJson)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.Append($@"
-            You are a video game AI that determines which items from the player's inventory should be active based on the proposed action.
-
-            Player action (proposed sentence or move):
-            {userMessage}
-
-            Available items and their usage descriptions (JSON):
-            {itemsKeywordJson}
-
-            Important instructions:
-            - Only mark an item as 'active' if it is explicitly used in the proposed action to perform an attack or battle effect.
-            - Do not guess or assume creative or indirect uses of items unless clearly stated in the action.
-            - If an item is only mentioned without clearly using it for an attack or effect, it should remain inactive.
-            - If the action is vague, purely performative, or not combat-related (e.g., 'Dance'), then mark all items as inactive.
-            - You must use only the items listed in the JSON exactly as given. Never invent or create new items.
-            - You should not activate an item based solely on inferred possibilities or indirect references.
-            - The focus is on direct, intentional usage of items in combat.
-
-            Output in this exact JSON format and do not include any explanation text, markdown, or code blocks. Only output the JSON object:
-            {{
-                ""items"": [
-                    {{ ""name"": ""ItemName1"", ""active"": true }},
-                    {{ ""name"": ""ItemName2"", ""active"": false }}
-                ]
-            }}
-            ");
-
-        return sb.ToString();
-    }
-
-    internal static string BuildPlayerPrompt(BattleManager battleManager, object targetEnemy, string userMessage)
-    {
-        throw new System.NotImplementedException();
+        Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
     }
 
     [System.Serializable]
-    public class ItemKeyword
+    public class ItemActivationList
     {
-        public string name;
-        public string description;
-        public List<string> keyword; // Add this
-    }
-
-    [System.Serializable]
-    public class ItemKeywordList
-    {
-        public List<ItemKeyword> items;
+        public ItemActivation[] items;
     }
 
     [System.Serializable]
@@ -346,12 +287,6 @@ public static class PromptBuilder
     {
         public string name;
         public bool active;
-    }
-
-    [System.Serializable]
-    public class ItemActivationList
-    {
-        public List<ItemActivation> items;
     }
 
     #endregion

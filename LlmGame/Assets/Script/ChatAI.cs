@@ -24,6 +24,7 @@ public class ChatAI : MonoBehaviour
         }
     }
 
+
     public void OnSendButtonClick()
     {
         string userMessage = inputField.text;
@@ -38,18 +39,19 @@ public class ChatAI : MonoBehaviour
         // Save user message in BattleManager first
         battleManager.SetUserMessage(safeMessage);
 
-        // Build item keyword JSON for first prompt
-        string itemsKeywordJson = PromptBuilder.BuildItemKeywordJson(battleManager);
+        // Check for item keyword matches and activate items
+        PromptBuilder.CheckAndActivateItems(battleManager, safeMessage);
 
-        // Build item evaluation prompt
-        string itemPrompt = PromptBuilder.BuildItemActivationPrompt(safeMessage, itemsKeywordJson);
+        // Get target enemy and send final prompt
+        Enemy targetEnemy = battleManager.enemies.FirstOrDefault(e => e.IsAlive());
 
-        // Start coroutine to first determine active items
-        StartCoroutine(SendItemActivationRequest(itemPrompt, safeMessage));
+        if (targetEnemy == null)
+        {
+            Debug.LogError("No valid enemy found!");
+            return;
+        }
 
-        Enemy targetEnemy = battleManager.enemies.FirstOrDefault(e => e.IsAlive()); //Change LAter !!!!!!!!!!!!!!!!!!!!!!!!!111111
-
-        string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, userMessage);
+        string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage);
         StartCoroutine(SendMessageToAI(finalPrompt));
     }
 
