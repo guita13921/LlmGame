@@ -370,6 +370,7 @@
 "Assets/Script/NPCDecisionResponse.cs"
 "Assets/Script/NPCManager.cs"
 "Assets/Script/Player.cs"
+"Assets/Script/PromptBuilder.cs"
 "Assets/Script/SpriteBillBoard.cs"
 "Assets/Script/Weapon.cs"
 -langversion:9.0

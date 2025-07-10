@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Character : MonoBehaviour
@@ -20,9 +21,11 @@ public class Character : MonoBehaviour
     public int currentMP;
     public float turnGauge = 0f;
 
-    [Header("Item")]
-    public Item item;
+    [Header("Inventory")]
+    public List<Item> inventoryItems;
 
+    [Header("Active Items")]
+    public List<Item> activeItem;
 
     public virtual void Awake()
     {

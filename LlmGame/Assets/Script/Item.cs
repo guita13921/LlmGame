@@ -5,6 +5,7 @@ public class Item : ScriptableObject
 {
     [Header("Item Info")]
     public string itemName;
+
     [TextArea]
     public string itemDescription;
 
@@ -13,4 +14,11 @@ public class Item : ScriptableObject
 
     [Header("KeyWord")]
     public List<string> keyWords;
+
+    [Header("Activate")]
+    public bool isActive;
+
+
 }
+
+

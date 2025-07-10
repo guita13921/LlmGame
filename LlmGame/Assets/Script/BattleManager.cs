@@ -38,6 +38,13 @@ public class BattleManager : MonoBehaviour
     {
         if (!battleActive) return;
 
+        // If it's player's turn and they are choosing an action, stop all gauge updates
+        if (isActionPhase && currentActingCharacter is Player)
+        {
+            // Only allow player to act, pause gauges
+            return;
+        }
+
         if (isActionPhase)
             return;
 
@@ -53,20 +60,16 @@ public class BattleManager : MonoBehaviour
                 isActionPhase = true;
                 character.turnGauge = 0f;
 
-                // Show or hide UI depending on who is acting
                 if (character is Player)
-                {
                     chatAI.ShowInputUI();
-                }
                 else
-                {
                     chatAI.HideInputUI();
-                }
 
                 StartCoroutine(DoAction(character));
                 break;
             }
         }
+
     }
 
     private Character GetRandomOpponent(Character self)

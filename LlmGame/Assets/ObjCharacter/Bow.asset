@@ -13,17 +13,14 @@ MonoBehaviour:
   m_Name: Bow
   m_EditorClassIdentifier: 
   itemName: Neon Recurve
-  itemDescription: 'high-tech, futuristic bow designed for silent, precise assassinations.
+  itemDescription: 'a weapon for shooting arrows or other.
 
-    Special
-    Features
+    ccan shoot projectile.
 
-    EMP Arrow Option: Can disable drones, turrets, and cybernetic enemies''
-    augmentations temporarily.
-
-    Virus Arrow: Hack into enemy cybernetics, causing
-    them to attack allies or shut down.'
+    Can
+    shoot only.'
   usageType: 1
   keyWords:
   - Bow
+  isActive: 1
   Damage: 10
