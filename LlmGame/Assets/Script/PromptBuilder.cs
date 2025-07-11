@@ -11,7 +11,8 @@ public static class PromptBuilder
         string history = GetBattleHistory(battleManager);
 
         // Format active items
-        string activeItemsText = FormatActiveItems(battleManager.player.activeItem);
+        string PlayerActiveItemsText = FormatActiveItems(battleManager.player.activeItem);
+        string EnemyActiveItemsText = FormatActiveItems(targetEnemy.activeItem);
 
         StringBuilder sb = new StringBuilder();
         sb.Append($@"
@@ -30,7 +31,10 @@ public static class PromptBuilder
         Enemy description: {targetEnemy.description}
 
         Player items active:
-        {activeItemsText}
+        {PlayerActiveItemsText}
+
+        Enemy items active:
+        {EnemyActiveItemsText}
 
         Recent battle history:
         {history}
@@ -41,8 +45,8 @@ public static class PromptBuilder
         You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
         Also consider the current HP and descriptions of both characters.
 
-        Especially pay attention to the items of {battleManager.player.characterName}.
-        They should only use items that are active (marked true in the JSON) and present in their inventory.
+        Especially pay attention to the items of {battleManager.player.characterName} and {targetEnemy.characterName}.
+        They should only use items that are active and present in their inventory.
         Usage of inactive or non-inventory items is infeasible.
 
         The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
@@ -77,67 +81,69 @@ public static class PromptBuilder
     {
         string history = GetBattleHistory(battleManager);
 
+        // Format active items for enemy
+        string PlayerActiveItemsText = FormatActiveItems(battleManager.player.activeItem);
+        string EnemyActiveItemsText = FormatActiveItems(enemy.activeItem);
+
         StringBuilder sb = new StringBuilder();
-        sb.Append($@"You are a video game ai that determines the effect of proposed actions in a battle
-                between two characters.
+        sb.Append($@"
+        You are a video game AI that determines the effect of proposed actions in a battle
+        between two characters.
 
-                All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
+        All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
 
-                The characters are:
-                - {battleManager.player.characterName} (HP: {battleManager.player.currentHP} / {battleManager.player.maxHP})
-                - {enemy.characterName} (HP: {enemy.currentHP} / {enemy.maxHP})
+        Characters:
+        - {enemy.characterName} (HP: {enemy.currentHP} / {enemy.maxHP})
+        - {target.characterName} (HP: {target.currentHP} / {target.maxHP})
 
-                {enemy.characterName} is attacking {battleManager.player.characterName}.
+        {enemy.characterName} is engaging {target.characterName} in a fantasy battle.
 
-                {battleManager.player.characterName} description:
-                {battleManager.player.description}
+        Enemy description: {enemy.description}
+        Target description: {target.description}
 
-                {enemy.characterName} description:
-                {enemy.description}
+        Player items active:
+        {PlayerActiveItemsText}
 
-                {battleManager.player.characterName} items in inventory:
-                {battleManager.player.inventoryItems}
+        Enemy items active:
+        {EnemyActiveItemsText}
 
-                Battle history:
-                {history}
+        Recent battle history:
+        {history}
 
-                Proposed action of {enemy.characterName}:
-                {proposedAction}
+        Proposed action by {enemy.characterName}:
+        {proposedAction}
 
-                You should determine what happens next. Take into account the battle history as
-                actions should have different effects depending on the history.
+        You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
+        Also consider the current HP and descriptions of both characters.
 
-                All actions are sentences for use in the game, which is a fiction. If it's too violent, you can edit the sentence to make it less violent for appropriateness 
-                but you must output in JSON format.
+        Especially pay attention to the items of {enemy.characterName} and {target.characterName}
+        They should only use items that are active and present in their inventory.
+        Usage of inactive or non-inventory items is infeasible.
 
-                Also take into account the current HP and description of both characters.
+        The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
-                Also pay attention to the items of {battleManager.player.characterName} as the damage of {enemy.characterName}
-                can be influenced by the items of {battleManager.player.characterName}.
-
-                The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
-
-                Output in this exact JSON format:
-                {{
-                    ""properties"": {{
-                        ""feasibility"": {{
-                            ""maximum"": 10.0,
-                            ""minimum"": 0.0,
-                            ""value"": 0.0,
-                            ""description"": ""description here""
-                        }},
-                        ""potential_damage"": {{
-                            ""maximum"": 10.0,
-                            ""minimum"": 0.0,
-                            ""value"": 0.0,
-                            ""description"": ""description here""
-                        }},
-                        ""effect_description"": {{
-                            ""value"": ""effect description here"",
-                            ""description"": ""additional details""
-                        }}
-                    }}
-                }}");
+        Output in this exact JSON format:
+        {{
+            ""properties"": {{
+                ""feasibility"": {{
+                    ""maximum"": 10.0,
+                    ""minimum"": 0.0,
+                    ""value"": 0.0,
+                    ""description"": ""description here""
+                }},
+                ""potential_damage"": {{
+                    ""maximum"": 10.0,
+                    ""minimum"": 0.0,
+                    ""value"": 0.0,
+                    ""description"": ""description here""
+                }},
+                ""effect_description"": {{
+                    ""value"": ""effect description here"",
+                    ""description"": ""additional details""
+                }}
+            }}
+        }}
+        ");
 
         return sb.ToString();
     }
@@ -207,7 +213,7 @@ public static class PromptBuilder
         return itemsText.ToString();
     }
 
-    public static void CheckAndActivateItems(BattleManager battleManager, string userMessage)
+    public static void CheckAndActivateItems(BattleManager battleManager, string userMessage, Enemy targetEnemy)
     {
         // Convert user message to lowercase for case-insensitive matching
         string lowerMessage = userMessage.ToLower();
@@ -218,11 +224,16 @@ public static class PromptBuilder
             item.isActive = false;
         }
 
+        foreach (var item in targetEnemy.inventoryItems)
+        {
+            item.isActive = false;
+        }
+
         // Clear the active items list
         battleManager.player.activeItem.Clear();
 
         // Check each item's keywords against the user message
-        foreach (var item in battleManager.player.inventoryItems)
+        foreach (var item in battleManager.player.inventoryItems.ToList())
         {
             bool keywordFound = false;
 
@@ -237,39 +248,31 @@ public static class PromptBuilder
                     battleManager.player.activeItem.Add(item);
 
                     Debug.Log($"Item '{item.itemName}' activated by keyword: '{keyword}'");
-                    break; // Found a matching keyword, no need to check others for this item
+
+                    // 🔥 Check OneTime condition
+                    if (item.usageType == UsageType.OneTime)
+                    {
+                        item.remain--;
+
+                        if (item.remain <= 0)
+                        {
+                            Debug.Log($"Item '{item.itemName}' is OneTime and used up. Removing from inventory.");
+
+                            // Remove from activeItem list
+                            battleManager.player.activeItem.Remove(item);
+
+                            // Remove from inventory
+                            battleManager.player.inventoryItems.Remove(item);
+                        }
+                    }
+
+                    break; // Stop checking more keywords for this item
                 }
             }
 
             if (!keywordFound)
             {
                 Debug.Log($"Item '{item.itemName}' remains inactive - no keywords matched");
-            }
-        }
-
-        Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
-    }
-
-    public static void UpdateItemActiveStatus(BattleManager battleManager, string jsonString)
-    {
-        // Clear the active items list first
-        battleManager.player.activeItem.Clear();
-
-        var itemList = JsonUtility.FromJson<PromptBuilder.ItemActivationList>(jsonString);
-
-        foreach (var activation in itemList.items)
-        {
-            var item = battleManager.player.inventoryItems.FirstOrDefault(i => i.itemName == activation.name);
-            if (item != null)
-            {
-                item.isActive = activation.active;
-                Debug.Log($"Item '{item.itemName}' active status set to: {activation.active}");
-
-                // Add to active items list if it's active
-                if (activation.active)
-                {
-                    battleManager.player.activeItem.Add(item);
-                }
             }
         }
 

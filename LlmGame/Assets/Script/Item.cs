@@ -11,6 +11,7 @@ public class Item : ScriptableObject
 
     [Header("Usage")]
     public UsageType usageType;
+    public int remain;
 
     [Header("KeyWord")]
     public List<string> keyWords;
@@ -18,7 +19,8 @@ public class Item : ScriptableObject
     [Header("Activate")]
     public bool isActive;
 
-
+    [Header("Consume Turn Item")]
+    public bool isConsumeTurn;
 }
 
 

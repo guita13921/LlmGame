@@ -6,12 +6,18 @@ using System.Linq;
 
 public class BattleManager : MonoBehaviour
 {
+    [Header("References")]
     [SerializeField] public Player player;
     [SerializeField] public List<Enemy> enemies = new List<Enemy>();
+    [SerializeField] public ChatAI chatAI;
+    [SerializeField] public CharacterCombatHandler combatHandler;
+    [SerializeField] public DamageCalculator damageCalculator;
+
+    [Header("Character Lists")]
     [SerializeField] public List<Character> allCharacters = new List<Character>();
     [SerializeField] public List<string> battleLog = new List<string>();
-    [SerializeField] public ChatAI chatAI;
 
+    [Header("Battle State")]
     [SerializeField] public int turnCount = 1;
     public float gaugeThreshold = 1000f;
     public bool battleActive = true;
@@ -19,8 +25,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public bool isActionPhase = false;
     [SerializeField] public Character currentActingCharacter = null;
 
-    // Store the last user message for damage calculation
-    private string lastUserMessage = "";
+    [HideInInspector] public string lastUserMessage = "";
 
     private void Start()
     {
@@ -38,15 +43,12 @@ public class BattleManager : MonoBehaviour
     {
         if (!battleActive) return;
 
-        // If it's player's turn and they are choosing an action, stop all gauge updates
         if (isActionPhase && currentActingCharacter is Player)
         {
-            // Only allow player to act, pause gauges
-            return;
+            return; // Wait for player's input
         }
 
-        if (isActionPhase)
-            return;
+        if (isActionPhase) return;
 
         foreach (var character in allCharacters)
         {
@@ -69,31 +71,117 @@ public class BattleManager : MonoBehaviour
                 break;
             }
         }
-
     }
 
-    private Character GetRandomOpponent(Character self)
+    private IEnumerator DoAction(Character character)
+    {
+        Debug.Log($"=== {character.characterName}'s Turn ===");
+
+        if (character is Player)
+        {
+            Debug.Log("Player's turn: waiting for player input.");
+            chatAI.ShowInputUI();
+            yield break;
+        }
+        else if (character is Enemy enemy)
+        {
+            Character target = GetRandomOpponent(enemy);
+            if (target != null)
+            {
+                string enemyAction = GetRandomEnemyAction(enemy);
+                CheckAndActivateEnemyItems(enemy, enemyAction);
+
+                Debug.Log($"Enemy {enemy.characterName} chosen action: {enemyAction}");
+                Debug.Log($"Enemy active items: {enemy.activeItem.Count}");
+
+                combatHandler.EnemyAttack(enemy, target, enemyAction);
+            }
+
+            yield return new WaitForSeconds(2.0f);
+
+            if (CheckBattleEnd())
+            {
+                battleActive = false;
+                Debug.Log("Battle Finished!");
+            }
+
+            isActionPhase = false;
+            currentActingCharacter = null;
+
+            chatAI.HideInputUI();
+        }
+    }
+
+    public Character GetRandomOpponent(Character self)
     {
         if (self is Player)
         {
             List<Enemy> aliveEnemies = enemies.FindAll(e => e.IsAlive());
             if (aliveEnemies.Count > 0)
-            {
                 return aliveEnemies[Random.Range(0, aliveEnemies.Count)];
-            }
         }
-        else if (self is Enemy)
+        else if (self is Enemy && player.IsAlive())
         {
-            if (player.IsAlive())
-            {
-                return player;
-            }
+            return player;
         }
 
         return null;
     }
 
-    private bool CheckBattleEnd()
+    private string GetRandomEnemyAction(Enemy enemy)
+    {
+        if (enemy.actions == null || enemy.actions.Count == 0)
+        {
+            Debug.LogWarning($"Enemy {enemy.characterName} has no actions defined, using default 'Punch'");
+            return "Punch";
+        }
+
+        int randomIndex = Random.Range(0, enemy.actions.Count);
+        return enemy.actions[randomIndex];
+    }
+
+    private void CheckAndActivateEnemyItems(Enemy enemy, string enemyAction)
+    {
+        string lowerAction = enemyAction.ToLower();
+
+        foreach (var item in enemy.inventoryItems)
+        {
+            item.isActive = false;
+        }
+
+        enemy.activeItem.Clear();
+
+        foreach (var item in enemy.inventoryItems)
+        {
+            bool keywordFound = false;
+            foreach (string keyword in item.keyWords)
+            {
+                if (!string.IsNullOrEmpty(keyword) && lowerAction.Contains(keyword.ToLower()))
+                {
+                    item.isActive = true;
+                    keywordFound = true;
+                    enemy.activeItem.Add(item);
+
+                    Debug.Log($"Enemy item '{item.itemName}' activated by keyword: '{keyword}' from action: '{enemyAction}'");
+                    break;
+                }
+            }
+
+            if (!keywordFound)
+            {
+                Debug.Log($"Enemy item '{item.itemName}' remains inactive - no keywords matched");
+            }
+        }
+
+        Debug.Log($"Total enemy active items: {enemy.activeItem.Count}");
+    }
+
+    public void SetUserMessage(string message)
+    {
+        lastUserMessage = message;
+    }
+
+    public bool CheckBattleEnd()
     {
         if (!player.IsAlive())
         {
@@ -101,16 +189,7 @@ public class BattleManager : MonoBehaviour
             return true;
         }
 
-        bool anyEnemyAlive = false;
-        foreach (var e in enemies)
-        {
-            if (e.IsAlive())
-            {
-                anyEnemyAlive = true;
-                break;
-            }
-        }
-
+        bool anyEnemyAlive = enemies.Any(e => e.IsAlive());
         if (!anyEnemyAlive)
         {
             Debug.Log("All Enemies Defeated!");
@@ -129,56 +208,14 @@ public class BattleManager : MonoBehaviour
         return sb.ToString();
     }
 
-    private IEnumerator DoAction(Character character)
-    {
-        Debug.Log($"=== {character.characterName}'s Turn ===");
-
-        if (character is Player)
-        {
-            Debug.Log("Player's turn: waiting for player to choose action.");
-            chatAI.ShowInputUI();
-            yield break;
-        }
-        else
-        {
-            Character target = GetRandomOpponent(character);
-            if (target != null)
-            {
-                string enemyAction = "Punch"; // or generate random move description
-                EnemyAttack(character, target, enemyAction);
-            }
-
-            yield return new WaitForSeconds(2.0f);
-
-            if (CheckBattleEnd())
-            {
-                battleActive = false;
-                Debug.Log("Battle Finished!");
-            }
-
-            isActionPhase = false;
-            currentActingCharacter = null;
-
-            chatAI.HideInputUI();
-        }
-    }
-
-    // Method to store the user message for damage calculation
-    public void SetUserMessage(string message)
-    {
-        lastUserMessage = message;
-    }
-
-    private List<string> GetPastMessagesFromActor(Character actor)
+    public List<string> GetPastMessagesFromActor(Character actor)
     {
         List<string> messages = new List<string>();
 
         foreach (string logEntry in battleLog)
         {
-            // Check if this log entry was from this character
             if (logEntry.Contains(actor.characterName))
             {
-                // Try extract message inside quotes (your new log format uses "..." for message)
                 int start = logEntry.IndexOf("\"");
                 int end = logEntry.LastIndexOf("\"");
 
@@ -192,182 +229,4 @@ public class BattleManager : MonoBehaviour
 
         return messages;
     }
-
-    #region Calculate Damage
-
-    private float CalculateCreativityBonus(string userMessage)
-    {
-        if (string.IsNullOrEmpty(userMessage))
-            return 0f;
-
-        // Combine past messages from this actor
-        List<string> pastMessages = GetPastMessagesFromActor(currentActingCharacter);
-
-        // Add current message
-        pastMessages.Add(userMessage);
-
-        // Combine into one big text
-        string combinedText = string.Join(" ", pastMessages).ToLower();
-
-        // Split words
-        string[] words = combinedText
-            .Split(new char[] { ' ', '\t', '\n', '\r', '.', ',', '!', '?', ';', ':', '"', '\'', '(', ')', '[', ']', '{', '}' },
-                   System.StringSplitOptions.RemoveEmptyEntries);
-
-        // Count unique words
-        HashSet<string> uniqueWords = new HashSet<string>(words);
-        int nUniqueWords = uniqueWords.Count;
-
-        // Count words used at least 2 times
-        Dictionary<string, int> wordCount = new Dictionary<string, int>();
-        foreach (string word in words)
-        {
-            if (wordCount.ContainsKey(word))
-                wordCount[word]++;
-            else
-                wordCount[word] = 1;
-        }
-
-        int nWordsUsedAtLeast2Times = wordCount.Count(kvp => kvp.Value >= 2);
-
-        // Calculate bonuses
-        float uniqueWordBonus = Mathf.Min(1f, nUniqueWords * 0.05f);
-        float repetitionPenalty = Mathf.Min(0.3f, nWordsUsedAtLeast2Times * 0.02f);
-
-        float creativityBonus = uniqueWordBonus - repetitionPenalty;
-
-        Debug.Log($"Creativity Calculation: UniqueWords={nUniqueWords}, RepeatedWords={nWordsUsedAtLeast2Times}");
-        Debug.Log($"UniqueWordBonus={uniqueWordBonus}, RepetitionPenalty={repetitionPenalty}, CreativityBonus={creativityBonus}");
-
-        return creativityBonus;
-    }
-
-    private float CalculateDamage(float feasibility, float potential, float baseDamage, string userMessage)
-    {
-        const float constant = 2f;
-
-        float llmDamageModifier = ((feasibility / 10) * (potential / 10)) * constant;
-        float llmScaledBaseDamage = baseDamage * llmDamageModifier;
-        float creativityBonus = CalculateCreativityBonus(userMessage);
-        float totalDamage = llmScaledBaseDamage * (1 + creativityBonus);
-
-        Debug.Log($"Damage Calculation: Feasibility={feasibility}, Potential={potential}, BaseDamage={baseDamage}");
-        Debug.Log($"LLMDamageModifier={llmDamageModifier}, LLMScaledBaseDamage={llmScaledBaseDamage}");
-        Debug.Log($"CreativityBonus={creativityBonus}, TotalDamage={totalDamage}");
-
-        return totalDamage;
-    }
-
-    private float CalculateDamageNoCreativity(float feasibility, float potential, float baseDamage)
-    {
-        const float constant = 2f;
-
-        float llmDamageModifier = ((feasibility / 10) * (potential / 10)) * constant;
-        float llmScaledBaseDamage = baseDamage * llmDamageModifier;
-
-        Debug.Log($"Enemy Damage Calculation: Feasibility={feasibility}, Potential={potential}, BaseDamage={baseDamage}");
-        Debug.Log($"LLMDamageModifier={llmDamageModifier}, LLMScaledBaseDamage={llmScaledBaseDamage}");
-
-        return llmScaledBaseDamage;
-    }
-
-    #endregion
-
-    #region Player/Enemy
-
-    public void PlayerAttack(float feasibility, float potential, string effectValue, string effectDesc)
-    {
-        if (!(currentActingCharacter is Player))
-        {
-            Debug.LogWarning("Not player's turn!");
-            return;
-        }
-
-        Character target = GetRandomOpponent(currentActingCharacter);
-
-        if (target != null)
-        {
-            float baseDamage = currentActingCharacter.attack;
-            float calculatedDamage = CalculateDamage(feasibility, potential, baseDamage, lastUserMessage);
-
-            int finalDamage = Mathf.RoundToInt(calculatedDamage);
-
-            target.TakeDamage(finalDamage);
-
-            // Build new formatted log
-            string log = $"Turn {turnCount}: {currentActingCharacter.characterName} (HP: {currentActingCharacter.currentHP}) " +
-                         $"used \"{lastUserMessage}\" [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
-                         $"for {finalDamage} damage → Target: {target.characterName} (HP: {target.currentHP} / {target.maxHP})";
-
-            battleLog.Add(log);
-
-            Debug.Log(log);
-        }
-
-        StartCoroutine(EndPlayerTurn());
-    }
-
-    public void PlayerAttack()
-    {
-        PlayerAttack(1f, 1f, "DefaultEffect", "DefaultDesc");
-    }
-
-    private IEnumerator EndPlayerTurn()
-    {
-        yield return new WaitForSeconds(2.0f);
-
-        if (CheckBattleEnd())
-        {
-            battleActive = false;
-            Debug.Log("Battle Finished!");
-        }
-
-        turnCount++;
-        isActionPhase = false;
-        currentActingCharacter = null;
-
-        chatAI.HideInputUI();
-    }
-
-    public void EnemyAttack(Character enemy, Character target, string proposedAction)
-    {
-        StartCoroutine(chatAI.SendEnemyMessage(enemy, target, proposedAction));
-    }
-
-    public void ResolveEnemyAttack(Character enemy, Character target, float feasibility, float potential, string effectValue, string effectDesc)
-    {
-        float baseDamage = enemy.attack;
-        float calculatedDamage = CalculateDamageNoCreativity(feasibility, potential, baseDamage);
-
-        int finalDamage = Mathf.RoundToInt(calculatedDamage);
-
-        target.TakeDamage(finalDamage);
-
-        string log = $"Turn {turnCount}: {enemy.characterName} (HP: {enemy.currentHP}) " +
-                     $"used [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
-                     $"for {finalDamage} damage → Target: {target.characterName} (HP: {target.currentHP})";
-
-        battleLog.Add(log);
-
-        Debug.Log(log);
-
-        StartCoroutine(EndEnemyTurn());
-    }
-
-    private IEnumerator EndEnemyTurn()
-    {
-        yield return new WaitForSeconds(2.0f);
-
-        if (CheckBattleEnd())
-        {
-            battleActive = false;
-            Debug.Log("Battle Finished!");
-        }
-
-        turnCount++;
-        isActionPhase = false;
-        currentActingCharacter = null;
-    }
-
-    #endregion
 }

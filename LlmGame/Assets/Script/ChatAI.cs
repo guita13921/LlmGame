@@ -30,6 +30,15 @@ public class ChatAI : MonoBehaviour
         string userMessage = inputField.text;
         string safeMessage = PromptBuilder.SanitizeUserMessage(userMessage);
 
+        // Get target enemy and send final prompt
+        Enemy targetEnemy = battleManager.enemies.FirstOrDefault(e => e.IsAlive());
+
+        if (targetEnemy == null)
+        {
+            Debug.LogError("No valid enemy found!");
+            return;
+        }
+
         if (string.IsNullOrEmpty(safeMessage.Trim()))
         {
             Debug.LogWarning("Empty message, skipping API call");
@@ -40,100 +49,12 @@ public class ChatAI : MonoBehaviour
         battleManager.SetUserMessage(safeMessage);
 
         // Check for item keyword matches and activate items
-        PromptBuilder.CheckAndActivateItems(battleManager, safeMessage);
+        PromptBuilder.CheckAndActivateItems(battleManager, safeMessage, targetEnemy);
 
-        // Get target enemy and send final prompt
-        Enemy targetEnemy = battleManager.enemies.FirstOrDefault(e => e.IsAlive());
-
-        if (targetEnemy == null)
-        {
-            Debug.LogError("No valid enemy found!");
-            return;
-        }
 
         string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage);
         StartCoroutine(SendMessageToAI(finalPrompt));
     }
-
-    public IEnumerator SendItemActivationRequest(string itemPrompt, string userMessage)
-    {
-        string json = "{\"message\":\"" + EscapeJsonString(itemPrompt) + "\"}";
-
-        Debug.Log("Sending Item Activation JSON: " + json);
-
-        var request = new UnityWebRequest(apiUrl, "POST");
-        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
-
-        yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Item Activation Raw Response: " + request.downloadHandler.text);
-
-            try
-            {
-                var res = JsonUtility.FromJson<ResponseWrapper>(request.downloadHandler.text);
-
-                if (string.IsNullOrEmpty(res.response))
-                {
-                    Debug.LogError("Empty item activation response from API");
-                    responseText.text = "Error: Empty item activation response";
-                    yield break;
-                }
-
-                string jsonString = res.response;
-                jsonString = jsonString.Replace("```json", "").Replace("```", "").Trim();
-
-                // Update the actual items in BattleManager
-                UpdateItemActiveStatus(battleManager, jsonString);
-
-                Debug.Log("Items updated from activation response");
-
-                // Build final battle prompt
-                Enemy targetEnemy = battleManager.enemies.FirstOrDefault(e => e.IsAlive());
-                if (targetEnemy == null)
-                {
-                    Debug.LogError("No valid enemy found for final prompt!");
-                    yield break;
-                }
-
-                Debug.Log("itemPrompt prompt: \n" + itemPrompt);
-
-                // Send final prompt to AI for actual action resolution
-                //StartCoroutine(SendMessageToAI(itemPrompt));
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError("Error parsing item activation response: " + e.Message);
-                responseText.text = "Error parsing item activation response: " + e.Message;
-            }
-        }
-        else
-        {
-            Debug.LogError($"HTTP Error: {request.responseCode} - {request.error}");
-            Debug.LogError("Response: " + request.downloadHandler.text);
-            responseText.text = $"HTTP Error: {request.responseCode} - {request.error}";
-        }
-    }
-
-
-    private void UpdateItemActiveStatus(BattleManager battleManager, string jsonString)
-    {
-        var itemList = JsonUtility.FromJson<PromptBuilder.ItemActivationList>(jsonString);
-        foreach (var activation in itemList.items)
-        {
-            var item = battleManager.player.inventoryItems.FirstOrDefault(i => i.itemName == activation.name);
-            if (item != null)
-            {
-                item.isActive = activation.active;
-                Debug.Log($"Item '{item.itemName}' active status set to: {activation.active}");
-            }
-        }
-    }
-
 
 
     IEnumerator SendMessageToAI(string userMessage)
@@ -210,7 +131,7 @@ public class ChatAI : MonoBehaviour
 
                 Debug.Log(responseText.text);
 
-                battleManager.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc);
+                battleManager.combatHandler.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc);
             }
             catch (System.Exception e)
             {
@@ -264,7 +185,7 @@ public class ChatAI : MonoBehaviour
                 string effectValue = root.properties.effect_description?.value ?? "No effect";
                 string effectDesc = root.properties.effect_description?.description ?? "No description";
 
-                battleManager.ResolveEnemyAttack(enemy, target, feasibilityValue, potentialValue, effectValue, effectDesc);
+                battleManager.combatHandler.ResolveEnemyAttack(enemy, target, feasibilityValue, potentialValue, effectValue, effectDesc);
             }
             catch (System.Exception e)
             {
@@ -288,6 +209,8 @@ public class ChatAI : MonoBehaviour
                   .Replace("\r", "\\r")
                   .Replace("\t", "\\t");
     }
+
+    # region Class
 
     [System.Serializable]
     public class ResponseWrapper
@@ -341,5 +264,5 @@ public class ChatAI : MonoBehaviour
         if (inputPanel != null)
             inputPanel.SetActive(false);
     }
-
+    #endregion
 }

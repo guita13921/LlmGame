@@ -1,22 +1,3 @@
-%YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7170016629943a6478e18c0724343dc1, type: 3}
-  m_Name: NukeArrow
-  m_EditorClassIdentifier: 
-  itemName: Arrow
-  itemDescription: An experimental, high-yield explosive arrowhead designed for the
-    Neon Recurve. Upon impact.
-  usageType: 0
-  keyWords:
-  - Nuke
-  isActive: 0
-  Damage: 10
+version https://git-lfs.github.com/spec/v1
+oid sha256:6f51e33ff64d0cd744697c2dcec6f075b8163c57a9d070142e714a92a0eca147
+size 672
