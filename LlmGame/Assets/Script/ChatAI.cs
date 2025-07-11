@@ -3,6 +3,7 @@ using UnityEngine.Networking;
 using TMPro;
 using System.Collections;
 using System.Linq;
+using System.Collections.Generic;
 
 public class ChatAI : MonoBehaviour
 {
@@ -51,6 +52,14 @@ public class ChatAI : MonoBehaviour
         // Check for item keyword matches and activate items
         PromptBuilder.CheckAndActivateItems(battleManager, safeMessage, targetEnemy);
 
+        List<DamageType> enemyDamageTypes = new List<DamageType>();
+
+        foreach (var weapon in targetEnemy.activeItem.OfType<Weapon>())
+        {
+            enemyDamageTypes.AddRange(weapon.damageType);
+        }
+
+        battleManager.CheckAndActivateDefensiveItems(battleManager.player, targetEnemy);
 
         string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage);
         StartCoroutine(SendMessageToAI(finalPrompt));

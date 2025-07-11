@@ -2,7 +2,8 @@ using UnityEngine;
 
 public enum ItemType
 {
-    Weapon,
+    Offensive,
+    Defensive,
     Healing
 }
 
@@ -23,8 +24,6 @@ public enum DamageType
     Plasma,         // High-energy plasma weapons
     Laser,          // Laser rifles, cutting beams
     Chemical,       // Gas attacks, chemical bombs
-
-    // Additional hybrid or futuristic types
     Viral,          // Digital viruses that affect both tech and biology
 
 }

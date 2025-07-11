@@ -90,6 +90,7 @@ public class BattleManager : MonoBehaviour
             {
                 string enemyAction = GetRandomEnemyAction(enemy);
                 CheckAndActivateEnemyItems(enemy, enemyAction);
+                CheckAndActivateDefensiveItems(enemy, target);
 
                 Debug.Log($"Enemy {enemy.characterName} chosen action: {enemyAction}");
                 Debug.Log($"Enemy active items: {enemy.activeItem.Count}");
@@ -174,6 +175,55 @@ public class BattleManager : MonoBehaviour
         }
 
         Debug.Log($"Total enemy active items: {enemy.activeItem.Count}");
+    }
+
+    /// Checks target defensive items and activates them if they match any incoming damage type.
+    /// <param name="attacker">The character dealing damage (used to read weapon types)</param>
+    /// <param name="target">The character receiving damage (defensive items are checked)</param>
+    public void CheckAndActivateDefensiveItems(Character attacker, Character target)
+    {
+        // Collect all damage types from active weapons on the attacker
+        HashSet<DamageType> incomingDamageTypes = new HashSet<DamageType>();
+
+        foreach (var weaponItem in attacker.activeItem)
+        {
+            if (weaponItem is Weapon weapon)
+            {
+                foreach (var dt in weapon.damageType)
+                {
+                    if (!incomingDamageTypes.Contains(dt))
+                    {
+                        incomingDamageTypes.Add(dt);
+                    }
+                }
+            }
+        }
+
+        Debug.Log($"Incoming damage types: {string.Join(", ", incomingDamageTypes.Select(t => t.ToString()))}");
+
+        // Check each defensive item on the target
+        foreach (var item in target.inventoryItems)
+        {
+            if (item is Defensive defensive)
+            {
+                defensive.isActive = false; // Reset to inactive before checking
+
+                // If any of the attacker's damage types match this defensive item's types
+                bool hasMatchingType = defensive.damageTypeReduce.Any(dt => incomingDamageTypes.Contains(dt));
+
+                if (hasMatchingType)
+                {
+                    defensive.isActive = true;
+                    target.activeItem.Add(defensive);
+
+                    Debug.Log($"Defensive item '{defensive.itemName}' activated! Matches damage types: {string.Join(", ", defensive.damageTypeReduce.Select(t => t.ToString()))}");
+                }
+                else
+                {
+                    Debug.Log($"Defensive item '{defensive.itemName}' did not match any damage types and remains inactive.");
+                }
+            }
+        }
     }
 
     public void SetUserMessage(string message)

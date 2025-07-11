@@ -46,8 +46,9 @@ public static class PromptBuilder
         Also consider the current HP and descriptions of both characters.
 
         Especially pay attention to the items of {battleManager.player.characterName} and {targetEnemy.characterName}.
-        They should only use items that are active and present in their inventory.
-        Usage of inactive or non-inventory items is infeasible.
+        - They should only use items that are active and present in their inventory.
+        - Usage of inactive or non-inventory items is infeasible.
+        - When a protective item is active, it does not reduce or increase the damage that can be dealt. It is just used to describe the details.
 
         The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
@@ -117,8 +118,9 @@ public static class PromptBuilder
         Also consider the current HP and descriptions of both characters.
 
         Especially pay attention to the items of {enemy.characterName} and {target.characterName}
-        They should only use items that are active and present in their inventory.
-        Usage of inactive or non-inventory items is infeasible.
+        - They should only use items that are active and present in their inventory.
+        - Usage of inactive or non-inventory items is infeasible.
+        - When a protective item is active, it does not reduce or increase the damage that can be dealt. It is just used to describe the details.
 
         The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
@@ -207,7 +209,7 @@ public static class PromptBuilder
         for (int i = 0; i < activeItems.Count; i++)
         {
             var item = activeItems[i];
-            itemsText.AppendLine($"- {item.itemName}: {item.itemDescription}");
+            itemsText.AppendLine($"- {item.itemName}: {item.itemType}: {item.itemDescription}");
         }
 
         return itemsText.ToString();

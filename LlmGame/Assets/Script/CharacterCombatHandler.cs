@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CharacterCombatHandler : MonoBehaviour
@@ -30,12 +31,14 @@ public class CharacterCombatHandler : MonoBehaviour
         if (target != null)
         {
             float baseDamage = player.attack;
-            float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player);
+            float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
 
             int finalDamage = Mathf.RoundToInt(calculatedDamage);
             target.TakeDamage(finalDamage);
 
-            float activeWeaponDamage = battleManager.damageCalculator.GetActiveWeaponDamage(player);
+            // ✅ Updated: use the new breakdown
+            var weaponDamageBreakdown = battleManager.damageCalculator.GetActiveWeaponDamageBreakdown(player);
+            float activeWeaponDamage = weaponDamageBreakdown.Values.Sum();
             string weaponInfo = activeWeaponDamage > 0 ? $" (Base: {baseDamage}, Weapon: +{activeWeaponDamage})" : "";
 
             string log = $"Turn {battleManager.turnCount}: {player.characterName} (HP: {player.currentHP}) " +
@@ -48,6 +51,7 @@ public class CharacterCombatHandler : MonoBehaviour
 
         battleManager.StartCoroutine(EndPlayerTurn());
     }
+
 
     private IEnumerator EndPlayerTurn()
     {
@@ -77,12 +81,14 @@ public class CharacterCombatHandler : MonoBehaviour
     public void ResolveEnemyAttack(Character enemy, Character target, float feasibility, float potential, string effectValue, string effectDesc)
     {
         float baseDamage = enemy.attack;
-        float calculatedDamage = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, enemy);
+        float calculatedDamage = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, enemy, target);
 
         int finalDamage = Mathf.RoundToInt(calculatedDamage);
         target.TakeDamage(finalDamage);
 
-        float activeWeaponDamage = battleManager.damageCalculator.GetActiveWeaponDamage(enemy);
+        // ✅ Updated: use new breakdown
+        var weaponDamageBreakdown = battleManager.damageCalculator.GetActiveWeaponDamageBreakdown(enemy);
+        float activeWeaponDamage = weaponDamageBreakdown.Values.Sum();
         string weaponInfo = activeWeaponDamage > 0 ? $" (Base: {baseDamage}, Weapon: +{activeWeaponDamage})" : "";
 
         string log = $"Turn {battleManager.turnCount}: {enemy.characterName} (HP: {enemy.currentHP}) " +
@@ -94,6 +100,7 @@ public class CharacterCombatHandler : MonoBehaviour
 
         battleManager.StartCoroutine(EndEnemyTurn());
     }
+
 
     private IEnumerator EndEnemyTurn()
     {

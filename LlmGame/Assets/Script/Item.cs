@@ -8,6 +8,7 @@ public class Item : ScriptableObject
 
     [TextArea]
     public string itemDescription;
+    public ItemType itemType;
 
     [Header("Usage")]
     public UsageType usageType;
