@@ -18,7 +18,7 @@ public class CharacterCombatHandler : MonoBehaviour
 
     #region Player
 
-    public void PlayerAttack(float feasibility, float potential, string effectValue, string effectDesc)
+    public void PlayerAttack(float feasibility, float potential, string effectValue, string effectDesc, Character target)
     {
         var player = battleManager.currentActingCharacter as Player;
         if (player == null)
@@ -27,30 +27,32 @@ public class CharacterCombatHandler : MonoBehaviour
             return;
         }
 
-        var target = battleManager.GetRandomOpponent(player);
-        if (target != null)
+        if (target == null || !target.IsAlive())
         {
-            float baseDamage = player.attack;
-            float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
-
-            int finalDamage = Mathf.RoundToInt(calculatedDamage);
-            target.TakeDamage(finalDamage);
-
-            // ✅ Updated: use the new breakdown
-            var weaponDamageBreakdown = battleManager.damageCalculator.GetActiveWeaponDamageBreakdown(player);
-            float activeWeaponDamage = weaponDamageBreakdown.Values.Sum();
-            string weaponInfo = activeWeaponDamage > 0 ? $" (Base: {baseDamage}, Weapon: +{activeWeaponDamage})" : "";
-
-            string log = $"Turn {battleManager.turnCount}: {player.characterName} (HP: {player.currentHP}) " +
-                         $"used \"{battleManager.lastUserMessage}\" [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
-                         $"for {finalDamage} damage{weaponInfo} → Target: {target.characterName} (HP: {target.currentHP} / {target.maxHP})";
-
-            battleManager.battleLog.Add(log);
-            Debug.Log(log);
+            Debug.LogWarning("No valid target selected!");
+            return;
         }
+
+        float baseDamage = player.attack;
+        float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
+
+        int finalDamage = Mathf.RoundToInt(calculatedDamage);
+        target.TakeDamage(finalDamage);
+
+        var weaponDamageBreakdown = battleManager.damageCalculator.GetActiveWeaponDamageBreakdown(player);
+        float activeWeaponDamage = weaponDamageBreakdown.Values.Sum();
+        string weaponInfo = activeWeaponDamage > 0 ? $" (Base: {baseDamage}, Weapon: +{activeWeaponDamage})" : "";
+
+        string log = $"Turn {battleManager.turnCount}: {player.characterName} (HP: {player.currentHP}) " +
+                     $"used \"{battleManager.lastUserMessage}\" [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
+                     $"for {finalDamage} damage{weaponInfo} → Target: {target.characterName} (HP: {target.currentHP} / {target.maxHP})";
+
+        battleManager.battleLog.Add(log);
+        Debug.Log(log);
 
         battleManager.StartCoroutine(EndPlayerTurn());
     }
+
 
 
     private IEnumerator EndPlayerTurn()

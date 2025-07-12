@@ -5,8 +5,11 @@ public class Character : MonoBehaviour
 {
     [Header("Basic Info")]
     public string characterName;
-    public Sprite sprite;
+    public GameObject sprite;
     [TextArea] public string description;
+
+    // Reference to BattleManager so we can inform it
+    private BattleManager battleManager;
 
     [Header("Stats")]
     public int attack;
@@ -33,6 +36,12 @@ public class Character : MonoBehaviour
         currentMP = maxMP;
     }
 
+    private void Start()
+    {
+        // Find BattleManager in the scene (or assign manually if you prefer)
+        battleManager = FindObjectOfType<BattleManager>();
+    }
+
     public virtual void TakeDamage(int dmg)
     {
         int finalDamage = Mathf.Max(dmg - defense, 0);
@@ -48,6 +57,17 @@ public class Character : MonoBehaviour
     public virtual void OnDeath()
     {
         Debug.Log($"{characterName} has died!");
+    }
+
+    private void OnMouseDown()
+    {
+        if (battleManager != null && battleManager.isActionPhase && battleManager.currentActingCharacter is Player)
+        {
+            if (this is Enemy && this.IsAlive())
+            {
+                battleManager.PlayerSelectedTarget(this as Enemy);
+            }
+        }
     }
 
 

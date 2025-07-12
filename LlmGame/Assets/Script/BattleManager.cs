@@ -16,6 +16,7 @@ public class BattleManager : MonoBehaviour
     [Header("Character Lists")]
     [SerializeField] public List<Character> allCharacters = new List<Character>();
     [SerializeField] public List<string> battleLog = new List<string>();
+    [HideInInspector] public Enemy selectedEnemy = null;
 
     [Header("Battle State")]
     [SerializeField] public int turnCount = 1;
@@ -127,6 +128,17 @@ public class BattleManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    public void PlayerSelectedTarget(Enemy selectedEnemy)
+    {
+        if (player == null || !player.IsAlive()) return;
+        if (selectedEnemy == null || !selectedEnemy.IsAlive()) return;
+
+        Debug.Log($"Player selected {selectedEnemy.characterName} as target!");
+
+        // ✅ Just set it
+        this.selectedEnemy = selectedEnemy;
     }
 
     private string GetRandomEnemyAction(Enemy enemy)

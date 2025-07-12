@@ -31,12 +31,11 @@ public class ChatAI : MonoBehaviour
         string userMessage = inputField.text;
         string safeMessage = PromptBuilder.SanitizeUserMessage(userMessage);
 
-        // Get target enemy and send final prompt
-        Enemy targetEnemy = battleManager.enemies.FirstOrDefault(e => e.IsAlive());
+        Enemy targetEnemy = battleManager.selectedEnemy;
 
-        if (targetEnemy == null)
+        if (targetEnemy == null || !targetEnemy.IsAlive())
         {
-            Debug.LogError("No valid enemy found!");
+            Debug.LogError("No valid enemy selected!");
             return;
         }
 
@@ -46,10 +45,8 @@ public class ChatAI : MonoBehaviour
             return;
         }
 
-        // Save user message in BattleManager first
         battleManager.SetUserMessage(safeMessage);
 
-        // Check for item keyword matches and activate items
         PromptBuilder.CheckAndActivateItems(battleManager, safeMessage, targetEnemy);
 
         List<DamageType> enemyDamageTypes = new List<DamageType>();
@@ -64,7 +61,6 @@ public class ChatAI : MonoBehaviour
         string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage);
         StartCoroutine(SendMessageToAI(finalPrompt));
     }
-
 
     IEnumerator SendMessageToAI(string userMessage)
     {
@@ -140,13 +136,15 @@ public class ChatAI : MonoBehaviour
 
                 Debug.Log(responseText.text);
 
-                battleManager.combatHandler.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc);
+                // ✅ FIX: Pass targetEnemy as the fifth argument
+                battleManager.combatHandler.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc, targetEnemy);
             }
             catch (System.Exception e)
             {
                 Debug.LogError("Error parsing response: " + e.Message);
                 responseText.text = "Error parsing response: " + e.Message;
             }
+
         }
         else
         {
