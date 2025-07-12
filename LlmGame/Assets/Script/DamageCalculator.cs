@@ -54,9 +54,6 @@ public class DamageCalculator : MonoBehaviour
         return creativityBonus;
     }
 
-    /// <summary>
-    /// Get total damage for each type from active weapons.
-    /// </summary>
     public Dictionary<DamageType, int> GetActiveWeaponDamageBreakdown(Character character)
     {
         Dictionary<DamageType, int> damageBreakdown = new Dictionary<DamageType, int>();
@@ -85,13 +82,9 @@ public class DamageCalculator : MonoBehaviour
                     }
 
                     if (!damageBreakdown.ContainsKey(dt))
-                    {
                         damageBreakdown[dt] = value;
-                    }
                     else
-                    {
                         damageBreakdown[dt] += value;
-                    }
                 }
             }
         }
@@ -99,14 +92,12 @@ public class DamageCalculator : MonoBehaviour
         return damageBreakdown;
     }
 
-
     public float CalculateDamage(float feasibility, float potential, float baseDamage, string userMessage, Character attacker, Character target)
     {
         const float constant = 2f;
 
         var weaponDamageBreakdown = GetActiveWeaponDamageBreakdown(attacker);
 
-        // Sum all type damage values
         float totalWeaponDamage = weaponDamageBreakdown.Values.Sum();
         float totalBaseDamage = baseDamage + totalWeaponDamage;
 
@@ -114,47 +105,52 @@ public class DamageCalculator : MonoBehaviour
         float llmScaledBaseDamage = totalBaseDamage * llmDamageModifier;
 
         float creativityBonus = CalculateCreativityBonus(userMessage, attacker);
-        float totalDamageBeforeReduction = llmScaledBaseDamage * (1 + creativityBonus);
+        float damageBeforeReduction = llmScaledBaseDamage * (1 + creativityBonus);
 
         Debug.Log($"Damage Calculation (Before Reduction): Feasibility={feasibility}, Potential={potential}, BaseDamage={baseDamage}, WeaponDamage={totalWeaponDamage}, TotalBaseDamage={totalBaseDamage}");
-        Debug.Log($"LLMDamageModifier={llmDamageModifier}, LLMScaledBaseDamage={llmScaledBaseDamage}, CreativityBonus={creativityBonus}, TotalDamageBeforeReduction={totalDamageBeforeReduction}");
+        Debug.Log($"LLMDamageModifier={llmDamageModifier}, LLMScaledBaseDamage={llmScaledBaseDamage}, CreativityBonus={creativityBonus}, DamageBeforeReduction={damageBeforeReduction}");
 
-        // Reduce damage based on active defensive items on the target
-        float totalReduction = 0f;
+        // Apply type-specific reductions
+        var reducedDamageBreakdown = new Dictionary<DamageType, float>();
 
-        foreach (var defItem in target.activeItem.OfType<Defensive>())
+        foreach (var kvp in weaponDamageBreakdown)
         {
-            foreach (var dt in weaponDamageBreakdown.Keys)
-            {
-                int reductionValue = 0;
+            DamageType dt = kvp.Key;
+            float typeDamage = kvp.Value;
 
+            float reductionValue = 0f;
+
+            foreach (var defItem in target.activeItem.OfType<Defensive>())
+            {
                 switch (dt)
                 {
-                    case DamageType.Physical: reductionValue = defItem.reduceDamagePhysical; break;
-                    case DamageType.Fire: reductionValue = defItem.reduceDamageFire; break;
-                    case DamageType.Electric: reductionValue = defItem.reduceDamageElectric; break;
-                    case DamageType.Radiation: reductionValue = defItem.reduceDamageRadiation; break;
-                    case DamageType.Explosive: reductionValue = defItem.reduceDamageExplosive; break;
-                    case DamageType.Digital: reductionValue = defItem.reduceDamageDigital; break;
-                    case DamageType.Plasma: reductionValue = defItem.reduceDamagePlasma; break;
-                    case DamageType.Laser: reductionValue = defItem.reduceDamageLaser; break;
-                    case DamageType.Chemical: reductionValue = defItem.reduceDamageChemical; break;
-                    case DamageType.Viral: reductionValue = defItem.reduceDamageViral; break;
+                    case DamageType.Physical: reductionValue += defItem.reduceDamagePhysical; break;
+                    case DamageType.Fire: reductionValue += defItem.reduceDamageFire; break;
+                    case DamageType.Electric: reductionValue += defItem.reduceDamageElectric; break;
+                    case DamageType.Radiation: reductionValue += defItem.reduceDamageRadiation; break;
+                    case DamageType.Explosive: reductionValue += defItem.reduceDamageExplosive; break;
+                    case DamageType.Digital: reductionValue += defItem.reduceDamageDigital; break;
+                    case DamageType.Plasma: reductionValue += defItem.reduceDamagePlasma; break;
+                    case DamageType.Laser: reductionValue += defItem.reduceDamageLaser; break;
+                    case DamageType.Chemical: reductionValue += defItem.reduceDamageChemical; break;
+                    case DamageType.Viral: reductionValue += defItem.reduceDamageViral; break;
                     default: break;
                 }
-
-                totalReduction += reductionValue;
-                Debug.Log($"Defensive item '{defItem.itemName}' reduces {dt} damage by {reductionValue}");
             }
+
+            float reducedTypeDamage = Mathf.Max(0f, typeDamage - reductionValue);
+            reducedDamageBreakdown[dt] = reducedTypeDamage;
+
+            Debug.Log($"Total reduction for {dt}: {reductionValue}, Damage after reduction: {reducedTypeDamage}");
         }
 
-        float finalDamage = Mathf.Max(0f, totalDamageBeforeReduction - totalReduction);
+        float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
+        float scaledFinalDamage = Mathf.Max(0f, finalDamage * llmDamageModifier * (1 + creativityBonus));
 
-        Debug.Log($"Total Reduction={totalReduction}, Final Damage={finalDamage}");
+        Debug.Log($"Final Damage (After Reductions and Modifiers): {scaledFinalDamage}");
 
-        return finalDamage;
+        return scaledFinalDamage;
     }
-
 
     public float CalculateDamageNoCreativity(float feasibility, float potential, float baseDamage, Character attacker, Character target)
     {
@@ -166,45 +162,50 @@ public class DamageCalculator : MonoBehaviour
         float totalBaseDamage = baseDamage + totalWeaponDamage;
 
         float llmDamageModifier = ((feasibility / 10f) * (potential / 10f)) * constant;
-        float llmScaledBaseDamage = totalBaseDamage * llmDamageModifier;
+        float damageBeforeReduction = totalBaseDamage * llmDamageModifier;
 
         Debug.Log($"Enemy Damage Calculation (Before Reduction): Feasibility={feasibility}, Potential={potential}, BaseDamage={baseDamage}, WeaponDamage={totalWeaponDamage}, TotalBaseDamage={totalBaseDamage}");
-        Debug.Log($"LLMDamageModifier={llmDamageModifier}, LLMScaledBaseDamage={llmScaledBaseDamage}");
+        Debug.Log($"LLMDamageModifier={llmDamageModifier}, DamageBeforeReduction={damageBeforeReduction}");
 
-        // Reduce damage using defenses
-        float totalReduction = 0f;
+        // Apply type-specific reductions
+        var reducedDamageBreakdown = new Dictionary<DamageType, float>();
 
-        foreach (var defItem in target.activeItem.OfType<Defensive>())
+        foreach (var kvp in weaponDamageBreakdown)
         {
-            foreach (var dt in weaponDamageBreakdown.Keys)
-            {
-                int reductionValue = 0;
+            DamageType dt = kvp.Key;
+            float typeDamage = kvp.Value;
 
+            float reductionValue = 0f;
+
+            foreach (var defItem in target.activeItem.OfType<Defensive>())
+            {
                 switch (dt)
                 {
-                    case DamageType.Physical: reductionValue = defItem.reduceDamagePhysical; break;
-                    case DamageType.Fire: reductionValue = defItem.reduceDamageFire; break;
-                    case DamageType.Electric: reductionValue = defItem.reduceDamageElectric; break;
-                    case DamageType.Radiation: reductionValue = defItem.reduceDamageRadiation; break;
-                    case DamageType.Explosive: reductionValue = defItem.reduceDamageExplosive; break;
-                    case DamageType.Digital: reductionValue = defItem.reduceDamageDigital; break;
-                    case DamageType.Plasma: reductionValue = defItem.reduceDamagePlasma; break;
-                    case DamageType.Laser: reductionValue = defItem.reduceDamageLaser; break;
-                    case DamageType.Chemical: reductionValue = defItem.reduceDamageChemical; break;
-                    case DamageType.Viral: reductionValue = defItem.reduceDamageViral; break;
+                    case DamageType.Physical: reductionValue += defItem.reduceDamagePhysical; break;
+                    case DamageType.Fire: reductionValue += defItem.reduceDamageFire; break;
+                    case DamageType.Electric: reductionValue += defItem.reduceDamageElectric; break;
+                    case DamageType.Radiation: reductionValue += defItem.reduceDamageRadiation; break;
+                    case DamageType.Explosive: reductionValue += defItem.reduceDamageExplosive; break;
+                    case DamageType.Digital: reductionValue += defItem.reduceDamageDigital; break;
+                    case DamageType.Plasma: reductionValue += defItem.reduceDamagePlasma; break;
+                    case DamageType.Laser: reductionValue += defItem.reduceDamageLaser; break;
+                    case DamageType.Chemical: reductionValue += defItem.reduceDamageChemical; break;
+                    case DamageType.Viral: reductionValue += defItem.reduceDamageViral; break;
                     default: break;
                 }
-
-                totalReduction += reductionValue;
-                Debug.Log($"Defensive item '{defItem.itemName}' reduces {dt} damage by {reductionValue}");
             }
+
+            float reducedTypeDamage = Mathf.Max(0f, typeDamage - reductionValue);
+            reducedDamageBreakdown[dt] = reducedTypeDamage;
+
+            Debug.Log($"Total reduction for {dt}: {reductionValue}, Damage after reduction: {reducedTypeDamage}");
         }
 
-        float finalDamage = Mathf.Max(0f, llmScaledBaseDamage - totalReduction);
+        float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
+        float scaledFinalDamage = Mathf.Max(0f, finalDamage * llmDamageModifier);
 
-        Debug.Log($"Total Reduction={totalReduction}, Final Damage={finalDamage}");
+        Debug.Log($"Final Damage (After Reductions and Modifiers): {scaledFinalDamage}");
 
-        return finalDamage;
+        return scaledFinalDamage;
     }
-
 }

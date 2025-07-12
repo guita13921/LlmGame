@@ -261,7 +261,7 @@ public static class PromptBuilder
                             Debug.Log($"Item '{item.itemName}' is OneTime and used up. Removing from inventory.");
 
                             // Remove from activeItem list
-                            battleManager.player.activeItem.Remove(item);
+                            //battleManager.player.activeItem.Remove(item);
 
                             // Remove from inventory
                             battleManager.player.inventoryItems.Remove(item);
