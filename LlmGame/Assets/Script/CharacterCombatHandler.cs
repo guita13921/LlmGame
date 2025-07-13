@@ -53,7 +53,10 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.StartCoroutine(EndPlayerTurn());
     }
 
-
+    public void UseItem(List<Item> item, string outcomeType)
+    {
+        Debug.Log($"Use Item :{item} -> {outcomeType}");
+    }
 
     private IEnumerator EndPlayerTurn()
     {
@@ -102,7 +105,6 @@ public class CharacterCombatHandler : MonoBehaviour
 
         battleManager.StartCoroutine(EndEnemyTurn());
     }
-
 
     private IEnumerator EndEnemyTurn()
     {

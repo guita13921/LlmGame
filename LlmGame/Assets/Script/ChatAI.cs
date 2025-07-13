@@ -31,7 +31,7 @@ public class ChatAI : MonoBehaviour
         string userMessage = inputField.text;
         string safeMessage = PromptBuilder.SanitizeUserMessage(userMessage);
 
-        Enemy targetEnemy = battleManager.selectedEnemy;
+        Character targetEnemy = battleManager.selectedTarget;
 
         if (targetEnemy == null || !targetEnemy.IsAlive())
         {
@@ -64,7 +64,8 @@ public class ChatAI : MonoBehaviour
 
     IEnumerator SendMessageToAI(string userMessage)
     {
-        Enemy targetEnemy = null;
+
+        Character targetEnemy = null;
         foreach (var e in battleManager.enemies)
         {
             if (e.IsAlive())
@@ -80,10 +81,10 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
 
+        string json = "";
+
         string prompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, userMessage);
-
-        string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
-
+        json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
         Debug.Log("Sending JSON: " + json);
 
         var request = new UnityWebRequest(apiUrl, "POST");
@@ -136,8 +137,14 @@ public class ChatAI : MonoBehaviour
 
                 Debug.Log(responseText.text);
 
-                // ✅ FIX: Pass targetEnemy as the fifth argument
-                battleManager.combatHandler.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc, targetEnemy);
+                if (battleManager.player.isUsingConsumeTurnItem == true)
+                {
+                    Debug.Log("PlayerAttack!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                }
+                else
+                {
+                    battleManager.combatHandler.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc, targetEnemy);
+                }
             }
             catch (System.Exception e)
             {

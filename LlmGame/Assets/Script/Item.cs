@@ -19,9 +19,6 @@ public class Item : ScriptableObject
 
     [Header("Activate")]
     public bool isActive;
-
-    [Header("Consume Turn Item")]
-    public bool isConsumeTurn;
 }
 
 

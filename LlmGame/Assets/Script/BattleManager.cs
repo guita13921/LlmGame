@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 using System.Linq;
+using TMPro;
 
 public class BattleManager : MonoBehaviour
 {
@@ -12,11 +13,13 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public ChatAI chatAI;
     [SerializeField] public CharacterCombatHandler combatHandler;
     [SerializeField] public DamageCalculator damageCalculator;
+    [SerializeField] public TMP_InputField playerInputField;
+
 
     [Header("Character Lists")]
     [SerializeField] public List<Character> allCharacters = new List<Character>();
     [SerializeField] public List<string> battleLog = new List<string>();
-    [HideInInspector] public Enemy selectedEnemy = null;
+    [SerializeField] public Character selectedTarget = null;
 
     [Header("Battle State")]
     [SerializeField] public int turnCount = 1;
@@ -130,16 +133,17 @@ public class BattleManager : MonoBehaviour
         return null;
     }
 
-    public void PlayerSelectedTarget(Enemy selectedEnemy)
+    public void PlayerSelectedTarget(Character selectedCharacter)
     {
+
         if (player == null || !player.IsAlive()) return;
-        if (selectedEnemy == null || !selectedEnemy.IsAlive()) return;
+        if (selectedCharacter == null || !selectedCharacter.IsAlive()) return;
 
-        Debug.Log($"Player selected {selectedEnemy.characterName} as target!");
+        Debug.Log($"Player selected {selectedCharacter.characterName} as target!");
 
-        // ✅ Just set it
-        this.selectedEnemy = selectedEnemy;
+        this.selectedTarget = selectedCharacter;
     }
+
 
     private string GetRandomEnemyAction(Enemy enemy)
     {

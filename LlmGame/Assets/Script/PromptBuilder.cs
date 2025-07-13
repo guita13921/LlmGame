@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 
 public static class PromptBuilder
 {
-    public static string BuildPlayerPrompt(BattleManager battleManager, Enemy targetEnemy, string userMessage)
+    public static string BuildPlayerPrompt(BattleManager battleManager, Character targetEnemy, string userMessage)
     {
         string history = GetBattleHistory(battleManager);
 
@@ -120,7 +120,7 @@ public static class PromptBuilder
         Especially pay attention to the items of {enemy.characterName} and {target.characterName}
         - They should only use items that are active and present in their inventory.
         - Usage of inactive or non-inventory items is infeasible.
-        - When a protective item is active, it does not reduce or increase the damage that can be dealt. It is just used to describe the details.
+        - When a protective item is active, it does not reduce or increase the potential_damage that can be dealt. It is just used to describe the details.
 
         The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
@@ -215,7 +215,7 @@ public static class PromptBuilder
         return itemsText.ToString();
     }
 
-    public static void CheckAndActivateItems(BattleManager battleManager, string userMessage, Enemy targetEnemy)
+    public static void CheckAndActivateItems(BattleManager battleManager, string userMessage, Character targetEnemy)
     {
         // Convert user message to lowercase for case-insensitive matching
         string lowerMessage = userMessage.ToLower();

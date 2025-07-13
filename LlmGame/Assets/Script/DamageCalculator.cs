@@ -94,7 +94,7 @@ public class DamageCalculator : MonoBehaviour
 
     public float CalculateDamage(float feasibility, float potential, float baseDamage, string userMessage, Character attacker, Character target)
     {
-        const float constant = 2f;
+        const float constant = 1f;
 
         var weaponDamageBreakdown = GetActiveWeaponDamageBreakdown(attacker);
 

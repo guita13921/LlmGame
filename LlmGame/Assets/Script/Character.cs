@@ -29,6 +29,7 @@ public class Character : MonoBehaviour
 
     [Header("Active Items")]
     public List<Item> activeItem;
+    public bool isUsingConsumeTurnItem;
 
     public virtual void Awake()
     {
@@ -63,13 +64,12 @@ public class Character : MonoBehaviour
     {
         if (battleManager != null && battleManager.isActionPhase && battleManager.currentActingCharacter is Player)
         {
-            if (this is Enemy && this.IsAlive())
+            if (this is Character && this.IsAlive())
             {
-                battleManager.PlayerSelectedTarget(this as Enemy);
+                battleManager.PlayerSelectedTarget(this as Character);
             }
         }
     }
-
 
     public virtual bool IsAlive()
     {
