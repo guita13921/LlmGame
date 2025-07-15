@@ -7,6 +7,7 @@ public class CharacterActionData : ScriptableObject
     public string actionName;
     public string animationTrigger;
 
-    [Tooltip("Each portion represents a % of final damage per hit. Example: [0.2, 0.3, 0.5] for 3 hits.")]
-    public List<float> damagePortions = new List<float> { 1.0f };
+    [Header("Multi-Hit Setup")]
+    [Tooltip("List of effects and damage split for each hit.")]
+    public List<HitEffectData> hitEffects = new List<HitEffectData> { new HitEffectData() };
 }

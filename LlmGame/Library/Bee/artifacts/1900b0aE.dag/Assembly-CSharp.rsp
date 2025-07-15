@@ -372,6 +372,7 @@
 "Assets/Script/Enemy.cs"
 "Assets/Script/enum.cs"
 "Assets/Script/HealingItem.cs"
+"Assets/Script/HitEffectData.cs"
 "Assets/Script/InputKeywordHighlighter.cs"
 "Assets/Script/Item.cs"
 "Assets/Script/ItemButtonUI.cs"

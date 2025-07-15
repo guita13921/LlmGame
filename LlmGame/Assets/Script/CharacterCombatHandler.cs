@@ -34,19 +34,22 @@ public class CharacterCombatHandler : MonoBehaviour
         // ✅ Prepare damage
         player.pendingDamage = finalDamage;
         player.damageTarget = target;
-        player.damagePortions = new List<float>(chosenAction.damagePortions);
         player.currentHitIndex = 0;
+
+        // ✅ Assign selected action so hits can use hitEffects
+        player.selectedAction = chosenAction;
 
         // ✅ Play Animation
         yield return battleManager.WaitForAnimation(player, chosenAction.animationTrigger);
 
-        // ✅ Log (เมื่อ animation จบ)
+        // ✅ Log
         string log = $"Turn {battleManager.turnCount}: {player.characterName} used {chosenAction.actionName} for total {finalDamage} damage → Target: {target.characterName}";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
         yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
     }
+
 
 
 
@@ -96,8 +99,10 @@ public class CharacterCombatHandler : MonoBehaviour
 
         enemy.pendingDamage = finalDamage;
         enemy.damageTarget = target;
-        enemy.damagePortions = new List<float>(chosenAction.damagePortions);
         enemy.currentHitIndex = 0;
+
+        // ✅ Assign selected action
+        enemy.selectedAction = chosenAction;
 
         // ✅ Wait for animation to finish
         yield return battleManager.WaitForAnimation(enemy, chosenAction.animationTrigger);
@@ -108,6 +113,7 @@ public class CharacterCombatHandler : MonoBehaviour
 
         yield return battleManager.StartCoroutine(EndEnemyTurn());
     }
+
 
 
 

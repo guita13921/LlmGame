@@ -109,24 +109,41 @@ public class Character : MonoBehaviour
     {
         if (damageTarget == null || !damageTarget.IsAlive())
         {
-            Debug.LogWarning($"damageTarget");
+            Debug.LogWarning("damageTarget is null or dead.");
             return;
         }
 
-        if (currentHitIndex >= damagePortions.Count)
+        // Safety checks
+        if (selectedAction == null || selectedAction.hitEffects == null || currentHitIndex >= selectedAction.hitEffects.Count)
         {
-            Debug.LogWarning($"{characterName} has no more damagePortions left.");
+            Debug.LogWarning($"{characterName} has no more hitEffects left or invalid index.");
             return;
         }
 
-        float portion = damagePortions[currentHitIndex];
+        var hitData = selectedAction.hitEffects[currentHitIndex];
+
+        float portion = hitData.damagePortion;
         int thisHitDamage = Mathf.RoundToInt(pendingDamage * portion);
         damageTarget.TakeDamage(thisHitDamage);
 
         Debug.Log($"{characterName} Apply Hit #{currentHitIndex + 1}: {portion * 100f}% → {thisHitDamage} damage to {damageTarget.characterName}");
 
+        // Play VFX
+        if (hitData.vfxPrefab != null)
+        {
+            GameObject vfx = Instantiate(hitData.vfxPrefab, damageTarget.transform.position + hitData.vfxOffset, Quaternion.identity);
+            Destroy(vfx, hitData.lifeTime);
+        }
+
+        // Play SFX
+        if (hitData.sfxClip != null)
+        {
+            AudioSource.PlayClipAtPoint(hitData.sfxClip, damageTarget.transform.position);
+        }
+
         currentHitIndex++;
     }
+
 
 
 }
