@@ -18,47 +18,44 @@ public class CharacterCombatHandler : MonoBehaviour
 
     #region Player
 
-    public void PlayerAttack(float feasibility, float potential, string effectValue, string effectDesc, Character target)
+    public IEnumerator PlayerAttack(CharacterActionData chosenAction, float feasibility, float potential, string effectValue, string effectDesc, Character target)
     {
         var player = battleManager.currentActingCharacter as Player;
-        if (player == null)
+        if (player == null || target == null || !target.IsAlive())
         {
-            Debug.LogWarning("Not player's turn!");
-            return;
-        }
-
-        if (target == null || !target.IsAlive())
-        {
-            Debug.LogWarning("No valid target selected!");
-            return;
+            Debug.LogWarning("Invalid player or target.");
+            yield break;
         }
 
         float baseDamage = player.attack;
         float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
-
         int finalDamage = Mathf.RoundToInt(calculatedDamage);
-        target.TakeDamage(finalDamage);
 
-        var weaponDamageBreakdown = battleManager.damageCalculator.GetActiveWeaponDamageBreakdown(player);
-        float activeWeaponDamage = weaponDamageBreakdown.Values.Sum();
-        string weaponInfo = activeWeaponDamage > 0 ? $" (Base: {baseDamage}, Weapon: +{activeWeaponDamage})" : "";
+        // ✅ Prepare damage
+        player.pendingDamage = finalDamage;
+        player.damageTarget = target;
+        player.damagePortions = new List<float>(chosenAction.damagePortions);
+        player.currentHitIndex = 0;
 
-        string log = $"Turn {battleManager.turnCount}: {player.characterName} (HP: {player.currentHP}) " +
-                     $"used \"{battleManager.lastUserMessage}\" [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
-                     $"for {finalDamage} damage{weaponInfo} → Target: {target.characterName} (HP: {target.currentHP} / {target.maxHP})";
+        // ✅ Play Animation
+        yield return battleManager.WaitForAnimation(player, chosenAction.animationTrigger);
 
+        // ✅ Log (เมื่อ animation จบ)
+        string log = $"Turn {battleManager.turnCount}: {player.characterName} used {chosenAction.actionName} for total {finalDamage} damage → Target: {target.characterName}";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
-        battleManager.StartCoroutine(EndPlayerTurn());
+        yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
     }
+
+
 
     public void UseItem(List<Item> item, string outcomeType)
     {
         Debug.Log($"Use Item :{item} -> {outcomeType}");
     }
 
-    private IEnumerator EndPlayerTurn()
+    public IEnumerator EndPlayerTurn()
     {
         yield return new WaitForSeconds(2.0f);
 
@@ -78,33 +75,41 @@ public class CharacterCombatHandler : MonoBehaviour
 
     #region Enemy
 
-    public void EnemyAttack(Character enemy, Character target, string proposedAction)
+    // เริ่มต้นการโจมตีของศัตรู
+    public void EnemyAttack(Character enemy, Character target, CharacterActionData chosenAction)
     {
-        battleManager.StartCoroutine(battleManager.chatAI.SendEnemyMessage(enemy, target, proposedAction));
+        battleManager.StartCoroutine(battleManager.chatAI.SendEnemyMessage(enemy, target, chosenAction.actionName));
     }
 
-    public void ResolveEnemyAttack(Character enemy, Character target, float feasibility, float potential, string effectValue, string effectDesc)
+    // จัดการผลของการโจมตี
+    public IEnumerator ResolveEnemyAttack(Character enemy, Character target, CharacterActionData chosenAction, float feasibility, float potential, string effectValue, string effectDesc)
     {
+        if (enemy == null || target == null || !target.IsAlive())
+        {
+            Debug.LogWarning("Invalid enemy or target.");
+            yield break;
+        }
+
         float baseDamage = enemy.attack;
         float calculatedDamage = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, enemy, target);
-
         int finalDamage = Mathf.RoundToInt(calculatedDamage);
-        target.TakeDamage(finalDamage);
 
-        // ✅ Updated: use new breakdown
-        var weaponDamageBreakdown = battleManager.damageCalculator.GetActiveWeaponDamageBreakdown(enemy);
-        float activeWeaponDamage = weaponDamageBreakdown.Values.Sum();
-        string weaponInfo = activeWeaponDamage > 0 ? $" (Base: {baseDamage}, Weapon: +{activeWeaponDamage})" : "";
+        enemy.pendingDamage = finalDamage;
+        enemy.damageTarget = target;
+        enemy.damagePortions = new List<float>(chosenAction.damagePortions);
+        enemy.currentHitIndex = 0;
 
-        string log = $"Turn {battleManager.turnCount}: {enemy.characterName} (HP: {enemy.currentHP}) " +
-                     $"used [EffectValue: {effectValue}, EffectDesc: {effectDesc}] " +
-                     $"for {finalDamage} damage{weaponInfo} → Target: {target.characterName} (HP: {target.currentHP})";
+        // ✅ Wait for animation to finish
+        yield return battleManager.WaitForAnimation(enemy, chosenAction.animationTrigger);
 
+        string log = $"Turn {battleManager.turnCount}: {enemy.characterName} used {chosenAction.actionName} for total {finalDamage} damage → Target: {target.characterName}";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
-        battleManager.StartCoroutine(EndEnemyTurn());
+        yield return battleManager.StartCoroutine(EndEnemyTurn());
     }
+
+
 
     private IEnumerator EndEnemyTurn()
     {

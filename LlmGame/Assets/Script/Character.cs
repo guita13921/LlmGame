@@ -3,13 +3,16 @@ using UnityEngine;
 
 public class Character : MonoBehaviour
 {
+    [Header("Animation")]
+    public Animator animator;
+    [SerializeField] public bool animationFinished = false;
+    BattleManager battleManager;
+
+
     [Header("Basic Info")]
     public string characterName;
     public GameObject sprite;
     [TextArea] public string description;
-
-    // Reference to BattleManager so we can inform it
-    private BattleManager battleManager;
 
     [Header("Stats")]
     public int attack;
@@ -18,6 +21,14 @@ public class Character : MonoBehaviour
     public int maxHP;
     public int maxMP;
     public int speed;
+
+    [Header("Actions")]
+    public List<CharacterActionData> availableActions = new List<CharacterActionData>();
+    public CharacterActionData selectedAction;
+    public int pendingDamage;
+    public List<float> damagePortions = new List<float>();
+    public Character damageTarget;
+    public int currentHitIndex = 0;
 
     [Header("Runtime")]
     public int currentHP;
@@ -33,6 +44,8 @@ public class Character : MonoBehaviour
 
     public virtual void Awake()
     {
+        battleManager = FindAnyObjectByType<BattleManager>();
+        animator = GetComponent<Animator>();
         currentHP = maxHP;
         currentMP = maxMP;
     }
@@ -86,6 +99,34 @@ public class Character : MonoBehaviour
         return $"HP: {currentHP}/{maxHP}, MP: {currentMP}/{maxMP}";
     }
 
+    public void OnAnimationComplete()
+    {
+        Debug.Log($"{characterName} animation complete (via Event)");
+        animationFinished = true;
+    }
+
+    public void ApplyDamageAtHit()
+    {
+        if (damageTarget == null || !damageTarget.IsAlive())
+        {
+            Debug.LogWarning($"damageTarget");
+            return;
+        }
+
+        if (currentHitIndex >= damagePortions.Count)
+        {
+            Debug.LogWarning($"{characterName} has no more damagePortions left.");
+            return;
+        }
+
+        float portion = damagePortions[currentHitIndex];
+        int thisHitDamage = Mathf.RoundToInt(pendingDamage * portion);
+        damageTarget.TakeDamage(thisHitDamage);
+
+        Debug.Log($"{characterName} Apply Hit #{currentHitIndex + 1}: {portion * 100f}% → {thisHitDamage} damage to {damageTarget.characterName}");
+
+        currentHitIndex++;
+    }
 
 
 }

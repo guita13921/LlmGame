@@ -143,7 +143,18 @@ public class ChatAI : MonoBehaviour
                 }
                 else
                 {
-                    battleManager.combatHandler.PlayerAttack(feasibilityValue, potentialValue, effectValue, effectDesc, targetEnemy);
+                    battleManager.player.selectedAction = battleManager.player.availableActions[0]; // ตัวอย่าง: เลือก action index 0
+
+                    battleManager.StartCoroutine(
+                        battleManager.combatHandler.PlayerAttack(
+                            battleManager.player.selectedAction,
+                            feasibilityValue,
+                            potentialValue,
+                            effectValue,
+                            effectDesc,
+                            targetEnemy
+                        )
+                    );
                 }
             }
             catch (System.Exception e)
@@ -199,7 +210,13 @@ public class ChatAI : MonoBehaviour
                 string effectValue = root.properties.effect_description?.value ?? "No effect";
                 string effectDesc = root.properties.effect_description?.description ?? "No description";
 
-                battleManager.combatHandler.ResolveEnemyAttack(enemy, target, feasibilityValue, potentialValue, effectValue, effectDesc);
+
+
+                //Debug.LogError($":{enemy},{target}, {enemy.selectedAction}, {feasibilityValue}, {potentialValue}, {effectValue}, {effectDesc}");
+
+                battleManager.StartCoroutine(
+                    battleManager.combatHandler.ResolveEnemyAttack(enemy, target, enemy.selectedAction, feasibilityValue, potentialValue, effectValue, effectDesc)
+                );
             }
             catch (System.Exception e)
             {

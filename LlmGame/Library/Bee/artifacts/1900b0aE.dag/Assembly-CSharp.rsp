@@ -362,6 +362,7 @@
 "Assets/Script/BattleManager.cs"
 "Assets/Script/CameraOrbit.cs"
 "Assets/Script/Character.cs"
+"Assets/Script/CharacterActionData.cs"
 "Assets/Script/CharacterCombatHandler.cs"
 "Assets/Script/ChatAI.cs"
 "Assets/Script/ConsumeTurnItem.cs"

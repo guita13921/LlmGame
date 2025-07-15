@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Text;
 using System.Linq;
 using TMPro;
+using UnityEditor.Search;
 
 public class BattleManager : MonoBehaviour
 {
@@ -14,6 +15,9 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public CharacterCombatHandler combatHandler;
     [SerializeField] public DamageCalculator damageCalculator;
     [SerializeField] public TMP_InputField playerInputField;
+
+    [Header("Show Debug")]
+    [SerializeField] public bool showDebug;
 
 
     [Header("Character Lists")]
@@ -45,6 +49,8 @@ public class BattleManager : MonoBehaviour
 
     private void Update()
     {
+        if (isActionPhase) return;
+
         if (!battleActive) return;
 
         if (isActionPhase && currentActingCharacter is Player)
@@ -81,6 +87,9 @@ public class BattleManager : MonoBehaviour
     {
         Debug.Log($"=== {character.characterName}'s Turn ===");
 
+        isActionPhase = true;
+        currentActingCharacter = character;
+
         if (character is Player)
         {
             Debug.Log("Player's turn: waiting for player input.");
@@ -92,30 +101,18 @@ public class BattleManager : MonoBehaviour
             Character target = GetRandomOpponent(enemy);
             if (target != null)
             {
-                string enemyAction = GetRandomEnemyAction(enemy);
-                CheckAndActivateEnemyItems(enemy, enemyAction);
+                enemy.selectedAction = enemy.availableActions[0];
+
+                CheckAndActivateEnemyItems(enemy, enemy.selectedAction.actionName);
                 CheckAndActivateDefensiveItems(enemy, target);
 
-                Debug.Log($"Enemy {enemy.characterName} chosen action: {enemyAction}");
-                Debug.Log($"Enemy active items: {enemy.activeItem.Count}");
+                Debug.Log($"Enemy {enemy.characterName} chosen action: {enemy.selectedAction.actionName}");
 
-                combatHandler.EnemyAttack(enemy, target, enemyAction);
+                combatHandler.EnemyAttack(enemy, target, enemy.selectedAction);
             }
-
-            yield return new WaitForSeconds(2.0f);
-
-            if (CheckBattleEnd())
-            {
-                battleActive = false;
-                Debug.Log("Battle Finished!");
-            }
-
-            isActionPhase = false;
-            currentActingCharacter = null;
-
-            chatAI.HideInputUI();
         }
     }
+
 
     public Character GetRandomOpponent(Character self)
     {
@@ -143,7 +140,6 @@ public class BattleManager : MonoBehaviour
 
         this.selectedTarget = selectedCharacter;
     }
-
 
     private string GetRandomEnemyAction(Enemy enemy)
     {
@@ -305,4 +301,23 @@ public class BattleManager : MonoBehaviour
 
         return messages;
     }
+
+    public IEnumerator WaitForAnimation(Character character, string animationTriggerName)
+    {
+        if (character.animator == null)
+        {
+            Debug.LogWarning($"{character.characterName} has no animator assigned!");
+            yield break;
+        }
+
+        character.animationFinished = false;
+        character.animator.SetTrigger(animationTriggerName);
+
+        while (!character.animationFinished)
+        {
+            yield return null;
+        }
+    }
+
+
 }
