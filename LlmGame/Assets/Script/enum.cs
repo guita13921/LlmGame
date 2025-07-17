@@ -27,3 +27,37 @@ public enum DamageType
     Viral,          // Digital viruses that affect both tech and biology
 
 }
+
+public enum CharacterType
+{
+    Cyborg,
+    Android,
+    Human
+}
+
+public enum BodyPartType
+{
+    Head,
+    Torso,
+    LeftArm,
+    RightArm,
+    LeftLeg,
+    RightLeg,
+    LeftEye,
+    RightEye,
+    Heart
+}
+
+public enum BodyPartState
+{
+    Intact,
+    Damaged,
+    Missing
+}
+
+public enum BodyPartComposition
+{
+    Human,
+    Cybernetic,
+    Robotic
+}

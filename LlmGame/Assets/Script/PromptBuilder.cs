@@ -16,67 +16,68 @@ public static class PromptBuilder
 
         StringBuilder sb = new StringBuilder();
         sb.Append($@"
-        You are a video game AI that determines the effect of proposed actions in a battle
-        between two characters.
+            You are a video game AI that determines the effect of proposed actions in a battle
+            between two characters.
 
-        All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
+            All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
 
-        Characters:
-        - {battleManager.player.characterName} (HP: {battleManager.player.currentHP} / {battleManager.player.maxHP})
-        - {targetEnemy.characterName} (HP: {targetEnemy.currentHP} / {targetEnemy.maxHP})
+            Characters:
+            - {battleManager.player.characterName} (HP: {battleManager.player.currentHP} / {battleManager.player.maxHP})
+            - {targetEnemy.characterName} (HP: {targetEnemy.currentHP} / {targetEnemy.maxHP})
 
-        {battleManager.player.characterName} is engaging {targetEnemy.characterName} in a fantasy battle.
+            {battleManager.player.characterName} is engaging {targetEnemy.characterName} in a fantasy battle.
 
-        Player description: {battleManager.player.description}
-        Enemy description: {targetEnemy.description}
+            Player description: {battleManager.player.description}
+            Enemy description: {targetEnemy.description}
 
-        Player items active:
-        {PlayerActiveItemsText}
+            Player items active:
+            {PlayerActiveItemsText}
 
-        Enemy items active:
-        {EnemyActiveItemsText}
+            Enemy items active:
+            {EnemyActiveItemsText}
 
-        Recent battle history:
-        {history}
+            Recent battle history:
+            {history}
 
-        Proposed action by {battleManager.player.characterName}:
-        {userMessage}
+            Proposed action by {battleManager.player.characterName}:
+            {userMessage}
 
-        You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
-        Also consider the current HP and descriptions of both characters.
+            You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
+            Also consider the current HP and descriptions of both characters.
 
-        Especially pay attention to the items of {battleManager.player.characterName} and {targetEnemy.characterName}.
-        - They should only use items that are active and present in their inventory.
-        - Usage of inactive or non-inventory items is infeasible.
-        - When a protective item is active, it does not reduce or increase the damage that can be dealt. It is just used to describe the details.
+            Especially pay attention to the items of {battleManager.player.characterName} and {targetEnemy.characterName}.
+            - They should only use items that are active and present in their inventory.
+            - Usage of inactive or non-inventory items is infeasible.
+            - When a protective item is active, it does not reduce or increase the damage that can be dealt. It is just used to describe the details.
 
-        The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
+            The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
-        Output in this exact JSON format:
-        {{
-            ""properties"": {{
-                ""feasibility"": {{
-                    ""maximum"": 10.0,
-                    ""minimum"": 0.0,
-                    ""value"": 0.0,
-                    ""description"": ""description here""
-                }},
-                ""potential_damage"": {{
-                    ""maximum"": 10.0,
-                    ""minimum"": 0.0,
-                    ""value"": 0.0,
-                    ""description"": ""description here""
-                }},
-                ""effect_description"": {{
-                    ""value"": ""effect description here"",
-                    ""description"": ""additional details""
+            Output in this exact JSON format:
+            {{
+                ""properties"": {{
+                    ""feasibility"": {{
+                        ""maximum"": 10.0,
+                        ""minimum"": 0.0,
+                        ""value"": 0.0,
+                        ""description"": ""description here""
+                    }},
+                    ""potential_damage"": {{
+                        ""maximum"": 10.0,
+                        ""minimum"": 0.0,
+                        ""value"": 0.0,
+                        ""description"": ""description here""
+                    }},
+                    ""effect_description"": {{
+                        ""value"": ""effect description here"",
+                        ""description"": ""additional details""
+                    }}
                 }}
             }}
-        }}
-        ");
+            ");
 
         return sb.ToString();
     }
+
 
     public static string BuildEnemyPrompt(BattleManager battleManager, Character enemy, Character target, string proposedAction)
     {
@@ -100,7 +101,7 @@ public static class PromptBuilder
         {enemy.characterName} is engaging {target.characterName} in a fantasy battle.
 
         Enemy description: {enemy.description}
-        Target description: {target.description}
+        Player description: {target.description}
 
         Player items active:
         {PlayerActiveItemsText}
@@ -116,7 +117,7 @@ public static class PromptBuilder
 
         You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
         Also consider the current HP and descriptions of both characters.
-
+        
         Especially pay attention to the items of {enemy.characterName} and {target.characterName}
         - They should only use items that are active and present in their inventory.
         - Usage of inactive or non-inventory items is infeasible.
@@ -196,7 +197,7 @@ public static class PromptBuilder
         return sanitized;
     }
 
-    #region Active Item
+    #region Format Function
 
     private static string FormatActiveItems(List<Item> activeItems)
     {
@@ -213,6 +214,34 @@ public static class PromptBuilder
         }
 
         return itemsText.ToString();
+    }
+
+    public static string FormatBodyParts(List<BodyPartData> parts)
+    {
+        if (parts == null || parts.Count == 0) return "No body part data.";
+
+        StringBuilder sb = new StringBuilder();
+        foreach (var part in parts)
+        {
+            sb.AppendLine($"- {part.type} ({part.composition}): {part.state}, HP: {part.health}, Vital: {part.isVital}");
+        }
+        return sb.ToString();
+    }
+
+    public static string FormatWeakPointsFromBodyParts(List<BodyPartData> parts)
+    {
+        if (parts == null || parts.Count == 0) return "No weak point data.";
+
+        StringBuilder sb = new StringBuilder();
+
+        foreach (var part in parts)
+        {
+            if (part.linkedWeakPoint != null)
+            {
+                sb.AppendLine($"- {part.linkedWeakPoint.weakPointName} (Description: {part.linkedWeakPoint.weakPointDescription})");
+            }
+        }
+        return sb.ToString();
     }
 
     public static void CheckAndActivateItems(BattleManager battleManager, string userMessage, Character targetEnemy)
@@ -293,6 +322,90 @@ public static class PromptBuilder
         public string name;
         public bool active;
     }
+
+    #endregion
+
+    #region Refine
+
+    public static string BuildRefinementPrompt(
+        Character attacker,
+        Character target,
+        float baseFeasibility,
+        string baseFeasibilityDesc,
+        float basePotentialDamage,
+        string basePotentialDamageDesc,
+        string baseEffectValue,
+        string baseEffectDesc)
+    {
+        string attackerParts = FormatBodyParts(attacker.bodyParts);
+        string attackerWeakPoints = FormatWeakPointsFromBodyParts(attacker.bodyParts);
+
+        string targetParts = FormatBodyParts(target.bodyParts);
+        string targetWeakPoints = FormatWeakPointsFromBodyParts(target.bodyParts);
+
+        StringBuilder sb = new StringBuilder();
+        sb.Append($@"
+            You are an advanced video game AI refining a battle outcome using detailed character anatomy.
+
+            Use the body part and weak point information to modify or validate the following base values provided by a first-pass AI:
+
+            Initial Results:
+            - Feasibility: {baseFeasibility} ({baseFeasibilityDesc})
+            - Potential Damage: {basePotentialDamage} ({basePotentialDamageDesc})
+            - Effect Description: {baseEffectValue} ({baseEffectDesc})
+
+            Attacker: {attacker.characterName}
+            {attackerParts}
+            {attackerWeakPoints}
+
+            Target: {target.characterName}
+            {targetParts}
+            {targetWeakPoints}
+
+            Especially pay attention to the attacker’s and target’s body parts and weak points that influence combat effectiveness:
+            - If the attacker uses a damaged or missing body part (like an arm or neural interface), reduce feasibility and describe it.
+            - If the target has exposed or cybernetic weak points (e.g., servo links, neural jacks), increase potential damage and reflect precision in the effect.
+            - If a body part is vital and is damaged or targeted via a weak point, increase both feasibility and damage impact.
+            - For non-vital or already missing parts, reduce damage and describe reduced consequence or ineffectiveness.
+
+            Make sure the adjustments are logical based on anatomy, composition (human/cybernetic/robotic), state (intact/damaged/missing), and whether the part is vital or not.
+
+            Respond ONLY with a raw JSON object. 
+            Do NOT wrap it in a string, markdown, or another field.
+            Do NOT add a 'response' field.
+            Do NOT escape characters.
+
+            Here is the required format:
+            {{
+            ""properties"": {{
+                ""feasibility"": {{
+                ""maximum"": 10.0,
+                ""minimum"": 0.0,
+                ""value"": 0.0,
+                ""description"": ""description here""
+                }},
+                ""potential_damage"": {{
+                ""maximum"": 10.0,
+                ""minimum"": 0.0,
+                ""value"": 0.0,
+                ""description"": ""description here""
+                }},
+                ""effect_description"": {{
+                ""value"": ""effect description here"",
+                ""description"": ""additional details""
+                }}
+            }}
+            }}
+            ");
+
+        string prompt = sb.ToString();
+
+        // ✅ Add debug log here
+        Debug.Log("<color=cyan>[PromptBuilder] Refinement Prompt Sent:</color>\n" + prompt);
+
+        return prompt;
+    }
+
 
     #endregion
 

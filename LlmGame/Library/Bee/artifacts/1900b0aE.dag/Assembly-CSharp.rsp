@@ -360,6 +360,7 @@
 -analyzer:"D:/Unity/2022.3.14f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.SourceGenerators.dll"
 "Assets/Script/BattleLogUI.cs"
 "Assets/Script/BattleManager.cs"
+"Assets/Script/BodyPart.cs"
 "Assets/Script/CameraOrbit.cs"
 "Assets/Script/Character.cs"
 "Assets/Script/CharacterActionData.cs"
@@ -381,6 +382,7 @@
 "Assets/Script/Player.cs"
 "Assets/Script/PromptBuilder.cs"
 "Assets/Script/SpriteBillBoard.cs"
+"Assets/Script/WeakPoint.cs"
 "Assets/Script/Weapon.cs"
 -langversion:9.0
 

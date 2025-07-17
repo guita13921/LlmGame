@@ -8,9 +8,9 @@ public class Character : MonoBehaviour
     [SerializeField] public bool animationFinished = false;
     BattleManager battleManager;
 
-
     [Header("Basic Info")]
     public string characterName;
+    public CharacterType characterType;
     public GameObject sprite;
     [TextArea] public string description;
 
@@ -21,6 +21,10 @@ public class Character : MonoBehaviour
     public int maxHP;
     public int maxMP;
     public int speed;
+
+    [Header("Body Parts")]
+    public List<BodyPartData> bodyParts = new List<BodyPartData>();
+
 
     [Header("Actions")]
     public List<CharacterActionData> availableActions = new List<CharacterActionData>();

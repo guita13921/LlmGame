@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
+using System.Text;
 
 public class ChatAI : MonoBehaviour
 {
@@ -64,121 +65,162 @@ public class ChatAI : MonoBehaviour
 
     IEnumerator SendMessageToAI(string userMessage)
     {
+        Character targetEnemy = battleManager.selectedTarget;
 
-        Character targetEnemy = null;
-        foreach (var e in battleManager.enemies)
+        if (targetEnemy == null || !targetEnemy.IsAlive())
         {
-            if (e.IsAlive())
-            {
-                targetEnemy = e;
-                break;
-            }
-        }
-
-        if (targetEnemy == null)
-        {
-            Debug.LogError("No valid enemy found!");
+            Debug.LogError("No valid enemy selected!");
             yield break;
         }
 
-        string json = "";
-
         string prompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, userMessage);
-        json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
-        Debug.Log("Sending JSON: " + json);
+        string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
+        Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + prompt);
 
         var request = new UnityWebRequest(apiUrl, "POST");
-        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
 
         yield return request.SendWebRequest();
 
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Debug.Log("Raw Response: " + request.downloadHandler.text);
-
-            try
-            {
-                var res = JsonUtility.FromJson<ResponseWrapper>(request.downloadHandler.text);
-
-                if (string.IsNullOrEmpty(res.response))
-                {
-                    Debug.LogError("Empty response from API");
-                    responseText.text = "Error: Empty response from API";
-                    yield break;
-                }
-
-                string jsonString = res.response;
-                jsonString = jsonString.Replace("```json", "").Replace("```", "").Trim();
-
-                var root = JsonUtility.FromJson<RootProperties>(jsonString);
-
-                if (root?.properties == null)
-                {
-                    Debug.LogError("Invalid JSON structure in response");
-                    responseText.text = "Error: Invalid response format";
-                    yield break;
-                }
-
-                float feasibilityValue = root.properties.feasibility?.value ?? 0f;
-                string feasibilityDesc = root.properties.feasibility?.description ?? "No description";
-
-                float potentialValue = root.properties.potential_damage?.value ?? 0f;
-                string potentialDesc = root.properties.potential_damage?.description ?? "No description";
-
-                string effectValue = root.properties.effect_description?.value ?? "No effect";
-                string effectDesc = root.properties.effect_description?.description ?? "No description";
-
-                responseText.text = $"Feasibility: {feasibilityValue} ({feasibilityDesc})\n" +
-                                    $"Potential: {potentialValue} ({potentialDesc})\n" +
-                                    $"Effect: {effectValue} ({effectDesc})";
-
-                Debug.Log(responseText.text);
-
-                if (battleManager.player.isUsingConsumeTurnItem == true)
-                {
-                    Debug.Log("PlayerAttack!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                }
-                else
-                {
-                    battleManager.player.selectedAction = battleManager.player.availableActions[0]; // ตัวอย่าง: เลือก action index 0
-
-                    battleManager.StartCoroutine(
-                        battleManager.combatHandler.PlayerAttack(
-                            battleManager.player.selectedAction,
-                            feasibilityValue,
-                            potentialValue,
-                            effectValue,
-                            effectDesc,
-                            targetEnemy
-                        )
-                    );
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError("Error parsing response: " + e.Message);
-                responseText.text = "Error parsing response: " + e.Message;
-            }
-
-        }
-        else
+        if (request.result != UnityWebRequest.Result.Success)
         {
             Debug.LogError($"HTTP Error: {request.responseCode} - {request.error}");
             Debug.LogError("Response: " + request.downloadHandler.text);
             responseText.text = $"HTTP Error: {request.responseCode} - {request.error}";
+            yield break;
+        }
+
+        string resText = request.downloadHandler.text;
+        Debug.Log("<color=green>[SendMessageToAI] Raw Response:</color>\n" + resText);
+
+        ResponseWrapper res = null;
+        RootProperties baseRoot = null;
+
+        try
+        {
+            res = JsonUtility.FromJson<ResponseWrapper>(resText);
+            string jsonString = res.response.Replace("```json", "").Replace("```", "").Trim();
+
+            // Unescape if double-encoded
+            if (jsonString.StartsWith("{\\\""))
+            {
+                jsonString = jsonString.Trim('"').Replace("\\\"", "\"");
+            }
+
+            baseRoot = JsonUtility.FromJson<RootProperties>(jsonString);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Error parsing base response: " + e.Message);
+            responseText.text = "Error parsing response: " + e.Message;
+            yield break;
+        }
+
+        float baseFeasibility = baseRoot.properties.feasibility?.value ?? 0f;
+        string baseFeasibilityDesc = baseRoot.properties.feasibility?.description ?? "No description";
+
+        float basePotential = baseRoot.properties.potential_damage?.value ?? 0f;
+        string basePotentialDesc = baseRoot.properties.potential_damage?.description ?? "No description";
+
+        string baseEffect = baseRoot.properties.effect_description?.value ?? "No effect";
+        string baseEffectDesc = baseRoot.properties.effect_description?.description ?? "No description";
+
+        // 🔁 BUILD REFINEMENT PROMPT
+        string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
+            battleManager.player,
+            targetEnemy,
+            baseFeasibility,
+            baseFeasibilityDesc,
+            basePotential,
+            basePotentialDesc,
+            baseEffect,
+            baseEffectDesc
+        );
+
+        string refineJson = "{\"message\":\"" + EscapeJsonString(refinementPrompt) + "\"}";
+        Debug.Log("<color=cyan>[SendMessageToAI] Refinement Prompt:</color>\n" + refinementPrompt);
+
+        var refineRequest = new UnityWebRequest(apiUrl, "POST");
+        refineRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(refineJson));
+        refineRequest.downloadHandler = new DownloadHandlerBuffer();
+        refineRequest.SetRequestHeader("Content-Type", "application/json");
+
+        yield return refineRequest.SendWebRequest();
+
+        if (refineRequest.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"Refinement HTTP Error: {refineRequest.responseCode} - {refineRequest.error}");
+            Debug.LogError("Response: " + refineRequest.downloadHandler.text);
+            yield break;
+        }
+
+        string refineText = refineRequest.downloadHandler.text;
+        Debug.Log("<color=lime>[SendMessageToAI] Refinement Response:</color>\n" + refineText);
+
+        RootProperties finalRoot = null;
+
+        try
+        {
+            var refineRes = JsonUtility.FromJson<ResponseWrapper>(refineText);
+            string refineJsonString = refineRes.response.Replace("```json", "").Replace("```", "").Trim();
+
+            if (refineJsonString.StartsWith("{\\\""))
+            {
+                refineJsonString = refineJsonString.Trim('"').Replace("\\\"", "\"");
+            }
+
+            finalRoot = JsonUtility.FromJson<RootProperties>(refineJsonString);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Error parsing refined response: " + e.Message);
+            yield break;
+        }
+
+        float finalFeasibility = finalRoot.properties.feasibility?.value ?? baseFeasibility;
+        string finalFeasibilityDesc = finalRoot.properties.feasibility?.description ?? baseFeasibilityDesc;
+
+        float finalPotential = finalRoot.properties.potential_damage?.value ?? basePotential;
+        string finalPotentialDesc = finalRoot.properties.potential_damage?.description ?? basePotentialDesc;
+
+        string finalEffect = finalRoot.properties.effect_description?.value ?? baseEffect;
+        string finalEffectDesc = finalRoot.properties.effect_description?.description ?? baseEffectDesc;
+
+        responseText.text = $"Feasibility: {finalFeasibility} ({finalFeasibilityDesc})\n" +
+                            $"Potential: {finalPotential} ({finalPotentialDesc})\n" +
+                            $"Effect: {finalEffect} ({finalEffectDesc})";
+
+        Debug.Log("<color=white>[Final Player Result]</color>:\n" + responseText.text);
+
+        if (battleManager.player.isUsingConsumeTurnItem)
+        {
+            Debug.Log("Using consume-turn item — skipping direct attack.");
+        }
+        else
+        {
+            battleManager.player.selectedAction = battleManager.player.availableActions[0];
+
+            battleManager.StartCoroutine(
+                battleManager.combatHandler.PlayerAttack(
+                    battleManager.player.selectedAction,
+                    finalFeasibility,
+                    finalPotential,
+                    finalEffect,
+                    finalEffectDesc,
+                    targetEnemy
+                )
+            );
         }
     }
+
 
     public IEnumerator SendEnemyMessage(Character enemy, Character target, string proposedAction)
     {
         string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, proposedAction);
-
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
-
-        Debug.Log("Sending Enemy JSON: " + json);
 
         var request = new UnityWebRequest(apiUrl, "POST");
         byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
@@ -190,37 +232,115 @@ public class ChatAI : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Enemy Raw Response: " + request.downloadHandler.text);
+            var resText = request.downloadHandler.text;
+            Debug.Log("Enemy Raw Response (Initial): " + resText);
+
+            ResponseWrapper res = null;
+            RootProperties root = null;
 
             try
             {
-                var res = JsonUtility.FromJson<ResponseWrapper>(request.downloadHandler.text);
-
-                string jsonString = res.response;
-                jsonString = jsonString.Replace("```json", "").Replace("```", "").Trim();
-
-                var root = JsonUtility.FromJson<RootProperties>(jsonString);
-
-                float feasibilityValue = root.properties.feasibility?.value ?? 0f;
-                string feasibilityDesc = root.properties.feasibility?.description ?? "No description";
-
-                float potentialValue = root.properties.potential_damage?.value ?? 0f;
-                string potentialDesc = root.properties.potential_damage?.description ?? "No description";
-
-                string effectValue = root.properties.effect_description?.value ?? "No effect";
-                string effectDesc = root.properties.effect_description?.description ?? "No description";
-
-
-
-                //Debug.LogError($":{enemy},{target}, {enemy.selectedAction}, {feasibilityValue}, {potentialValue}, {effectValue}, {effectDesc}");
-
-                battleManager.StartCoroutine(
-                    battleManager.combatHandler.ResolveEnemyAttack(enemy, target, enemy.selectedAction, feasibilityValue, potentialValue, effectValue, effectDesc)
-                );
+                res = JsonUtility.FromJson<ResponseWrapper>(resText);
+                string jsonString = res.response.Replace("```json", "").Replace("```", "").Trim();
+                root = JsonUtility.FromJson<RootProperties>(jsonString);
             }
             catch (System.Exception e)
             {
-                Debug.LogError("Error parsing enemy response: " + e.Message);
+                Debug.LogError("Error parsing first response: " + e.Message);
+                yield break;
+            }
+
+            float baseFeasibility = root.properties.feasibility?.value ?? 0f;
+            string baseFeasibilityDesc = root.properties.feasibility?.description ?? "No description";
+
+            float basePotential = root.properties.potential_damage?.value ?? 0f;
+            string basePotentialDesc = root.properties.potential_damage?.description ?? "No description";
+
+            string baseEffect = root.properties.effect_description?.value ?? "No effect";
+            string baseEffectDesc = root.properties.effect_description?.description ?? "No description";
+
+            // 🔁 BUILD SECONDARY PROMPT
+            string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
+                enemy,
+                target,
+                baseFeasibility,
+                baseFeasibilityDesc,
+                basePotential,
+                basePotentialDesc,
+                baseEffect,
+                baseEffectDesc
+            );
+
+
+            string refineJson = "{\"message\":\"" + EscapeJsonString(refinementPrompt) + "\"}";
+            var refineRequest = new UnityWebRequest(apiUrl, "POST");
+            refineRequest.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(refineJson));
+            refineRequest.downloadHandler = new DownloadHandlerBuffer();
+            refineRequest.SetRequestHeader("Content-Type", "application/json");
+
+            yield return refineRequest.SendWebRequest();
+
+            if (refineRequest.result == UnityWebRequest.Result.Success)
+            {
+                var refineText = refineRequest.downloadHandler.text;
+
+                // 📤 Log the raw AI response from refinement
+                Debug.Log("<color=lime>[BuildRefinementPrompt] Raw AI Response:</color>\n" + refineText);
+
+                ResponseWrapper refineRes = null;
+                RootProperties finalRoot = null;
+
+                try
+                {
+                    refineRes = JsonUtility.FromJson<ResponseWrapper>(refineText);
+                    string refineJsonString = refineRes.response.Replace("```json", "").Replace("```", "").Trim();
+
+                    // 👇 UNWRAP if double-encoded
+                    if (refineJsonString.StartsWith("{\\\""))
+                    {
+                        // Double escaped — remove outer quotes and unescape
+                        refineJsonString = refineJsonString.Trim('"');
+                        refineJsonString = refineJsonString.Replace("\\\"", "\"");
+                    }
+
+                    // ✅ Log cleaned string for verification
+                    Debug.Log("<color=lime>[Unwrapped AI JSON]</color>\n" + refineJsonString);
+
+                    // Now parse
+                    finalRoot = JsonUtility.FromJson<RootProperties>(refineJsonString);
+
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing refined response: " + e.Message);
+                    yield break;
+                }
+
+                float finalFeasibility = finalRoot.properties.feasibility?.value ?? baseFeasibility;
+                string finalFeasibilityDesc = finalRoot.properties.feasibility?.description ?? baseFeasibilityDesc;
+
+                float finalPotential = finalRoot.properties.potential_damage?.value ?? basePotential;
+                string finalPotentialDesc = finalRoot.properties.potential_damage?.description ?? basePotentialDesc;
+
+                string finalEffect = finalRoot.properties.effect_description?.value ?? baseEffect;
+                string finalEffectDesc = finalRoot.properties.effect_description?.description ?? baseEffectDesc;
+
+                battleManager.StartCoroutine(
+                    battleManager.combatHandler.ResolveEnemyAttack(
+                        enemy,
+                        target,
+                        enemy.selectedAction,
+                        finalFeasibility,
+                        finalPotential,
+                        finalEffect,
+                        finalEffectDesc
+                    )
+                );
+            }
+            else
+            {
+                Debug.LogError($"Refinement API Error: {refineRequest.responseCode} - {refineRequest.error}");
+                Debug.LogError("Refinement Response Text: " + refineRequest.downloadHandler.text);
             }
         }
         else
