@@ -23,8 +23,8 @@ public class Character : MonoBehaviour
     public int speed;
 
     [Header("Body Parts")]
-    public List<BodyPartData> bodyParts = new List<BodyPartData>();
-
+    public BodyPartConfig bodyPartConfig;
+    [HideInInspector] public List<BodyPartData> bodyParts = new List<BodyPartData>();
 
     [Header("Actions")]
     public List<CharacterActionData> availableActions = new List<CharacterActionData>();
@@ -52,6 +52,11 @@ public class Character : MonoBehaviour
         animator = GetComponent<Animator>();
         currentHP = maxHP;
         currentMP = maxMP;
+
+        if (bodyPartConfig != null)
+        {
+            bodyParts = bodyPartConfig.GenerateBodyParts();
+        }
     }
 
     private void Start()

@@ -24,6 +24,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public List<Character> allCharacters = new List<Character>();
     [SerializeField] public List<string> battleLog = new List<string>();
     [SerializeField] public Character selectedTarget = null;
+    [SerializeField] public List<BodyPartData> selectedParts = new List<BodyPartData>();
 
     [Header("Battle State")]
     [SerializeField] public int turnCount = 1;
@@ -113,7 +114,6 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-
     public Character GetRandomOpponent(Character self)
     {
         if (self is Player)
@@ -189,9 +189,6 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"Total enemy active items: {enemy.activeItem.Count}");
     }
 
-    /// Checks target defensive items and activates them if they match any incoming damage type.
-    /// <param name="attacker">The character dealing damage (used to read weapon types)</param>
-    /// <param name="target">The character receiving damage (defensive items are checked)</param>
     public void CheckAndActivateDefensiveItems(Character attacker, Character target)
     {
         HashSet<DamageType> incomingDamageTypes = new HashSet<DamageType>();

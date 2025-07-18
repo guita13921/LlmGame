@@ -14,7 +14,6 @@ public class ChatAI : MonoBehaviour
     public GameObject inputPanel;
 
 
-
     private string apiUrl = "https://diphtxovye.execute-api.ap-northeast-1.amazonaws.com/chatWithAI";
 
     private void Awake()
@@ -25,7 +24,6 @@ public class ChatAI : MonoBehaviour
             inputPanel.SetActive(false);
         }
     }
-
 
     public void OnSendButtonClick()
     {
@@ -73,9 +71,9 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
 
-        string prompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, userMessage);
-        string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
-        Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + prompt);
+        //string prompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, userMessage);
+        string json = "{\"message\":\"" + EscapeJsonString(userMessage) + "\"}";
+        Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + userMessage);
 
         var request = new UnityWebRequest(apiUrl, "POST");
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
@@ -130,6 +128,7 @@ public class ChatAI : MonoBehaviour
 
         // 🔁 BUILD REFINEMENT PROMPT
         string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
+            battleManager,
             battleManager.player,
             targetEnemy,
             baseFeasibility,
@@ -141,7 +140,7 @@ public class ChatAI : MonoBehaviour
         );
 
         string refineJson = "{\"message\":\"" + EscapeJsonString(refinementPrompt) + "\"}";
-        Debug.Log("<color=cyan>[SendMessageToAI] Refinement Prompt:</color>\n" + refinementPrompt);
+        //Debug.Log("<color=cyan>[SendMessageToAI] Refinement Prompt:</color>\n" + refinementPrompt);
 
         var refineRequest = new UnityWebRequest(apiUrl, "POST");
         refineRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(refineJson));
@@ -216,7 +215,6 @@ public class ChatAI : MonoBehaviour
         }
     }
 
-
     public IEnumerator SendEnemyMessage(Character enemy, Character target, string proposedAction)
     {
         string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, proposedAction);
@@ -261,6 +259,7 @@ public class ChatAI : MonoBehaviour
 
             // 🔁 BUILD SECONDARY PROMPT
             string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
+                battleManager,
                 enemy,
                 target,
                 baseFeasibility,

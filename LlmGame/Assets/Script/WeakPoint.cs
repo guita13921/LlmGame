@@ -6,7 +6,7 @@ using UnityEngine;
 public class WeakPointData : ScriptableObject
 {
     public string weakPointName;
-    public string keyword;
+    public bool isExposed = false;
 
     [TextArea]
     public string weakPointDescription;
