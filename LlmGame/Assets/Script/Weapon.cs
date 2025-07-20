@@ -19,4 +19,5 @@ public class Weapon : Item
 
     [Header("DamageType")]
     public List<DamageType> damageType;
+
 }

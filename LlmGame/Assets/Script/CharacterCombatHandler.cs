@@ -43,7 +43,7 @@ public class CharacterCombatHandler : MonoBehaviour
         yield return battleManager.WaitForAnimation(player, chosenAction.animationTrigger);
 
         // ✅ Log
-        string log = $"Turn {battleManager.turnCount}: {player.characterName} used {chosenAction.actionName} for total {finalDamage} damage → Target: {target.characterName}";
+        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text} for total {finalDamage} damage → Target: {target.characterName}";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 

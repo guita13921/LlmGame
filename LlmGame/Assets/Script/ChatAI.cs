@@ -186,6 +186,7 @@ public class ChatAI : MonoBehaviour
     {
         string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, proposedAction);
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
+        Debug.Log(json);
 
         int maxAttempts = 3;
         int attempts = 0;

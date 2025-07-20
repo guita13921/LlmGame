@@ -39,11 +39,11 @@ public class BodyPartData : ScriptableObject
     {
         int damageToPart = Mathf.RoundToInt(totalDamage * damageToPartRatio);
         health -= damageToPart;
+        Debug.Log(this.type);
         if (health < 0) health = 0;
 
         if (IsDestroyed && becomesWeakPointWhenDestroyed)
         {
-            state = BodyPartState.Missing;
             if (linkedWeakPoint != null)
             {
                 linkedWeakPoint.isExposed = true;

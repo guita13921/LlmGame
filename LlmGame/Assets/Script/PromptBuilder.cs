@@ -121,7 +121,7 @@ public static class PromptBuilder
         Proposed action by {enemy.characterName}:
         {proposedAction}
 
-        You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
+        Now, This is enemy turn. You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
         Also consider the current HP and descriptions of both characters.
         
         Especially pay attention to the items of {enemy.characterName} and {target.characterName}
@@ -156,6 +156,7 @@ public static class PromptBuilder
 
         return sb.ToString();
     }
+
 
     private static string GetBattleHistory(BattleManager battleManager)
     {
@@ -335,12 +336,30 @@ public static class PromptBuilder
             }
         }
 
-        // Fallback: randomly select one part if none matched
+        // Fallback: select default body part (e.g., Torso)
         if (battleManager.selectedParts.Count == 0 && target.bodyParts != null && target.bodyParts.Count > 0)
         {
-            var randomPart = target.bodyParts[Random.Range(0, target.bodyParts.Count)];
-            battleManager.selectedParts.Add(randomPart);
-            Debug.Log($"🎯 [Fallback] No part matched — randomly selected: {randomPart.type}");
+            var defaultPart = target.bodyParts.FirstOrDefault(p => p != null && p.type == BodyPartType.Torso);
+
+            if (defaultPart != null)
+            {
+                battleManager.selectedParts.Add(defaultPart);
+                Debug.Log($"🎯 [Fallback] No part matched — defaulted to: {defaultPart.type}");
+            }
+            else
+            {
+                // Still fallback to first valid part if Torso doesn't exist
+                var fallbackPart = target.bodyParts.FirstOrDefault(p => p != null);
+                if (fallbackPart != null)
+                {
+                    battleManager.selectedParts.Add(fallbackPart);
+                    Debug.Log($"🎯 [Fallback] No part matched — defaulted to first available: {fallbackPart.type}");
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ [Fallback] No valid body parts found.");
+                }
+            }
         }
 
         Debug.Log($"✅ Total Selected Body Parts: {battleManager.selectedParts.Count}");
