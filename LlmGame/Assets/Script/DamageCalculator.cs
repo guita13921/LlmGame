@@ -93,15 +93,31 @@ public class DamageCalculator : MonoBehaviour
         float totalWeaponDamage = weaponDamageBreakdown.Values.Sum();
         float totalBaseDamage = baseDamage + totalWeaponDamage;
 
-        float llmDamageModifier = ((feasibility / 10f) * (potential / 10f)) * constant;
+        // 🧠 Apply part-based feasibility/potential modifiers (additive)
+        float feasibilityModifierSum = target.bodyParts.Sum(p => p.feasibilityModifier);
+        float potentialModifierSum = target.bodyParts.Sum(p => p.potentialModifier);
+
+        float finalFeasibility = Mathf.Max(0f, feasibility + feasibilityModifierSum);
+        float finalPotential = Mathf.Max(0f, potential + potentialModifierSum);
+
+        // 🛡️ Apply armor reductions (multiplicative)
+        foreach (var part in target.bodyParts)
+        {
+            ArmorData armor = part.equippedArmor;
+            if (armor == null) continue;
+
+            finalFeasibility *= 1f - Mathf.Clamp01(armor.reduceFeasibility);
+            finalPotential *= 1f - Mathf.Clamp01(armor.reducePotentialDamage);
+        }
+
+        float llmDamageModifier = ((finalFeasibility / 10f) * (finalPotential / 10f)) * constant;
         float llmScaledBaseDamage = totalBaseDamage * llmDamageModifier;
 
         float creativityBonus = CalculateCreativityBonus(userMessage, attacker);
         float damageBeforeReduction = llmScaledBaseDamage * (1 + creativityBonus);
 
-        Debug.Log($"[Damage] Before Reduction: {damageBeforeReduction} (Feasibility: {feasibility}, Potential: {potential})");
+        Debug.Log($"[Damage] Before Reduction: {damageBeforeReduction} (Feasibility: {finalFeasibility}, Potential: {finalPotential})");
 
-        // Apply type-specific reductions from Defensive items
         var reducedDamageBreakdown = new Dictionary<DamageType, float>();
         foreach (var kvp in weaponDamageBreakdown)
         {
@@ -109,27 +125,29 @@ public class DamageCalculator : MonoBehaviour
             float typeDamage = kvp.Value;
             float reduction = 0f;
 
-            foreach (var def in target.activeItem.OfType<Defensive>())
+            foreach (var part in target.bodyParts)
             {
+                ArmorData armor = part.equippedArmor;
+                if (armor == null) continue;
+
                 reduction += dt switch
                 {
-                    DamageType.Physical => def.reduceDamagePhysical,
-                    DamageType.Fire => def.reduceDamageFire,
-                    DamageType.Electric => def.reduceDamageElectric,
-                    DamageType.Radiation => def.reduceDamageRadiation,
-                    DamageType.Explosive => def.reduceDamageExplosive,
-                    DamageType.Digital => def.reduceDamageDigital,
-                    DamageType.Plasma => def.reduceDamagePlasma,
-                    DamageType.Laser => def.reduceDamageLaser,
-                    DamageType.Chemical => def.reduceDamageChemical,
-                    DamageType.Viral => def.reduceDamageViral,
+                    DamageType.Physical => armor.reduceDamagePhysical,
+                    DamageType.Fire => armor.reduceDamageFire,
+                    DamageType.Electric => armor.reduceDamageElectric,
+                    DamageType.Radiation => armor.reduceDamageRadiation,
+                    DamageType.Explosive => armor.reduceDamageExplosive,
+                    DamageType.Digital => armor.reduceDamageDigital,
+                    DamageType.Plasma => armor.reduceDamagePlasma,
+                    DamageType.Laser => armor.reduceDamageLaser,
+                    DamageType.Chemical => armor.reduceDamageChemical,
+                    DamageType.Viral => armor.reduceDamageViral,
                     _ => 0f
                 };
             }
 
             float reduced = Mathf.Max(0f, typeDamage - reduction);
             reducedDamageBreakdown[dt] = reduced;
-
             Debug.Log($"[Reduce] {dt}: -{reduction} => {reduced}");
         }
 
@@ -138,7 +156,6 @@ public class DamageCalculator : MonoBehaviour
 
         Debug.Log($"[Final Damage]: {scaledFinalDamage}");
 
-        // ✅ APPLY TO BODY PARTS or fallback
         List<BodyPartData> targetParts = battleManager.selectedParts;
 
         if (targetParts == null || targetParts.Count == 0)
@@ -167,6 +184,7 @@ public class DamageCalculator : MonoBehaviour
         return scaledFinalDamage;
     }
 
+
     public float CalculateDamageNoCreativity(
         float feasibility, float potential, float baseDamage,
         Character attacker, Character target)
@@ -177,12 +195,28 @@ public class DamageCalculator : MonoBehaviour
         float totalWeaponDamage = weaponDamageBreakdown.Values.Sum();
         float totalBaseDamage = baseDamage + totalWeaponDamage;
 
-        float llmDamageModifier = ((feasibility / 10f) * (potential / 10f)) * constant;
+        // 🧠 Apply part-based modifiers (additive)
+        float feasibilityModifierSum = target.bodyParts.Sum(p => p.feasibilityModifier);
+        float potentialModifierSum = target.bodyParts.Sum(p => p.potentialModifier);
+
+        float finalFeasibility = Mathf.Max(0f, feasibility + feasibilityModifierSum);
+        float finalPotential = Mathf.Max(0f, potential + potentialModifierSum);
+
+        // 🛡️ Apply armor reductions (multiplicative)
+        foreach (var part in target.bodyParts)
+        {
+            ArmorData armor = part.equippedArmor;
+            if (armor == null) continue;
+
+            finalFeasibility *= 1f - Mathf.Clamp01(armor.reduceFeasibility);
+            finalPotential *= 1f - Mathf.Clamp01(armor.reducePotentialDamage);
+        }
+
+        float llmDamageModifier = ((finalFeasibility / 10f) * (finalPotential / 10f)) * constant;
         float damageBeforeReduction = totalBaseDamage * llmDamageModifier;
 
         Debug.Log($"[Enemy Damage Before Reduction]: {damageBeforeReduction}");
 
-        // Damage reduction
         var reducedDamageBreakdown = new Dictionary<DamageType, float>();
         foreach (var kvp in weaponDamageBreakdown)
         {
@@ -190,20 +224,23 @@ public class DamageCalculator : MonoBehaviour
             float typeDamage = kvp.Value;
             float reduction = 0f;
 
-            foreach (var def in target.activeItem.OfType<Defensive>())
+            foreach (var part in target.bodyParts)
             {
+                ArmorData armor = part.equippedArmor;
+                if (armor == null) continue;
+
                 reduction += dt switch
                 {
-                    DamageType.Physical => def.reduceDamagePhysical,
-                    DamageType.Fire => def.reduceDamageFire,
-                    DamageType.Electric => def.reduceDamageElectric,
-                    DamageType.Radiation => def.reduceDamageRadiation,
-                    DamageType.Explosive => def.reduceDamageExplosive,
-                    DamageType.Digital => def.reduceDamageDigital,
-                    DamageType.Plasma => def.reduceDamagePlasma,
-                    DamageType.Laser => def.reduceDamageLaser,
-                    DamageType.Chemical => def.reduceDamageChemical,
-                    DamageType.Viral => def.reduceDamageViral,
+                    DamageType.Physical => armor.reduceDamagePhysical,
+                    DamageType.Fire => armor.reduceDamageFire,
+                    DamageType.Electric => armor.reduceDamageElectric,
+                    DamageType.Radiation => armor.reduceDamageRadiation,
+                    DamageType.Explosive => armor.reduceDamageExplosive,
+                    DamageType.Digital => armor.reduceDamageDigital,
+                    DamageType.Plasma => armor.reduceDamagePlasma,
+                    DamageType.Laser => armor.reduceDamageLaser,
+                    DamageType.Chemical => armor.reduceDamageChemical,
+                    DamageType.Viral => armor.reduceDamageViral,
                     _ => 0f
                 };
             }
@@ -217,7 +254,6 @@ public class DamageCalculator : MonoBehaviour
 
         Debug.Log($"[Final Damage]: {scaledFinalDamage}");
 
-        // ✅ APPLY TO BODY PARTS or fallback
         List<BodyPartData> targetParts = battleManager.selectedParts;
 
         if (targetParts == null || targetParts.Count == 0)
@@ -245,5 +281,6 @@ public class DamageCalculator : MonoBehaviour
 
         return scaledFinalDamage;
     }
+
 }
 

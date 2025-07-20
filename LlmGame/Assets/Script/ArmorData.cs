@@ -1,12 +1,26 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewArmor", menuName = "Character/Armor")]
 public class ArmorData : ScriptableObject
 {
+    [Header("General Armor Stats")]
     public string armorName;
-    public int defense; // general defense
-    public float reducePotentialDamage; // e.g., 0.2f = 20%
-    public float reduceFeasibility; // e.g., 0.1f = 10%
-    public int armorHealth;
+    public float reducePotentialDamage;  // Reduces potential multiplier
+    public float reduceFeasibility;      // Reduces feasibility multiplier
     public string description;
+
+    [Header("DamageType Reduction")]
+    public int reduceDamagePhysical;
+    public int reduceDamageFire;
+    public int reduceDamageElectric;
+    public int reduceDamageRadiation;
+    public int reduceDamageExplosive;
+    public int reduceDamageDigital;
+    public int reduceDamagePlasma;
+    public int reduceDamageLaser;
+    public int reduceDamageChemical;
+    public int reduceDamageViral;
+
+    public List<DamageType> damageTypeReduce; // Used for UI/display, optional for logic
 }

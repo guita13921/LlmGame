@@ -185,19 +185,6 @@ public static class PromptBuilder
         sanitized = sanitized.Replace("die", "complete shutdown");
         sanitized = sanitized.Replace("death", "complete shutdown");
 
-        sanitized = sanitized.Replace("shoot", "fire precision pulse at");
-        sanitized = sanitized.Replace("gun down", "suppress");
-        sanitized = sanitized.Replace("snipe", "lock-on snipe to overload optics");
-        sanitized = sanitized.Replace("headshot", "target head optics module precisely");
-        sanitized = sanitized.Replace("blast", "emit a focused burst at");
-        sanitized = sanitized.Replace("fire at", "fire controlled beam at");
-
-        sanitized = sanitized.Replace("head", "head optics module");
-        sanitized = sanitized.Replace("arm", "arm actuator");
-        sanitized = sanitized.Replace("leg", "leg mobility unit");
-        sanitized = sanitized.Replace("chest", "core armor panel");
-        sanitized = sanitized.Replace("heart", "core battery module");
-
         sanitized = char.ToUpper(sanitized[0]) + sanitized.Substring(1);
 
         return sanitized;
@@ -229,7 +216,7 @@ public static class PromptBuilder
         StringBuilder sb = new StringBuilder();
         foreach (var part in parts)
         {
-            sb.AppendLine($"- {part.type} ({part.composition}): {part.state}, HP: {part.health}, Vital: {part.isVital}");
+            sb.AppendLine($"- {part.type} ({part.composition}): {part.state}, HP: {part.health} / {part.maxHealth}, Vital: {part.isVital}");
 
             if (part.equippedArmor != null)
             {
@@ -374,92 +361,71 @@ public static class PromptBuilder
 
     #endregion
 
-    #region Refine
+    /*
+        #region Refine
 
-    public static string BuildRefinementPrompt(
-        BattleManager battleManager,
-        Character attacker,
-        Character target,
-        float baseFeasibility,
-        string baseFeasibilityDesc,
-        float basePotentialDamage,
-        string basePotentialDamageDesc,
-        string baseEffectValue,
-        string baseEffectDesc)
+        public static string BuildRefinementPrompt(
+            BattleManager battleManager,
+            Character attacker,
+            Character target,
+            float baseFeasibility,
+            string baseFeasibilityDesc,
+            float basePotentialDamage,
+            string basePotentialDamageDesc,
+            string baseEffectValue,
+            string baseEffectDesc)
+        {
+            string attackerParts = FormatBodyParts(attacker.bodyParts);
+            string attackerWeakPoints = FormatWeakPointsFromBodyParts(attacker.bodyParts);
 
-    {
-        string attackerParts = FormatBodyParts(attacker.bodyParts);
-        string attackerWeakPoints = FormatWeakPointsFromBodyParts(attacker.bodyParts);
+            string targetParts = FormatBodyParts(target.bodyParts);
+            string targetWeakPoints = FormatWeakPointsFromBodyParts(target.bodyParts);
 
-        string targetParts = FormatBodyParts(target.bodyParts);
-        string targetWeakPoints = FormatWeakPointsFromBodyParts(target.bodyParts);
+            StringBuilder sb = new StringBuilder();
+            sb.Append($@"You are a combat analysis AI that refines battle outcomes based on detailed character anatomy and current conditions.
 
-        StringBuilder sb = new StringBuilder();
-        sb.Append($@"
-            You are an advanced video game AI refining a battle outcome using detailed character anatomy.
+                CURRENT BATTLE STATE:
+                Attacker: {attacker.characterName}
+                {attackerParts}
+                {attackerWeakPoints}
 
-            Use the body part and weak point information to modify or validate the following base values provided by a first-pass AI:
+                Target: {target.characterName}
+                {targetParts}
+                {targetWeakPoints}
 
-            Initial Results:
-            - Feasibility: {baseFeasibility} ({baseFeasibilityDesc})
-            - Potential Damage: {basePotentialDamage} ({basePotentialDamageDesc})
-            - Effect Description: {baseEffectValue} ({baseEffectDesc})
+                INITIAL ASSESSMENT TO REFINE:
+                - Feasibility: {baseFeasibility}/10 
+                - Potential Damage: {basePotentialDamage}/10
+                - Effect: {baseEffectValue} 
 
-            Attacker: {attacker.characterName}
-            {attackerParts}
-            {attackerWeakPoints}
+                IMPORTANT: Only make logical adjustments. Don't change values drastically without clear anatomical justification.
 
-            Target: {target.characterName}
-            {targetParts}
-            {targetWeakPoints}
+                Return your analysis as a JSON object with this exact structure:
 
-            Especially pay attention to the attacker’s and target’s body parts and weak points that influence combat effectiveness:
-            - If the attacker uses a damaged or missing body part (like an arm or neural interface), reduce feasibility and describe it.
-            - If the target has exposed or cybernetic weak points (e.g., servo links, neural jacks), increase potential damage and reflect precision in the effect.
-            - If a body part is vital and is damaged or targeted via a weak point, increase both feasibility and damage impact.
-            - For non-vital or already missing parts, reduce damage and describe reduced consequence or ineffectiveness.
-
-            Make sure the adjustments are logical based on anatomy, composition (human/cybernetic/robotic), state (intact/damaged/missing), and whether the part is vital or not.
-
-            Respond ONLY with a raw JSON object. 
-            Do NOT wrap it in a string, markdown, or another field.
-            Do NOT add a 'response' field.
-            Do NOT escape characters.
-
-
-            Here is the required format:
-            {{
-            ""properties"": {{
+                {{
                 ""feasibility"": {{
-                ""maximum"": 10.0,
-                ""minimum"": 0.0,
-                ""value"": 0.0,
-                ""description"": ""description here""
+                    ""value"": [0.0-10.0],
+                    ""description"": ""Brief explanation of feasibility factors""
                 }},
                 ""potential_damage"": {{
-                ""maximum"": 10.0,
-                ""minimum"": 0.0,
-                ""value"": 0.0,
-                ""description"": ""description here""
+                    ""value"": [0.0-10.0], 
+                    ""description"": ""Brief explanation of damage factors""
                 }},
                 ""effect_description"": {{
-                ""value"": ""effect description here"",
-                ""description"": ""additional details""
+                    ""value"": ""Detailed combat effect description"",
+                    ""description"": ""Additional tactical context""
                 }}
-            }}
-            }}
-            ");
+                }}");
 
+            string prompt = sb.ToString();
 
-        string prompt = sb.ToString();
+            // Debug log
+            Debug.Log("<color=cyan>[PromptBuilder] Refinement Prompt:</color>\n" + prompt);
 
-        // ✅ Add debug log here
-        Debug.Log("<color=cyan>[PromptBuilder] Refinement Prompt Sent:</color>\n" + prompt);
+            return prompt;
+        }
 
-        return prompt;
-    }
-
-
-    #endregion
+        #endregion
+        */
 
 }

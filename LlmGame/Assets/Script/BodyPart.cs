@@ -10,18 +10,28 @@ public class BodyPartData : ScriptableObject
     public BodyPartState state = BodyPartState.Intact;
     public BodyPartComposition composition = BodyPartComposition.Human;
     public List<string> keyword;
-    public bool isVital;
+    public bool isVital = false;
     public int health = 100;
+    public int maxHealth = 100;
 
-    [Header("Damage Control")]
-    [Range(0f, 1f)] public float damageToPartRatio = 0.5f;
-    public bool becomesWeakPointWhenDestroyed = true;
+    [Header("Descriptions (Buffs/Debuffs)")]
+    [Tooltip("Optional description of traits or effects (e.g. 'Harder to hit', '+1 potential damage')")]
+    public List<string> descriptions = new List<string>();
 
     [Header("Weak Point (Optional)")]
     public WeakPointData linkedWeakPoint;
 
     [Header("Armor (Optional)")]
     public ArmorData equippedArmor;
+
+    [Header("LLM Influence")]
+    [Range(-10f, 10f)] public float feasibilityModifier = 0f;
+    [Range(-10f, 10f)] public float potentialModifier = 0f;
+
+    [Header("Damage Control")]
+    [Range(0f, 1f)] public float damageToPartRatio = 0.5f;
+    public bool becomesWeakPointWhenDestroyed = true;
+
 
     public bool IsDestroyed => health <= 0;
 
@@ -34,18 +44,10 @@ public class BodyPartData : ScriptableObject
         if (IsDestroyed && becomesWeakPointWhenDestroyed)
         {
             state = BodyPartState.Missing;
-
-            if (linkedWeakPoint == null)
-            {
-                linkedWeakPoint = ScriptableObject.CreateInstance<WeakPointData>();
-                linkedWeakPoint.weakPointName = $"{type} Core";
-                linkedWeakPoint.weakPointDescription = $"Weak point revealed after destruction of {type}.";
-                linkedWeakPoint.isExposed = true;
-                linkedWeakPoint.hideFlags = HideFlags.DontSave;
-            }
-            else
+            if (linkedWeakPoint != null)
             {
                 linkedWeakPoint.isExposed = true;
+                Debug.Log($"[BodyPart] {type} destroyed, weak point '{linkedWeakPoint.weakPointName}' now exposed.");
             }
         }
     }

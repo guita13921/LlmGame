@@ -21,14 +21,20 @@ public class BodyPartConfig : ScriptableObject
             part.keyword = new List<string>(overrideData.keywords);
             part.isVital = overrideData.isVital;
             part.health = overrideData.health;
+            part.maxHealth = overrideData.maxHealth;
             part.damageToPartRatio = overrideData.damageToPartRatio;
             part.equippedArmor = overrideData.defaultArmor;
             part.linkedWeakPoint = overrideData.weakPoint;
-            part.hideFlags = HideFlags.DontSave; // Ensure they don't persist in memory
+            part.descriptions = new List<string>(overrideData.descriptions);
+            part.feasibilityModifier = overrideData.feasibilityModifier;
+            part.potentialModifier = overrideData.potentialModifier;
+            part.hideFlags = HideFlags.DontSave;
 
             result.Add(part);
         }
 
         return result;
     }
+
+
 }
