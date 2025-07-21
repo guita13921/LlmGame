@@ -30,6 +30,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public int turnCount = 1;
     public float gaugeThreshold = 1000f;
     public bool battleActive = true;
+    public bool isUsingConsumableMode = false;
 
     [SerializeField] public bool isActionPhase = false;
     [SerializeField] public Character currentActingCharacter = null;
@@ -132,13 +133,22 @@ public class BattleManager : MonoBehaviour
 
     public void PlayerSelectedTarget(Character selectedCharacter)
     {
-
         if (player == null || !player.IsAlive()) return;
         if (selectedCharacter == null || !selectedCharacter.IsAlive()) return;
 
         Debug.Log($"Player selected {selectedCharacter.characterName} as target!");
 
-        this.selectedTarget = selectedCharacter;
+        selectedTarget = selectedCharacter;
+
+        if (isUsingConsumableMode && player.activeItem.Count > 0)
+        {
+            Item active = player.activeItem[0];
+
+            if (active is ConsumeTurnItem consumeItem)
+            {
+                StartCoroutine(consumeItem.UseOnTarget(player, selectedCharacter, this));
+            }
+        }
     }
 
     private string GetRandomEnemyAction(Enemy enemy)
@@ -314,6 +324,17 @@ public class BattleManager : MonoBehaviour
         {
             yield return null;
         }
+    }
+
+    public void EndPlayerTurn()
+    {
+        isActionPhase = false;
+        currentActingCharacter = null;
+        selectedTarget = null;
+        selectedParts.Clear();
+
+        chatAI.ShowInputUI(); // Reset UI
+        Debug.Log("Player turn ended.");
     }
 
 

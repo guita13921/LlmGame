@@ -25,7 +25,6 @@ public class BodyPartConfig : ScriptableObject
             part.damageToPartRatio = overrideData.damageToPartRatio;
             part.equippedArmor = overrideData.defaultArmor;
             part.linkedWeakPoint = overrideData.weakPoint;
-            part.descriptions = new List<string>(overrideData.descriptions);
             part.feasibilityModifier = overrideData.feasibilityModifier;
             part.potentialModifier = overrideData.potentialModifier;
             part.hideFlags = HideFlags.DontSave;

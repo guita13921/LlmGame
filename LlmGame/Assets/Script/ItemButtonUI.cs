@@ -28,6 +28,13 @@ public class ItemButtonUI : MonoBehaviour
 
     public void ActiveConsumeTurnItem(Item item)
     {
+        // ✅ Only allow activation during player's turn
+        if (!battleManager.isActionPhase || battleManager.currentActingCharacter != battleManager.player)
+        {
+            Debug.LogWarning("Cannot use items outside your turn!");
+            return;
+        }
+
         if (item == null) return;
 
         // Deactivate all other items
@@ -38,32 +45,36 @@ public class ItemButtonUI : MonoBehaviour
 
         if (!battleManager.player.activeItem.Contains(item))
         {
-
             battleManager.player.activeItem.Add(item);
             battleManager.player.isUsingConsumeTurnItem = true;
+            battleManager.isUsingConsumableMode = true;
 
-            Debug.Log($"Item '{item.itemName}' activated by player!");
 
-            // ✅ Fill input field with keywords
             if (battleManager.playerInputField != null)
             {
-                battleManager.playerInputField.text = string.Empty;
-                string keywordText = string.Join(", ", item.keyWords);
-                battleManager.playerInputField.text = keywordText;
+                battleManager.playerInputField.text = string.Join(", ", item.keyWords);
+                battleManager.playerInputField.interactable = false;
             }
+
+            battleManager.chatAI.HideInputUI(); // Hide AI input panel
         }
         else
         {
             battleManager.player.activeItem.Remove(item);
             battleManager.player.isUsingConsumeTurnItem = false;
+            battleManager.isUsingConsumableMode = false;
 
             Debug.Log($"Item '{item.itemName}' deactivated by player!");
 
-            // ✅ Clear input field
             if (battleManager.playerInputField != null)
             {
-                battleManager.playerInputField.text = string.Empty;
+                battleManager.playerInputField.text = "";
+                battleManager.playerInputField.interactable = true;
             }
+
+            battleManager.chatAI.ShowInputUI();
         }
     }
+
+
 }
