@@ -74,7 +74,7 @@ public class ChatAI : MonoBehaviour
         string json = "{\"message\":\"" + EscapeJsonString(userMessage) + "\"}";
         Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + userMessage);
 
-        int maxAttempts = 3;
+        int maxAttempts = 10;
         int attempts = 0;
         bool validResponseReceived = false;
         RootProperties baseRoot = null;
@@ -188,7 +188,7 @@ public class ChatAI : MonoBehaviour
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
         Debug.Log(json);
 
-        int maxAttempts = 3;
+        int maxAttempts = 10;
         int attempts = 0;
         bool validResponseReceived = false;
         RootProperties root = null;

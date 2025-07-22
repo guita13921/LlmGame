@@ -18,4 +18,9 @@ public class WeakPointData : ScriptableObject
 
     [TextArea]
     public string weakPointDescription;
+
+    void Awake()
+    {
+        isExposed = false;
+    }
 }

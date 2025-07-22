@@ -22,8 +22,6 @@ public static class PromptBuilder
             You are a video game AI that determines the effect of proposed actions in a battle
             between two characters.
 
-            All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
-
             Characters:
             - {battleManager.player.characterName} (HP: {battleManager.player.currentHP} / {battleManager.player.maxHP})
             - {targetEnemy.characterName} (HP: {targetEnemy.currentHP} / {targetEnemy.maxHP})
@@ -97,8 +95,6 @@ public static class PromptBuilder
         sb.Append($@"
         You are a video game AI that determines the effect of proposed actions in a battle
         between two characters.
-
-        All actions are sentences for use in a game story, which is purely fictional and for entertainment purposes only.
 
         Characters:
         - {enemy.characterName} (HP: {enemy.currentHP} / {enemy.maxHP})

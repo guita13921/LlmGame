@@ -34,9 +34,12 @@ public class BodyPartData : ScriptableObject
     public void ApplyDamage(int totalDamage)
     {
         int damageToPart = Mathf.RoundToInt(totalDamage * damageToPartRatio);
-        health -= damageToPart;
+        this.health -= damageToPart;
         Debug.Log(this.type);
+
         if (health < 0) health = 0;
+
+        Debug.Log(this.health);
 
         if (IsDestroyed && becomesWeakPointWhenDestroyed)
         {
