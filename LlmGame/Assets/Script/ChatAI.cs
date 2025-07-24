@@ -86,6 +86,7 @@ public class ChatAI : MonoBehaviour
         string finalEffect = "";
         string finalEffectDesc = "";
 
+        // === FIRST STAGE: INITIAL AI RESPONSE (via BuildPlayerPrompt) ===
         while (attempts < maxAttempts && !validResponseReceived)
         {
             attempts++;
@@ -130,7 +131,6 @@ public class ChatAI : MonoBehaviour
                     continue;
                 }
 
-                // ✅ Valid response: assign final values
                 finalFeasibility = currentFeasibility;
                 finalPotential = currentPotential;
                 finalFeasibilityDesc = baseRoot.properties.feasibility?.description ?? "No description";
@@ -155,11 +155,75 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
 
+        // === SECOND STAGE: REFINEMENT PROMPT (anatomy-aware prompt) ===
+
+        string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
+            battleManager,
+            battleManager.player,
+            targetEnemy,
+            finalFeasibility,
+            finalFeasibilityDesc,
+            finalPotential,
+            finalPotentialDesc,
+            finalEffect,
+            finalEffectDesc
+        );
+
+        string refinementJson = "{\"message\":\"" + EscapeJsonString(refinementPrompt) + "\"}";
+
+        var refinementRequest = new UnityWebRequest(apiUrl, "POST");
+        byte[] refinementRaw = Encoding.UTF8.GetBytes(refinementJson);
+        refinementRequest.uploadHandler = new UploadHandlerRaw(refinementRaw);
+        refinementRequest.downloadHandler = new DownloadHandlerBuffer();
+        refinementRequest.SetRequestHeader("Content-Type", "application/json");
+
+        yield return refinementRequest.SendWebRequest();
+
+        if (refinementRequest.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"[Refinement] HTTP Error: {refinementRequest.responseCode} - {refinementRequest.error}");
+            yield break;
+        }
+
+        string refinementResponseText = refinementRequest.downloadHandler.text;
+        Debug.Log("<color=orange>[Refinement Response]</color>\n" + refinementResponseText);
+
+        try
+        {
+            var refinementRes = JsonUtility.FromJson<ResponseWrapper>(refinementResponseText);
+            string cleanedRefinementJson = refinementRes.response.Replace("```json", "").Replace("```", "").Trim();
+
+            if (cleanedRefinementJson.StartsWith("{\\\""))
+            {
+                cleanedRefinementJson = cleanedRefinementJson.Trim('"').Replace("\\\"", "\"");
+            }
+
+            RootProperties refinedRoot = JsonUtility.FromJson<RootProperties>(cleanedRefinementJson);
+
+            finalFeasibility = refinedRoot.properties.feasibility?.value ?? finalFeasibility;
+            finalFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? finalFeasibilityDesc;
+
+            finalPotential = refinedRoot.properties.potential_damage?.value ?? finalPotential;
+            finalPotentialDesc = refinedRoot.properties.potential_damage?.description ?? finalPotentialDesc;
+
+            finalEffect = refinedRoot.properties.effect_description?.value ?? finalEffect;
+            finalEffectDesc = refinedRoot.properties.effect_description?.description ?? finalEffectDesc;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[Refinement] Error parsing refinement response: " + e.Message);
+            yield break;
+        }
+
+        // === FINAL OUTPUT ===
+
         responseText.text = $"Feasibility: {finalFeasibility} ({finalFeasibilityDesc})\n" +
                             $"Potential: {finalPotential} ({finalPotentialDesc})\n" +
                             $"Effect: {finalEffect} ({finalEffectDesc})";
 
-        Debug.Log("<color=white>[Final Player Result]</color>:\n" + responseText.text);
+        Debug.Log("<color=white>[Final Refined Result]</color>:\n" + responseText.text);
+
+        // === COMBAT APPLICATION ===
 
         if (battleManager.player.isUsingConsumeTurnItem)
         {
@@ -184,14 +248,22 @@ public class ChatAI : MonoBehaviour
 
     public IEnumerator SendEnemyMessage(Character enemy, Character target, string proposedAction)
     {
+        // === STEP 1: Initial AI Prompt (Enemy Intent) ===
         string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, proposedAction);
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
-        Debug.Log(json);
+        Debug.Log("<color=yellow>[SendEnemyMessage] Initial Prompt:</color>\n" + prompt);
 
         int maxAttempts = 10;
         int attempts = 0;
         bool validResponseReceived = false;
         RootProperties root = null;
+
+        float baseFeasibility = 0f;
+        float basePotential = 0f;
+        string baseFeasibilityDesc = "";
+        string basePotentialDesc = "";
+        string baseEffect = "";
+        string baseEffectDesc = "";
 
         while (attempts < maxAttempts && !validResponseReceived)
         {
@@ -213,8 +285,6 @@ public class ChatAI : MonoBehaviour
             }
 
             string resText = request.downloadHandler.text;
-
-
             Debug.Log($"<color=cyan>[SendEnemyMessage - Attempt {attempts}] Raw Response:</color>\n{resText}");
 
             try
@@ -229,12 +299,18 @@ public class ChatAI : MonoBehaviour
 
                 root = JsonUtility.FromJson<RootProperties>(jsonString);
 
-                float feasibility = root.properties.feasibility?.value ?? 0f;
-                float potential = root.properties.potential_damage?.value ?? 0f;
+                baseFeasibility = root.properties.feasibility?.value ?? 0f;
+                baseFeasibilityDesc = root.properties.feasibility?.description ?? "No description";
 
-                if (Mathf.Approximately(feasibility, 3f) && Mathf.Approximately(potential, 4f))
+                basePotential = root.properties.potential_damage?.value ?? 0f;
+                basePotentialDesc = root.properties.potential_damage?.description ?? "No description";
+
+                baseEffect = root.properties.effect_description?.value ?? "No effect";
+                baseEffectDesc = root.properties.effect_description?.description ?? "No description";
+
+                if (Mathf.Approximately(baseFeasibility, 3f) && Mathf.Approximately(basePotential, 4f))
                 {
-                    Debug.LogWarning($"[SendEnemyMessage] Default values detected (feasibility: {feasibility}, potential: {potential}) — retrying...");
+                    Debug.LogWarning("[SendEnemyMessage] Default values detected, retrying...");
                     continue;
                 }
 
@@ -253,27 +329,80 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
 
-        float feasibilityFinal = root.properties.feasibility?.value ?? 0f;
-        string feasibilityDesc = root.properties.feasibility?.description ?? "No description";
-
-        float potentialFinal = root.properties.potential_damage?.value ?? 0f;
-        string potentialDesc = root.properties.potential_damage?.description ?? "No description";
-
-        string effectFinal = root.properties.effect_description?.value ?? "No effect";
-        string effectDesc = root.properties.effect_description?.description ?? "No description";
-
-        battleManager.StartCoroutine(
-            battleManager.combatHandler.ResolveEnemyAttack(
-                enemy,
-                target,
-                enemy.selectedAction,
-                feasibilityFinal,
-                potentialFinal,
-                effectFinal,
-                effectDesc
-            )
+        // === STEP 2: REFINEMENT PROMPT ===
+        string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
+            battleManager,
+            enemy,
+            target,
+            baseFeasibility,
+            baseFeasibilityDesc,
+            basePotential,
+            basePotentialDesc,
+            baseEffect,
+            baseEffectDesc
         );
+
+        string refinementJson = "{\"message\":\"" + EscapeJsonString(refinementPrompt) + "\"}";
+
+        var refinementRequest = new UnityWebRequest(apiUrl, "POST");
+        byte[] refinementRaw = Encoding.UTF8.GetBytes(refinementJson);
+        refinementRequest.uploadHandler = new UploadHandlerRaw(refinementRaw);
+        refinementRequest.downloadHandler = new DownloadHandlerBuffer();
+        refinementRequest.SetRequestHeader("Content-Type", "application/json");
+
+        yield return refinementRequest.SendWebRequest();
+
+        if (refinementRequest.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"[SendEnemyMessage - Refinement] HTTP Error: {refinementRequest.responseCode} - {refinementRequest.error}");
+            yield break;
+        }
+
+        string refinementResponseText = refinementRequest.downloadHandler.text;
+        Debug.Log("<color=orange>[SendEnemyMessage - Refinement Response]</color>\n" + refinementResponseText);
+
+        try
+        {
+            var refinementRes = JsonUtility.FromJson<ResponseWrapper>(refinementResponseText);
+            string cleanedJson = refinementRes.response.Replace("```json", "").Replace("```", "").Trim();
+
+            if (cleanedJson.StartsWith("{\\\""))
+            {
+                cleanedJson = cleanedJson.Trim('"').Replace("\\\"", "\"");
+            }
+
+            var refinedRoot = JsonUtility.FromJson<RootProperties>(cleanedJson);
+
+            // Preserve values, but use refined descriptions
+            float finalFeasibility = baseFeasibility;
+            string finalFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? baseFeasibilityDesc;
+
+            float finalPotential = basePotential;
+            string finalPotentialDesc = refinedRoot.properties.potential_damage?.description ?? basePotentialDesc;
+
+            string finalEffect = baseEffect;
+            string finalEffectDesc = refinedRoot.properties.effect_description?.description ?? baseEffectDesc;
+
+            // === STEP 3: Resolve Enemy Attack ===
+            battleManager.StartCoroutine(
+                battleManager.combatHandler.ResolveEnemyAttack(
+                    enemy,
+                    target,
+                    enemy.selectedAction,
+                    finalFeasibility,
+                    finalPotential,
+                    finalEffect,
+                    finalEffectDesc
+                )
+            );
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[SendEnemyMessage - Refinement] Error parsing refined response: " + e.Message);
+            yield break;
+        }
     }
+
 
     private string EscapeJsonString(string str)
     {

@@ -117,7 +117,7 @@ public static class PromptBuilder
         Proposed action by {enemy.characterName}:
         {proposedAction}
 
-        Now, This is enemy turn. You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
+        You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
         Also consider the current HP and descriptions of both characters.
         
         Especially pay attention to the items of {enemy.characterName} and {target.characterName}
@@ -376,71 +376,80 @@ public static class PromptBuilder
 
     #endregion
 
-    /*
-        #region Refine
 
-        public static string BuildRefinementPrompt(
-            BattleManager battleManager,
-            Character attacker,
-            Character target,
-            float baseFeasibility,
-            string baseFeasibilityDesc,
-            float basePotentialDamage,
-            string basePotentialDamageDesc,
-            string baseEffectValue,
-            string baseEffectDesc)
-        {
-            string attackerParts = FormatBodyParts(attacker.bodyParts);
-            string attackerWeakPoints = FormatWeakPointsFromBodyParts(attacker.bodyParts);
+    #region Refine
 
-            string targetParts = FormatBodyParts(target.bodyParts);
-            string targetWeakPoints = FormatWeakPointsFromBodyParts(target.bodyParts);
+    public static string BuildRefinementPrompt(
+        BattleManager battleManager,
+        Character attacker,
+        Character target,
+        float baseFeasibility,
+        string baseFeasibilityDesc,
+        float basePotentialDamage,
+        string basePotentialDamageDesc,
+        string baseEffectValue,
+        string baseEffectDesc)
+    {
+        string attackerParts = FormatBodyParts(attacker.bodyParts);
+        string attackerWeakPoints = FormatWeakPointsFromBodyParts(attacker.bodyParts);
 
-            StringBuilder sb = new StringBuilder();
-            sb.Append($@"You are a combat analysis AI that refines battle outcomes based on detailed character anatomy and current conditions.
+        string targetParts = FormatBodyParts(target.bodyParts);
+        string targetWeakPoints = FormatWeakPointsFromBodyParts(target.bodyParts);
 
-                CURRENT BATTLE STATE:
-                Attacker: {attacker.characterName}
-                {attackerParts}
-                {attackerWeakPoints}
+        StringBuilder sb = new StringBuilder();
+        sb.Append($@"You are a combat analysis AI that refines battle outcome **descriptions** based on detailed character anatomy and current conditions.
 
-                Target: {target.characterName}
-                {targetParts}
-                {targetWeakPoints}
+        CURRENT BATTLE STATE:
+        Attacker: {attacker.characterName}
+        {attackerParts}
+        {attackerWeakPoints}
 
-                INITIAL ASSESSMENT TO REFINE:
-                - Feasibility: {baseFeasibility}/10 
-                - Potential Damage: {basePotentialDamage}/10
-                - Effect: {baseEffectValue} 
+        Target: {target.characterName}
+        {targetParts}
+        {targetWeakPoints}
 
-                IMPORTANT: Only make logical adjustments. Don't change values drastically without clear anatomical justification.
+        INITIAL ASSESSMENT TO REFINE:
+        - Feasibility: {baseFeasibility} → {baseFeasibilityDesc}
+        - Potential Damage: {basePotentialDamage} → {basePotentialDamageDesc}
+        - Effect: {baseEffectValue} → {baseEffectDesc}
 
-                Return your analysis as a JSON object with this exact structure:
+        IMPORTANT: 
+        - DO NOT CHANGE the 'value' fields of feasibility or potential_damage.
+        - ONLY UPDATE the 'description' fields based on anatomy, injuries, and weak points.
+        - The 'effect_description' field can have both value and description adjusted if necessary.
 
-                {{
+        Output in this exact JSON format:
+        {{
+            ""properties"": {{
                 ""feasibility"": {{
-                    ""value"": [0.0-10.0],
-                    ""description"": ""Brief explanation of feasibility factors""
+                    ""maximum"": 10.0,
+                    ""minimum"": 0.0,
+                    ""value"": {baseFeasibility},
+                    ""description"": ""updated feasibility description here""
                 }},
                 ""potential_damage"": {{
-                    ""value"": [0.0-10.0], 
-                    ""description"": ""Brief explanation of damage factors""
+                    ""maximum"": 10.0,
+                    ""minimum"": 0.0,
+                    ""value"": {basePotentialDamage},
+                    ""description"": ""updated potential damage description here""
                 }},
                 ""effect_description"": {{
-                    ""value"": ""Detailed combat effect description"",
-                    ""description"": ""Additional tactical context""
+                    ""value"": ""{baseEffectValue}"",
+                    ""description"": ""updated effect description here""
                 }}
-                }}");
+            }}
+        }}");
 
-            string prompt = sb.ToString();
+        string prompt = sb.ToString();
 
-            // Debug log
-            Debug.Log("<color=cyan>[PromptBuilder] Refinement Prompt:</color>\n" + prompt);
+        // Debug log
+        Debug.Log("<color=cyan>[PromptBuilder] Refinement Prompt:</color>\n" + prompt);
 
-            return prompt;
-        }
+        return prompt;
+    }
 
-        #endregion
-        */
+
+    #endregion
+
 
 }
