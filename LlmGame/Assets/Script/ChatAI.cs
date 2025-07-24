@@ -403,7 +403,6 @@ public class ChatAI : MonoBehaviour
         }
     }
 
-
     private string EscapeJsonString(string str)
     {
         if (string.IsNullOrEmpty(str)) return "";
