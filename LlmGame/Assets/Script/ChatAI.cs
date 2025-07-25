@@ -61,7 +61,7 @@ public class ChatAI : MonoBehaviour
         StartCoroutine(SendMessageToAI(finalPrompt));
     }
 
-    IEnumerator SendMessageToAI(string userMessage)
+    public IEnumerator SendMessageToAI(string userMessage)
     {
         Character targetEnemy = battleManager.selectedTarget;
 
@@ -403,7 +403,7 @@ public class ChatAI : MonoBehaviour
         }
     }
 
-    private string EscapeJsonString(string str)
+    public string EscapeJsonString(string str)
     {
         if (string.IsNullOrEmpty(str)) return "";
 

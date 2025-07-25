@@ -15,8 +15,7 @@ public class HitEffectData
     [Tooltip("Offset relative to target for spawning VFX.")]
     public Vector3 vfxOffset = Vector3.zero;
 
-    [Tooltip("lifeTime.")]
+    [Tooltip("How long the VFX lives.")]
     public float lifeTime = 2f;
-
 
 }

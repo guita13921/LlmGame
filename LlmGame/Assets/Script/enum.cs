@@ -25,7 +25,6 @@ public enum DamageType
     Laser,          // Laser rifles, cutting beams
     Chemical,       // Gas attacks, chemical bombs
     Viral,          // Digital viruses that affect both tech and biology
-
 }
 
 public enum CharacterType
@@ -60,4 +59,11 @@ public enum BodyPartComposition
     Human,
     Cybernetic,
     Robotic
+}
+
+public class StatusEffect
+{
+    public string effectName;
+    public int turnsRemaining;
+    public bool skipTurn;
 }

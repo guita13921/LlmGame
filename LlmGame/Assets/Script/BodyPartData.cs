@@ -34,20 +34,24 @@ public class BodyPartData : ScriptableObject
     public void ApplyDamage(int totalDamage)
     {
         int damageToPart = Mathf.RoundToInt(totalDamage * damageToPartRatio);
+
+        int beforeHealth = this.health;
         this.health -= damageToPart;
-        Debug.Log(this.type);
 
         if (health < 0) health = 0;
 
-        Debug.Log(this.health);
+        // 🧠 Debug log
+        Debug.Log($"💥 [Damage{totalDamage}] {type} took {damageToPart} damage. HP: {beforeHealth} → {health}");
 
+        // Check for destruction
         if (IsDestroyed && becomesWeakPointWhenDestroyed)
         {
             if (linkedWeakPoint != null)
             {
                 linkedWeakPoint.isExposed = true;
-                Debug.Log($"[BodyPart] {type} destroyed, weak point '{linkedWeakPoint.weakPointName}' now exposed.");
+                Debug.Log($"⚠️ [BodyPart] {type} destroyed — weak point '{linkedWeakPoint.weakPointName}' is now exposed.");
             }
         }
     }
+
 }

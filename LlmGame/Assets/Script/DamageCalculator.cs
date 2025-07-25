@@ -213,14 +213,50 @@ public class DamageCalculator : MonoBehaviour
     {
         const float constant = 2f;
 
-        // 1. Weapon Damage Breakdown
-        var weaponDamageBreakdown = GetActiveWeaponDamageBreakdown(attacker);
-        float totalWeaponDamage = weaponDamageBreakdown.Values.Sum();
+        // 1. Gather Damage Types and Values
+        Dictionary<DamageType, int> weaponDamageBreakdown = new();
+        float totalWeaponDamage = 0f;
+
+        // ✅ If attacker has an active skill
+        if (attacker.currentSkill is DamageModifierSkill skill)
+        {
+            // Use skill-specific damage types and values
+            weaponDamageBreakdown = new Dictionary<DamageType, int>
+        {
+            { DamageType.Physical, skill.damagePhysical },
+            { DamageType.Fire, skill.damageFire },
+            { DamageType.Electric, skill.damageElectric },
+            { DamageType.Radiation, skill.damageRadiation },
+            { DamageType.Explosive, skill.damageExplosive },
+            { DamageType.Digital, skill.damageDigital },
+            { DamageType.Plasma, skill.damagePlasma },
+            { DamageType.Laser, skill.damageLaser },
+            { DamageType.Chemical, skill.damageChemical },
+            { DamageType.Viral, skill.damageViral }
+        };
+
+            // Remove zero entries
+            weaponDamageBreakdown = weaponDamageBreakdown
+                .Where(kvp => kvp.Value > 0)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            totalWeaponDamage = weaponDamageBreakdown.Values.Sum();
+
+            Debug.Log($"[Skill] {skill.skillName} damage breakdown: " +
+                      $"{string.Join(", ", weaponDamageBreakdown.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
+        }
+        else
+        {
+            // Fallback to weapons
+            weaponDamageBreakdown = GetActiveWeaponDamageBreakdown(attacker);
+            totalWeaponDamage = weaponDamageBreakdown.Values.Sum();
+        }
+
         float totalBaseDamage = baseDamage + totalWeaponDamage;
 
         Debug.Log("totalBaseDamage : " + totalBaseDamage);
 
-        // 2. Feasibility & Potential Modifiers (selected parts only)
+        // 2. Feasibility & Potential Modifiers (based on selected parts)
         float feasibilityModifierSum = 0f;
         float potentialModifierSum = 0f;
 
@@ -231,47 +267,28 @@ public class DamageCalculator : MonoBehaviour
             return 0f;
         }
 
-        // → From selected target parts
         foreach (var part in selectedParts)
         {
             if (part == null) continue;
 
             feasibilityModifierSum += part.feasibilityModifier;
             potentialModifierSum += part.potentialModifier;
-        }
 
-        // → From selected target parts' exposed WeakPoints (income modifiers)
-        foreach (var part in selectedParts)
-        {
-            if (part == null) continue;
-
-            var wp = part.linkedWeakPoint;
-            if (wp != null && wp.isExposed)
+            if (part.linkedWeakPoint != null && part.linkedWeakPoint.isExposed)
             {
-                feasibilityModifierSum += wp.income_feasibilityModifier;
-                potentialModifierSum += wp.income_potentialModifier;
-                Debug.Log($"🛡️ [Income Weakness] {wp.weakPointName}: +F{wp.income_feasibilityModifier}, +P{wp.income_potentialModifier}");
-            }
-        }
+                var wp = part.linkedWeakPoint;
 
-        // → From selected attacker parts' exposed WeakPoints (outcome modifiers)
-        foreach (var part in selectedParts) // You can replace this with attacker.selectedParts if needed
-        {
-            if (part == null) continue;
+                feasibilityModifierSum += wp.income_feasibilityModifier + wp.outcome_feasibilityModifier;
+                potentialModifierSum += wp.income_potentialModifier + wp.outcome_potentialModifier;
 
-            var wp = part.linkedWeakPoint;
-            if (wp != null && wp.isExposed)
-            {
-                feasibilityModifierSum += wp.outcome_feasibilityModifier;
-                potentialModifierSum += wp.outcome_potentialModifier;
-                Debug.Log($"⚔️ [Outcome Weakness] {wp.weakPointName}: +F{wp.outcome_feasibilityModifier}, +P{wp.outcome_potentialModifier}");
+                Debug.Log($"🧠 [WeakPoint] {wp.weakPointName} exposed: +F({wp.income_feasibilityModifier + wp.outcome_feasibilityModifier}), +P({wp.income_potentialModifier + wp.outcome_potentialModifier})");
             }
         }
 
         float finalFeasibility = Mathf.Max(0f, feasibility + feasibilityModifierSum);
         float finalPotential = Mathf.Max(0f, potential + potentialModifierSum);
 
-        // 3. Apply Armor Reductions (only selected parts)
+        // 3. Apply Armor Reductions (feasibility/potential)
         foreach (var part in selectedParts)
         {
             ArmorData armor = part.equippedArmor;
@@ -282,25 +299,25 @@ public class DamageCalculator : MonoBehaviour
         }
 
         // 4. LLM Scaling
-        float llmDamageModifier = ((finalFeasibility / 10f) * (finalPotential / 10f)) * constant;
-        float llmScaledBaseDamage = totalBaseDamage * llmDamageModifier;
+        float llmModifier = ((finalFeasibility / 10f) * (finalPotential / 10f)) * constant;
+        float scaledLLMBaseDamage = totalBaseDamage * llmModifier;
 
-        Debug.Log($"[Enemy Damage Before Reduction]: {llmScaledBaseDamage}");
+        Debug.Log($"[LLM] Feasibility: {finalFeasibility}, Potential: {finalPotential}, ScaledBaseDamage: {scaledLLMBaseDamage}");
 
-        // 5. Reduce Per-Damage-Type by Armor (only selected parts)
+        // 5. Reduce Per-Damage-Type by Armor
         var reducedDamageBreakdown = new Dictionary<DamageType, float>();
         foreach (var kvp in weaponDamageBreakdown)
         {
             DamageType dt = kvp.Key;
             float original = kvp.Value;
-            float totalReduction = 0f;
+            float reduction = 0f;
 
             foreach (var part in selectedParts)
             {
                 ArmorData armor = part.equippedArmor;
                 if (armor == null) continue;
 
-                totalReduction += dt switch
+                reduction += dt switch
                 {
                     DamageType.Physical => armor.reduceDamagePhysical,
                     DamageType.Fire => armor.reduceDamageFire,
@@ -316,23 +333,22 @@ public class DamageCalculator : MonoBehaviour
                 };
             }
 
-            float reduced = Mathf.Max(0f, original - totalReduction);
+            float reduced = Mathf.Max(0f, original - reduction);
             reducedDamageBreakdown[dt] = reduced;
-
-            Debug.Log($"[Reduce] {dt}: -{totalReduction} => {reduced}");
+            Debug.Log($"[Reduce] {dt}: -{reduction} => {reduced}");
         }
 
-        // 6. Final Damage
+        // 6. Final Damage Calculation
         float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
-        float scaledFinalDamage = Mathf.Max(0f, finalDamage * llmDamageModifier);
+        float scaledFinalDamage = Mathf.Max(0f, finalDamage * llmModifier);
 
-        Debug.Log($"[Final Damage]: {scaledFinalDamage}");
+        Debug.Log($"[Final Damage] = {scaledFinalDamage}");
 
-        // 7. Apply to selected body parts
-        float splitDamage = scaledFinalDamage / selectedParts.Count;
+        // 7. Apply to Body Parts
+        float damagePerPart = scaledFinalDamage / selectedParts.Count;
         foreach (var part in selectedParts)
         {
-            part.ApplyDamage(Mathf.RoundToInt(splitDamage));
+            part.ApplyDamage(Mathf.RoundToInt(damagePerPart));
         }
 
         return scaledFinalDamage;

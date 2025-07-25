@@ -37,6 +37,8 @@ public class ItemButtonUI : MonoBehaviour
 
         if (item == null) return;
 
+        battleManager.selectedTarget = null;
+
         // Deactivate all other items
         foreach (var invItem in battleManager.player.activeItem)
         {

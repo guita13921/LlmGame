@@ -34,6 +34,11 @@ public class Character : MonoBehaviour
     public Character damageTarget;
     public int currentHitIndex = 0;
 
+    [Header("Skills")]
+    public List<DamageModifierSkill> damageModifierSkills = new List<DamageModifierSkill>();
+    public DamageModifierSkill currentSkill;
+    public bool isUsingUltimateSkill = false;
+
     [Header("Runtime")]
     public int currentHP;
     public int currentMP;
@@ -45,6 +50,7 @@ public class Character : MonoBehaviour
     [Header("Active Items")]
     public List<Item> activeItem;
     public bool isUsingConsumeTurnItem;
+
 
     public virtual void Awake()
     {
@@ -75,6 +81,11 @@ public class Character : MonoBehaviour
         {
             OnDeath();
         }
+    }
+
+    public BodyPartData GetBodyPart(BodyPartType type)
+    {
+        return bodyParts.Find(p => p.type == type);
     }
 
     public virtual void OnDeath()
@@ -153,6 +164,9 @@ public class Character : MonoBehaviour
         currentHitIndex++;
     }
 
-
+    public void ApplyStatusEffect(StatusEffect effect)
+    {
+        // Your logic to track status effects, e.g. add to a List<StatusEffect>
+    }
 
 }

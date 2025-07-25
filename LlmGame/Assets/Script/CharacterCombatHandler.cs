@@ -28,8 +28,18 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         float baseDamage = player.attack;
-        float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
-        int finalDamage = Mathf.RoundToInt(calculatedDamage);
+        int finalDamage = 0;
+
+        if (battleManager.player.isUsingUltimateSkill == false)
+        {
+            float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
+            finalDamage = Mathf.RoundToInt(calculatedDamage);
+        }
+        else
+        {
+            float calculatedDamage = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
+            finalDamage = Mathf.RoundToInt(calculatedDamage);
+        }
 
         // ✅ Prepare damage
         player.pendingDamage = finalDamage;

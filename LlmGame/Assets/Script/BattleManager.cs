@@ -19,12 +19,12 @@ public class BattleManager : MonoBehaviour
     [Header("Show Debug")]
     [SerializeField] public bool showDebug;
 
-
     [Header("Character Lists")]
     [SerializeField] public List<Character> allCharacters = new List<Character>();
     [SerializeField] public List<string> battleLog = new List<string>();
     [SerializeField] public Character selectedTarget = null;
     [SerializeField] public List<BodyPartData> selectedParts = new List<BodyPartData>();
+
 
     [Header("Battle State")]
     [SerializeField] public int turnCount = 1;
@@ -37,6 +37,7 @@ public class BattleManager : MonoBehaviour
 
     [HideInInspector] public string lastUserMessage = "";
 
+
     private void Start()
     {
         player.turnGauge = 0f;
@@ -47,6 +48,7 @@ public class BattleManager : MonoBehaviour
             e.turnGauge = 0f;
             allCharacters.Add(e);
         }
+
     }
 
     private void Update()
@@ -149,6 +151,11 @@ public class BattleManager : MonoBehaviour
                 StartCoroutine(consumeItem.UseOnTarget(player, selectedCharacter, this));
             }
         }
+
+        if (player.isUsingUltimateSkill == true)
+        {
+            StartCoroutine(player.currentSkill.UseOnTarget(player, selectedCharacter, this));
+        }
     }
 
     private string GetRandomEnemyAction(Enemy enemy)
@@ -203,30 +210,43 @@ public class BattleManager : MonoBehaviour
     {
         HashSet<DamageType> incomingDamageTypes = new HashSet<DamageType>();
 
-        foreach (var weaponItem in attacker.activeItem)
+        // ✅ 1. Check if a skill is active
+        if (attacker.currentSkill is DamageModifierSkill skill && skill.damageTypes != null && skill.damageTypes.Count > 0)
         {
-            if (weaponItem is Weapon weapon)
+            foreach (var dt in skill.damageTypes)
             {
-                foreach (var dt in weapon.damageType)
+                incomingDamageTypes.Add(dt);
+            }
+
+            Debug.Log($"[Defensive] Using skill '{skill.skillName}' with damage types: {string.Join(", ", skill.damageTypes)}");
+        }
+        else
+        {
+            // ✅ 2. Fallback to weapon items in activeItem
+            foreach (var weaponItem in attacker.activeItem)
+            {
+                if (weaponItem is Weapon weapon)
                 {
-                    incomingDamageTypes.Add(dt);
+                    foreach (var dt in weapon.damageType)
+                    {
+                        incomingDamageTypes.Add(dt);
+                    }
                 }
             }
-        }
 
-        // If no damage types found, default to Physical
-        if (incomingDamageTypes.Count == 0)
-        {
-            incomingDamageTypes.Add(DamageType.Physical);
-            Debug.Log("No damage types detected. Defaulting to Physical damage.");
+            if (incomingDamageTypes.Count == 0)
+            {
+                incomingDamageTypes.Add(DamageType.Physical);
+                Debug.Log("No damage types detected. Defaulting to Physical damage.");
+            }
         }
 
         Debug.Log($"Incoming damage types: {string.Join(", ", incomingDamageTypes.Select(t => t.ToString()))}");
 
-        // Clear active defensive items first
+        // ✅ 3. Clear previously active defensive items
         target.activeItem.RemoveAll(item => item is Defensive);
 
-        // Check each defensive item
+        // ✅ 4. Evaluate defensive items
         foreach (var item in target.inventoryItems)
         {
             if (item is Defensive defensive)
@@ -239,21 +259,21 @@ public class BattleManager : MonoBehaviour
                 {
                     defensive.isActive = true;
 
-                    // Only add if not already in activeItem
                     if (!target.activeItem.Contains(defensive))
                     {
                         target.activeItem.Add(defensive);
                     }
 
-                    Debug.Log($"Defensive item '{defensive.itemName}' activated! Matches damage types: {string.Join(", ", defensive.damageTypeReduce.Select(t => t.ToString()))}");
+                    Debug.Log($"🛡️ Defensive item '{defensive.itemName}' activated! Matches: {string.Join(", ", defensive.damageTypeReduce)}");
                 }
                 else
                 {
-                    Debug.Log($"Defensive item '{defensive.itemName}' did not match any damage types and remains inactive.");
+                    Debug.Log($"⚠️ Defensive item '{defensive.itemName}' did not match any damage types.");
                 }
             }
         }
     }
+
 
     public void SetUserMessage(string message)
     {

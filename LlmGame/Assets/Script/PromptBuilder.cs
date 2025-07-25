@@ -11,7 +11,7 @@ public static class PromptBuilder
         string history = GetBattleHistory(battleManager);
 
         // Detect selected parts in enemy based on user's action
-        PromptBuilder.DetectSelectedBodyParts(userMessage, targetEnemy, battleManager);
+        if (battleManager.player.isUsingUltimateSkill == false) PromptBuilder.DetectSelectedBodyParts(userMessage, targetEnemy, battleManager);
 
         // Format active items
         string PlayerActiveItemsText = FormatActiveItems(battleManager.player.activeItem);
@@ -45,6 +45,8 @@ public static class PromptBuilder
 
             You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
             Also consider the current HP and descriptions of both characters.
+
+            If the Proposed action contains {{Skill}}, note that it is a character ability that can be performed.
 
             Especially pay attention to the items of {battleManager.player.characterName} and {targetEnemy.characterName}.
             - They should only use items that are active and present in their inventory.
@@ -119,7 +121,9 @@ public static class PromptBuilder
 
         You should determine what happens next in the story. Take into account the battle history so actions have evolving narrative effects.
         Also consider the current HP and descriptions of both characters.
-        
+
+        If the Proposed action contains {{Skill}}, note that it is a character ability that can be performed.
+
         Especially pay attention to the items of {enemy.characterName} and {target.characterName}
         - They should only use items that are active and present in their inventory.
         - Usage of inactive or non-inventory items is infeasible.
@@ -312,7 +316,6 @@ public static class PromptBuilder
 
     public static void DetectSelectedBodyParts(string message, Character target, BattleManager battleManager)
     {
-        battleManager.selectedParts.Clear();
 
         string lowerMessage = message.ToLower();
 
@@ -359,6 +362,7 @@ public static class PromptBuilder
         }
 
         Debug.Log($"✅ Total Selected Body Parts: {battleManager.selectedParts.Count}");
+        battleManager.selectedParts.Clear();
     }
 
     [System.Serializable]
