@@ -31,9 +31,19 @@ public class BodyPartData : ScriptableObject
 
     public bool IsDestroyed => health <= 0;
 
-    public void ApplyDamage(int totalDamage)
+    public void ApplyDamage(int totalDamage, bool hasReduce = true)
     {
-        int damageToPart = Mathf.RoundToInt(totalDamage * damageToPartRatio);
+
+        int damageToPart = 0;
+
+        if (hasReduce)
+        {
+            damageToPart = Mathf.RoundToInt(totalDamage * damageToPartRatio);
+        }
+        else
+        {
+            damageToPart = Mathf.RoundToInt(totalDamage);
+        }
 
         int beforeHealth = this.health;
         this.health -= damageToPart;
@@ -53,5 +63,6 @@ public class BodyPartData : ScriptableObject
             }
         }
     }
+
 
 }

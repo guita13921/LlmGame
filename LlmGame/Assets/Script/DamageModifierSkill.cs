@@ -10,7 +10,7 @@ public class DamageModifierSkill : ScriptableObject
     [TextArea]
     public string skillDescription;
 
-    [Header("Stat")]
+    [Header("StatToCharacter")]
     public int damagePhysical;   // Bullets, blades, blunt weapons
     public int damageFire;       // Flamethrowers, incendiary rounds
     public int damageElectric;   // Shock batons, EMP, etc.
@@ -22,7 +22,10 @@ public class DamageModifierSkill : ScriptableObject
     public int damageChemical;   // Gas, toxins
     public int damageViral;      // Biological or digital viruses
 
-    public int baseDamage = 100;
+    [Header("StatToCharacter")]
+    public bool isDamagePercentagePart;
+    public int percentDamgePerPart;
+
     public int mpCost = 80;
 
     [Tooltip("Which types of damage this skill affects.")]

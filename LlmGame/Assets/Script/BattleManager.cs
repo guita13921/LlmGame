@@ -274,7 +274,6 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-
     public void SetUserMessage(string message)
     {
         lastUserMessage = message;

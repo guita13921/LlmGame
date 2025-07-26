@@ -345,10 +345,23 @@ public class DamageCalculator : MonoBehaviour
         Debug.Log($"[Final Damage] = {scaledFinalDamage}");
 
         // 7. Apply to Body Parts
-        float damagePerPart = scaledFinalDamage / selectedParts.Count;
-        foreach (var part in selectedParts)
+        if (battleManager.player.currentSkill.isDamagePercentagePart)
         {
-            part.ApplyDamage(Mathf.RoundToInt(damagePerPart));
+            foreach (var part in selectedParts)
+            {
+                // Assume each part has a MaxHP property.
+                float percentage = battleManager.player.currentSkill.percentDamgePerPart / 100f;
+                int damageAmount = Mathf.RoundToInt(part.maxHealth * percentage);
+                part.ApplyDamage(damageAmount, false);
+            }
+        }
+        else
+        {
+            float damagePerPart = scaledFinalDamage / selectedParts.Count;
+            foreach (var part in selectedParts)
+            {
+                part.ApplyDamage(Mathf.RoundToInt(damagePerPart));
+            }
         }
 
         return scaledFinalDamage;
