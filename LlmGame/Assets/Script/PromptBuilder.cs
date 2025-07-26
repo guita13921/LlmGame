@@ -316,7 +316,7 @@ public static class PromptBuilder
 
     public static void DetectSelectedBodyParts(string message, Character target, BattleManager battleManager)
     {
-
+        battleManager.selectedParts.Clear();
         string lowerMessage = message.ToLower();
 
         foreach (var part in target.bodyParts)
@@ -362,7 +362,6 @@ public static class PromptBuilder
         }
 
         Debug.Log($"✅ Total Selected Body Parts: {battleManager.selectedParts.Count}");
-        battleManager.selectedParts.Clear();
     }
 
     [System.Serializable]

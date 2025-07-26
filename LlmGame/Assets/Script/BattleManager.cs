@@ -49,6 +49,7 @@ public class BattleManager : MonoBehaviour
             allCharacters.Add(e);
         }
 
+
     }
 
     private void Update()
@@ -76,6 +77,17 @@ public class BattleManager : MonoBehaviour
                 isActionPhase = true;
                 character.turnGauge = 0f;
 
+                // ⬇️ Process status effects BEFORE they take their action
+                character.ProcessStatusEffects();
+
+                // ⬇️ If stunned, skip action
+                if (character.HasStatusEffect(StatusEffectType.Stun))
+                {
+                    Debug.Log($"{character.characterName} is stunned and skips their turn.");
+                    StartCoroutine(SkipTurn(character));
+                    break;
+                }
+
                 if (character is Player)
                     chatAI.ShowInputUI();
                 else
@@ -86,6 +98,7 @@ public class BattleManager : MonoBehaviour
             }
         }
     }
+
 
     private IEnumerator DoAction(Character character)
     {
@@ -356,5 +369,11 @@ public class BattleManager : MonoBehaviour
         Debug.Log("Player turn ended.");
     }
 
+    private IEnumerator SkipTurn(Character character)
+    {
+        yield return new WaitForSeconds(1f); // Simulate a delay
+        Debug.Log($"{character.characterName}'s turn was skipped due to stun.");
+        isActionPhase = false;
+    }
 
 }

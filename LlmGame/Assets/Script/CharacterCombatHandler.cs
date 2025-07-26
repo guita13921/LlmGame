@@ -28,16 +28,18 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         float baseDamage = player.attack;
-        int finalDamage = 0;
+        int finalDamage;
 
         if (battleManager.player.isUsingUltimateSkill == false)
         {
             float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
+            Debug.Log("calculatedDamage : " + calculatedDamage);
             finalDamage = Mathf.RoundToInt(calculatedDamage);
         }
         else
         {
             float calculatedDamage = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
+            Debug.Log("calculatedDamage : " + calculatedDamage);
             finalDamage = Mathf.RoundToInt(calculatedDamage);
         }
 
@@ -46,11 +48,19 @@ public class CharacterCombatHandler : MonoBehaviour
         player.damageTarget = target;
         player.currentHitIndex = 0;
 
+
         // ✅ Assign selected action so hits can use hitEffects
         player.selectedAction = chosenAction;
 
         // ✅ Play Animation
-        yield return battleManager.WaitForAnimation(player, chosenAction.animationTrigger);
+        if (battleManager.player.isUsingUltimateSkill == true)
+        {
+            yield return battleManager.WaitForAnimation(player, battleManager.player.currentSkill.aniamtionTrigger);
+        }
+        else
+        {
+            yield return battleManager.WaitForAnimation(player, chosenAction.animationTrigger);
+        }
 
         // ✅ Log
         string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text} for total {finalDamage} damage → Target: {target.characterName}";
@@ -59,8 +69,6 @@ public class CharacterCombatHandler : MonoBehaviour
 
         yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
     }
-
-
 
 
     public void UseItem(List<Item> item, string outcomeType)

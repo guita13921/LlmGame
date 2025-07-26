@@ -34,6 +34,9 @@ public class Character : MonoBehaviour
     public Character damageTarget;
     public int currentHitIndex = 0;
 
+    [Header("Status Effects")]
+    [SerializeField] public List<TurnStatusEffect> activeStatusEffects = new List<TurnStatusEffect>();
+
     [Header("Skills")]
     public List<DamageModifierSkill> damageModifierSkills = new List<DamageModifierSkill>();
     public DamageModifierSkill currentSkill;
@@ -81,11 +84,6 @@ public class Character : MonoBehaviour
         {
             OnDeath();
         }
-    }
-
-    public BodyPartData GetBodyPart(BodyPartType type)
-    {
-        return bodyParts.Find(p => p.type == type);
     }
 
     public virtual void OnDeath()
@@ -164,9 +162,100 @@ public class Character : MonoBehaviour
         currentHitIndex++;
     }
 
-    public void ApplyStatusEffect(StatusEffect effect)
+    public void ApplyStatusEffect(TurnStatusEffect newEffect)
     {
-        // Your logic to track status effects, e.g. add to a List<StatusEffect>
+        // Optional: merge with existing effect
+        var existing = activeStatusEffects.Find(e => e.effectType == newEffect.effectType);
+        if (existing != null)
+        {
+            existing.remainingTurns = Mathf.Max(existing.remainingTurns, newEffect.remainingTurns);
+            existing.magnitude = Mathf.Max(existing.magnitude, newEffect.magnitude);
+        }
+        else
+        {
+            activeStatusEffects.Add(newEffect);
+        }
+
+        Debug.Log($"{characterName} gains {newEffect.effectType} for {newEffect.remainingTurns} turns.");
+    }
+
+    public virtual void ProcessStatusEffects()
+    {
+        for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
+        {
+            TurnStatusEffect effect = activeStatusEffects[i];
+
+            // Apply effect logic before reducing turn count
+            switch (effect.effectType)
+            {
+                case StatusEffectType.Stun:
+                    Debug.Log($"{characterName} is stunned and will skip this turn.");
+                    break;
+
+                case StatusEffectType.Flame:
+                    int burnDamage = Mathf.RoundToInt(maxHP * 0.05f); // 5% of max HP
+                    TakeDamage(burnDamage);
+                    Debug.Log($"{characterName} takes {burnDamage} burn damage from Flame.");
+                    break;
+
+                case StatusEffectType.DefenseDown:
+                    if (!effect.isApplied)
+                    {
+                        defense -= effect.magnitude;
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s defense is reduced by {effect.magnitude}.");
+                    }
+                    break;
+
+                case StatusEffectType.AttackDown:
+                    if (!effect.isApplied)
+                    {
+                        attack -= effect.magnitude;
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s attack is reduced by {effect.magnitude}.");
+                    }
+                    break;
+
+                case StatusEffectType.FocusDown:
+                    if (!effect.isApplied)
+                    {
+                        focus -= effect.magnitude;
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s focus is reduced by {effect.magnitude}.");
+                    }
+                    break;
+
+                    // Add more effects here
+            }
+
+            // Decrement turns
+            effect.remainingTurns--;
+
+            // Remove and revert stat effects if expired
+            if (effect.remainingTurns <= 0)
+            {
+                switch (effect.effectType)
+                {
+                    case StatusEffectType.DefenseDown:
+                        defense += effect.magnitude;
+                        break;
+                    case StatusEffectType.AttackDown:
+                        attack += effect.magnitude;
+                        break;
+                    case StatusEffectType.FocusDown:
+                        focus += effect.magnitude;
+                        break;
+                }
+
+                Debug.Log($"{characterName} is no longer affected by {effect.effectType}.");
+                activeStatusEffects.RemoveAt(i);
+            }
+        }
+    }
+
+    public bool HasStatusEffect(StatusEffectType type)
+    {
+        return activeStatusEffects.Exists(effect => effect.effectType == type && effect.remainingTurns > 0);
     }
 
 }

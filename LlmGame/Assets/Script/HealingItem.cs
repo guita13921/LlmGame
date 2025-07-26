@@ -12,7 +12,7 @@ public class HealingItem : ConsumeTurnItem
     {
         Debug.Log($"{user.characterName} uses {itemName} on {target.characterName}");
 
-        yield return battleManager.StartCoroutine(battleManager.WaitForAnimation(user, "Attack"));
+        yield return battleManager.StartCoroutine(battleManager.WaitForAnimation(user, this.aniamtionTrigger));
 
         target.currentHP = Mathf.Min(target.maxHP, target.currentHP + healingAmount);
         Debug.Log($"{target.characterName} healed for {healingAmount} HP");

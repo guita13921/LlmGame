@@ -7,14 +7,16 @@ public class InputKeywordHighlighter : MonoBehaviour
 {
     [Header("References")]
     public TMP_InputField inputField;
-    public TMP_Text displayText; // Text object that shows highlighted text.
+    public TMP_Text displayText;
 
     [SerializeField] public BattleManager battleManager;
 
-    [Header("Color")]
-    public Color highlightColor = Color.green;
+    [Header("Highlight Colors")]
+    public Color mainWeaponColor = Color.blue;
+    public Color subWeaponColor = Color.yellow;
 
-    private HashSet<string> allKeywords = new HashSet<string>();
+    // Map each keyword to its ItemType
+    private Dictionary<string, ItemType> keywordToType = new Dictionary<string, ItemType>();
 
     void Start()
     {
@@ -24,46 +26,77 @@ public class InputKeywordHighlighter : MonoBehaviour
             return;
         }
 
-        // Collect all keywords from inventory
+        if (battleManager == null || battleManager.player == null || battleManager.player.inventoryItems == null)
+        {
+            Debug.LogError("Missing BattleManager or inventoryItems.");
+            return;
+        }
+
+        // Map keywords to their ItemType
         foreach (var item in battleManager.player.inventoryItems)
         {
+            if (item.itemType == ItemType.Other)
+                continue; // Skip keywords from 'Other' items
+
             foreach (var keyword in item.keyWords)
             {
-                allKeywords.Add(keyword.ToLower()); // Lowercase for case-insensitive match
+                string lowerKeyword = keyword.ToLower();
+                if (!keywordToType.ContainsKey(lowerKeyword))
+                {
+                    keywordToType.Add(lowerKeyword, item.itemType);
+                }
             }
         }
 
-        // Subscribe to input event
         inputField.onValueChanged.AddListener(OnTextChanged);
     }
 
     void OnDestroy()
     {
-        inputField.onValueChanged.RemoveListener(OnTextChanged);
+        if (inputField != null)
+            inputField.onValueChanged.RemoveListener(OnTextChanged);
     }
 
     void OnTextChanged(string userInput)
     {
-        // If you want to escape < and >, use the EscapeRichText method, otherwise just use userInput directly.
-        string escapedInput = userInput;
-
-        // Regex pattern to match words (ignoring punctuation and whitespace)
         string pattern = @"\b\w+\b";
-        var matches = Regex.Matches(escapedInput, pattern);
+        var matches = Regex.Matches(userInput, pattern);
 
         int lastIndex = 0;
         string formattedText = "";
 
         foreach (Match match in matches)
         {
-            formattedText += escapedInput.Substring(lastIndex, match.Index - lastIndex);
+            formattedText += userInput.Substring(lastIndex, match.Index - lastIndex);
 
             string word = match.Value;
+            string lowerWord = word.ToLower();
 
-            if (allKeywords.Contains(word.ToLower()))
+            if (keywordToType.TryGetValue(lowerWord, out ItemType itemType))
             {
-                string colorHex = ColorUtility.ToHtmlStringRGB(highlightColor);
-                formattedText += $"<color=#{colorHex}>{word}</color>";
+                string colorHex = "";
+
+                switch (itemType)
+                {
+                    case ItemType.Main_Weapon:
+                        colorHex = ColorUtility.ToHtmlStringRGB(mainWeaponColor);
+                        break;
+                    case ItemType.Sub_Weapon:
+                        colorHex = ColorUtility.ToHtmlStringRGB(subWeaponColor);
+                        break;
+                    default:
+                        colorHex = ""; // Do not highlight for 'Other'
+                        break;
+                }
+
+                if (!string.IsNullOrEmpty(colorHex))
+                {
+                    formattedText += $"<color=#{colorHex}>{word}</color>";
+                }
+                else
+                {
+                    formattedText += word;
+                }
             }
             else
             {
@@ -73,11 +106,7 @@ public class InputKeywordHighlighter : MonoBehaviour
             lastIndex = match.Index + match.Length;
         }
 
-        // Add remaining text after last word
-        formattedText += escapedInput.Substring(lastIndex);
-
-        // Update display text
+        formattedText += userInput.Substring(lastIndex);
         displayText.text = formattedText;
     }
-
 }

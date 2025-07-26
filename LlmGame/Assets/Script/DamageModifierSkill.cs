@@ -28,6 +28,9 @@ public class DamageModifierSkill : ScriptableObject
 
     public int mpCost = 80;
 
+    [Header("Animation Trigger")]
+    public string aniamtionTrigger;
+
     [Tooltip("Which types of damage this skill affects.")]
     public List<DamageType> damageTypes = new List<DamageType>();
 
@@ -47,9 +50,6 @@ public class DamageModifierSkill : ScriptableObject
 
         user.currentMP -= mpCost;
         Debug.Log($"{user.characterName} uses {skillName} on {target.characterName}");
-
-        // ✅ Play animation
-        yield return battleManager.StartCoroutine(battleManager.WaitForAnimation(user, "Attack"));
 
         /*
         // ✅ Optional damage logic (currently commented out)

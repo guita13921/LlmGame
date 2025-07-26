@@ -457,6 +457,7 @@
 "Assets/Script/Player.cs"
 "Assets/Script/PromptBuilder.cs"
 "Assets/Script/SpriteBillBoard.cs"
+"Assets/Script/TurnStatusEffect.cs"
 "Assets/Script/UltimateSkillButtonUI.cs"
 "Assets/Script/WeakPoint.cs"
 "Assets/Script/Weapon.cs"

@@ -2,9 +2,9 @@ using UnityEngine;
 
 public enum ItemType
 {
-    Offensive,
-    Defensive,
-    Healing
+    Main_Weapon,
+    Sub_Weapon,
+    Other
 }
 
 public enum UsageType
@@ -66,4 +66,15 @@ public class StatusEffect
     public string effectName;
     public int turnsRemaining;
     public bool skipTurn;
+}
+
+public enum StatusEffectType
+{
+    Stun,
+    Shock,
+    Flame,
+    DefenseDown,
+    AttackDown,
+    FocusDown,
+    Custom // Add more as needed
 }

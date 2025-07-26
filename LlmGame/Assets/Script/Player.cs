@@ -13,6 +13,11 @@ public class Player : Character
     private int baseEXP = 100;
     private double growth = 1.5;
 
+    void Start()
+    {
+        ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Stun, 1));
+    }
+
     public int EXPToNextLevel()
     {
         return (int)(baseEXP * Mathf.Pow(level, (float)growth));

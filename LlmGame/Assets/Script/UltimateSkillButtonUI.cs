@@ -19,7 +19,14 @@ public class UltimateSkillButtonUI : MonoBehaviour
     {
         if (battleManager.player == null)
         {
-            Debug.LogWarning("No player assigned in BattleManager!");
+            Debug.Log("No player assigned in BattleManager!");
+            return;
+        }
+
+        // ✅ MP Check
+        if (battleManager.player.currentMP < ultimateSkill.mpCost)
+        {
+            Debug.Log($"{battleManager.player.characterName} does not have enough MP to use {ultimateSkill.mpCost}!");
             return;
         }
 

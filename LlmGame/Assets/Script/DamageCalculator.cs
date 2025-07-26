@@ -100,6 +100,7 @@ public class DamageCalculator : MonoBehaviour
         float potentialModifierSum = 0f;
 
         var selectedParts = battleManager.selectedParts;
+
         if (selectedParts == null || selectedParts.Count == 0)
         {
             Debug.LogWarning("⚠️ No selected body parts.");
@@ -194,8 +195,6 @@ public class DamageCalculator : MonoBehaviour
         float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
         float scaledFinalDamage = Mathf.Max(0f, finalDamage * llmDamageModifier);
 
-        Debug.Log($"[Final Damage]: {scaledFinalDamage}");
-
         // 7. Apply split damage to selected body parts
         float splitDamage = scaledFinalDamage / selectedParts.Count;
         foreach (var part in selectedParts)
@@ -203,6 +202,7 @@ public class DamageCalculator : MonoBehaviour
             part.ApplyDamage(Mathf.RoundToInt(splitDamage));
         }
 
+        Debug.Log($"[Final Damage]: {scaledFinalDamage}");
         return scaledFinalDamage;
     }
 
@@ -368,4 +368,3 @@ public class DamageCalculator : MonoBehaviour
     }
 
 }
-
