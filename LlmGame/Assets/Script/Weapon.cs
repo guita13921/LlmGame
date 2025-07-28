@@ -17,7 +17,11 @@ public class Weapon : Item
     public int damageChemical;       // Gas attacks; chemical bombs
     public int damageViral;          // Digital viruses that affect both tech and biology
 
+    [Header("TwoHand Weapon")]
+    public bool isTwoHandWeapon;
+
     [Header("DamageType")]
     public List<DamageType> damageType;
+
 
 }

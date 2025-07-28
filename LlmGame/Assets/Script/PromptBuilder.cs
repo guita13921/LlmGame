@@ -28,8 +28,8 @@ public static class PromptBuilder
 
             {battleManager.player.characterName} is engaging {targetEnemy.characterName} in a fantasy battle.
 
-            Player description: {battleManager.player.description}
-            Enemy description: {targetEnemy.description}
+            Player description: {battleManager.player.characterType} - {battleManager.player.description}
+            Enemy description: {targetEnemy.characterType} - {targetEnemy.description}
 
             Player items active:
             {PlayerActiveItemsText}
@@ -51,7 +51,6 @@ public static class PromptBuilder
             Especially pay attention to the items of {battleManager.player.characterName} and {targetEnemy.characterName}.
             - They should only use items that are active and present in their inventory.
             - Usage of inactive or non-inventory items is infeasible.
-            - When a protective item is active, it does not reduce or increase the damage that can be dealt. It is just used to describe the details.
 
             The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
@@ -104,8 +103,8 @@ public static class PromptBuilder
 
         {enemy.characterName} is engaging {target.characterName} in a fantasy battle.
 
-        Enemy description: {enemy.description}
-        Player description: {target.description}
+        Player description: {target.characterType} - {target.description}
+        Enemy description: {enemy.characterType} - {enemy.description}
 
         Player items active:
         {PlayerActiveItemsText}
@@ -127,7 +126,6 @@ public static class PromptBuilder
         Especially pay attention to the items of {enemy.characterName} and {target.characterName}
         - They should only use items that are active and present in their inventory.
         - Usage of inactive or non-inventory items is infeasible.
-        - When a protective item is active, it does not reduce or increase the potential_damage that can be dealt. It is just used to describe the details.
 
         The possible damages and feasibility are not comparable to the actual damages, so it is a written description without any quantification.
 
@@ -247,13 +245,11 @@ public static class PromptBuilder
         return foundExposed ? sb.ToString() : "No exposed weak points.";
     }
 
-
     public static void CheckAndActivateItems(BattleManager battleManager, string userMessage, Character targetEnemy)
     {
-        // Convert user message to lowercase for case-insensitive matching
         string lowerMessage = userMessage.ToLower();
 
-        // Reset all items to inactive first
+        // Reset all items to inactive
         foreach (var item in battleManager.player.inventoryItems)
         {
             item.isActive = false;
@@ -264,11 +260,28 @@ public static class PromptBuilder
             item.isActive = false;
         }
 
-        // Clear the active items list
+        // Clear active items list
         battleManager.player.activeItem.Clear();
 
-        // Check each item's keywords against the user message
-        foreach (var item in battleManager.player.inventoryItems.ToList())
+        // Prepare items to check: equipped weapons + Sub_Weapons in inventory
+        List<Item> itemsToCheck = new List<Item>();
+
+        if (battleManager.player.leftHandWeapon != null)
+            itemsToCheck.Add(battleManager.player.leftHandWeapon);
+
+        if (battleManager.player.rightHandWeapon != null)
+            itemsToCheck.Add(battleManager.player.rightHandWeapon);
+
+        foreach (var item in battleManager.player.inventoryItems)
+        {
+            if (item is Weapon weapon && weapon.itemType == ItemType.Sub_Weapon)
+            {
+                itemsToCheck.Add(weapon);
+            }
+        }
+
+        // 🔥 Activate all matching items
+        foreach (var item in itemsToCheck.ToList())
         {
             bool keywordFound = false;
 
@@ -279,29 +292,22 @@ public static class PromptBuilder
                     item.isActive = true;
                     keywordFound = true;
 
-                    // Add to active items list
                     battleManager.player.activeItem.Add(item);
-
                     Debug.Log($"Item '{item.itemName}' activated by keyword: '{keyword}'");
 
-                    // 🔥 Check OneTime condition
+                    // Handle OneTime items
                     if (item.usageType == UsageType.OneTime)
                     {
                         item.remain--;
 
                         if (item.remain <= 0)
                         {
-                            Debug.Log($"Item '{item.itemName}' is OneTime and used up. Removing from inventory.");
-
-                            // Remove from activeItem list
-                            //battleManager.player.activeItem.Remove(item);
-
-                            // Remove from inventory
+                            Debug.Log($"Item '{item.itemName}' used up and removed (OneTime)");
                             battleManager.player.inventoryItems.Remove(item);
                         }
                     }
 
-                    break; // Stop checking more keywords for this item
+                    break; // Found a match, stop checking this item's keywords
                 }
             }
 

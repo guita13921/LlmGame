@@ -50,6 +50,10 @@ public class Character : MonoBehaviour
     [Header("Inventory")]
     public List<Item> inventoryItems;
 
+    [Header("Equipment")]
+    public Weapon leftHandWeapon;
+    public Weapon rightHandWeapon;
+
     [Header("Active Items")]
     public List<Item> activeItem;
     public bool isUsingConsumeTurnItem;
@@ -256,6 +260,56 @@ public class Character : MonoBehaviour
     public bool HasStatusEffect(StatusEffectType type)
     {
         return activeStatusEffects.Exists(effect => effect.effectType == type && effect.remainingTurns > 0);
+    }
+
+    public bool EquipWeapon(Weapon weapon, bool isRightHand)
+    {
+        if (weapon == null) return false;
+
+        if (weapon.isTwoHandWeapon)
+        {
+            // Two-handed weapons occupy both hands
+            leftHandWeapon = weapon;
+            rightHandWeapon = weapon;
+        }
+        else
+        {
+            // Equip normally
+            if (isRightHand)
+                rightHandWeapon = weapon;
+            else
+                leftHandWeapon = weapon;
+
+            // Unequip two-hand if one-handed weapon is equipped
+            if (leftHandWeapon != rightHandWeapon)
+            {
+                if (leftHandWeapon?.isTwoHandWeapon == true)
+                    leftHandWeapon = null;
+
+                if (rightHandWeapon?.isTwoHandWeapon == true)
+                    rightHandWeapon = null;
+            }
+        }
+
+        return true;
+    }
+
+    public void UnequipRightHand()
+    {
+        rightHandWeapon = null;
+
+        // If it's a two-handed weapon, remove both
+        if (leftHandWeapon?.isTwoHandWeapon == true)
+            leftHandWeapon = null;
+    }
+
+    public void UnequipLeftHand()
+    {
+        leftHandWeapon = null;
+
+        // If it's a two-handed weapon, remove both
+        if (rightHandWeapon?.isTwoHandWeapon == true)
+            rightHandWeapon = null;
     }
 
 }

@@ -15,7 +15,7 @@ public class Player : Character
 
     void Start()
     {
-        ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Stun, 1));
+        //ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Stun, 1));
     }
 
     public int EXPToNextLevel()

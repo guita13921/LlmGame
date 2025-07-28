@@ -26,30 +26,52 @@ public class InputKeywordHighlighter : MonoBehaviour
             return;
         }
 
-        if (battleManager == null || battleManager.player == null || battleManager.player.inventoryItems == null)
+        if (battleManager == null || battleManager.player == null)
         {
-            Debug.LogError("Missing BattleManager or inventoryItems.");
+            Debug.LogError("Missing BattleManager or player.");
             return;
         }
 
-        // Map keywords to their ItemType
+        // ✅ Add Main_Weapon keywords from equipped weapons
+        AddWeaponKeywords(battleManager.player.leftHandWeapon, ItemType.Main_Weapon);
+        if (battleManager.player.rightHandWeapon != battleManager.player.leftHandWeapon)
+        {
+            AddWeaponKeywords(battleManager.player.rightHandWeapon, ItemType.Main_Weapon);
+        }
+
+        // ✅ Add Sub_Weapon keywords from inventory
         foreach (var item in battleManager.player.inventoryItems)
         {
-            if (item.itemType == ItemType.Other)
-                continue; // Skip keywords from 'Other' items
-
-            foreach (var keyword in item.keyWords)
+            if (item is Weapon weapon && weapon.itemType == ItemType.Sub_Weapon)
             {
-                string lowerKeyword = keyword.ToLower();
-                if (!keywordToType.ContainsKey(lowerKeyword))
+                foreach (var keyword in weapon.keyWords)
                 {
-                    keywordToType.Add(lowerKeyword, item.itemType);
+                    string lowerKeyword = keyword.ToLower();
+                    if (!keywordToType.ContainsKey(lowerKeyword))
+                    {
+                        keywordToType.Add(lowerKeyword, ItemType.Sub_Weapon);
+                    }
                 }
             }
         }
 
         inputField.onValueChanged.AddListener(OnTextChanged);
     }
+
+    private void AddWeaponKeywords(Weapon weapon, ItemType type)
+    {
+        if (weapon == null) return;
+
+        foreach (var keyword in weapon.keyWords)
+        {
+            string lowerKeyword = keyword.ToLower();
+            if (!keywordToType.ContainsKey(lowerKeyword))
+            {
+                keywordToType.Add(lowerKeyword, type);
+            }
+        }
+    }
+
 
     void OnDestroy()
     {

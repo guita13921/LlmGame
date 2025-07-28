@@ -187,6 +187,7 @@ public class BattleManager : MonoBehaviour
     {
         string lowerAction = enemyAction.ToLower();
 
+        // Clear all item activation states
         foreach (var item in enemy.inventoryItems)
         {
             item.isActive = false;
@@ -194,30 +195,41 @@ public class BattleManager : MonoBehaviour
 
         enemy.activeItem.Clear();
 
-        foreach (var item in enemy.inventoryItems)
-        {
-            bool keywordFound = false;
-            foreach (string keyword in item.keyWords)
-            {
-                if (!string.IsNullOrEmpty(keyword) && lowerAction.Contains(keyword.ToLower()))
-                {
-                    item.isActive = true;
-                    keywordFound = true;
-                    enemy.activeItem.Add(item);
+        // Check left hand weapon
+        ProcessWeaponForActivation(enemy.leftHandWeapon, lowerAction, enemy);
 
-                    Debug.Log($"Enemy item '{item.itemName}' activated by keyword: '{keyword}' from action: '{enemyAction}'");
-                    break;
-                }
-            }
-
-            if (!keywordFound)
-            {
-                Debug.Log($"Enemy item '{item.itemName}' remains inactive - no keywords matched");
-            }
-        }
+        // Check right hand weapon
+        ProcessWeaponForActivation(enemy.rightHandWeapon, lowerAction, enemy);
 
         Debug.Log($"Total enemy active items: {enemy.activeItem.Count}");
     }
+
+    private void ProcessWeaponForActivation(Weapon weapon, string lowerAction, Enemy enemy)
+    {
+        if (weapon == null)
+            return;
+
+        bool keywordFound = false;
+
+        foreach (string keyword in weapon.keyWords)
+        {
+            if (!string.IsNullOrEmpty(keyword) && lowerAction.Contains(keyword.ToLower()))
+            {
+                weapon.isActive = true;
+                keywordFound = true;
+                enemy.activeItem.Add(weapon);
+
+                Debug.Log($"Sub_Weapon '{weapon.itemName}' activated by keyword: '{keyword}' from action: '{lowerAction}'");
+                break;
+            }
+        }
+
+        if (!keywordFound)
+        {
+            Debug.Log($"Sub_Weapon '{weapon.itemName}' remains inactive - no keywords matched");
+        }
+    }
+
 
     public void CheckAndActivateDefensiveItems(Character attacker, Character target)
     {
@@ -375,5 +387,7 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"{character.characterName}'s turn was skipped due to stun.");
         isActionPhase = false;
     }
+
+
 
 }
