@@ -230,7 +230,6 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-
     public void CheckAndActivateDefensiveItems(Character attacker, Character target)
     {
         HashSet<DamageType> incomingDamageTypes = new HashSet<DamageType>();

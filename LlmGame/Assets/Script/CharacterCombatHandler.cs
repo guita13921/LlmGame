@@ -63,7 +63,7 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         // ✅ Log
-        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text} for total {finalDamage} damage → Target: {target.characterName}";
+        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName}";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
@@ -125,7 +125,7 @@ public class CharacterCombatHandler : MonoBehaviour
         // ✅ Wait for animation to finish
         yield return battleManager.WaitForAnimation(enemy, chosenAction.animationTrigger);
 
-        string log = $"Turn {battleManager.turnCount}: {enemy.characterName} used {chosenAction.actionName} for total {finalDamage} damage → Target: {target.characterName}";
+        string log = $"Turn {battleManager.turnCount}: {enemy.characterName} used {chosenAction.actionName}  → Target: {target.characterName}";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 

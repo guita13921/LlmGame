@@ -21,6 +21,8 @@ public class ArmorData : ScriptableObject
     public int reduceDamageLaser;
     public int reduceDamageChemical;
     public int reduceDamageViral;
-
     public List<DamageType> damageTypeReduce; // Used for UI/display, optional for logic
+
+    [Header("BodyWeight")]
+    public int weightCost;
 }

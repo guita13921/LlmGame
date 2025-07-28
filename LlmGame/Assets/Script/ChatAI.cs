@@ -86,7 +86,7 @@ public class ChatAI : MonoBehaviour
         string finalEffect = "";
         string finalEffectDesc = "";
 
-        // === FIRST STAGE: INITIAL AI RESPONSE (via BuildPlayerPrompt) ===
+        // === FIRST STAGE: INITIAL AI RESPONSE ===
         while (attempts < maxAttempts && !validResponseReceived)
         {
             attempts++;
@@ -155,8 +155,7 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
 
-        // === SECOND STAGE: REFINEMENT PROMPT (anatomy-aware prompt) ===
-
+        // === SECOND STAGE: REFINEMENT PROMPT ===
         string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
             battleManager,
             battleManager.player,
@@ -200,14 +199,24 @@ public class ChatAI : MonoBehaviour
 
             RootProperties refinedRoot = JsonUtility.FromJson<RootProperties>(cleanedRefinementJson);
 
-            finalFeasibility = refinedRoot.properties.feasibility?.value ?? finalFeasibility;
-            finalFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? finalFeasibilityDesc;
+            float refinedFeasibility = refinedRoot.properties.feasibility?.value ?? finalFeasibility;
+            float refinedPotential = refinedRoot.properties.potential_damage?.value ?? finalPotential;
 
-            finalPotential = refinedRoot.properties.potential_damage?.value ?? finalPotential;
-            finalPotentialDesc = refinedRoot.properties.potential_damage?.description ?? finalPotentialDesc;
+            if (Mathf.Approximately(refinedFeasibility, 3f) && Mathf.Approximately(refinedPotential, 4f))
+            {
+                Debug.LogWarning("[Refinement] Default values detected in refinement stage — using initial response instead.");
+            }
+            else
+            {
+                finalFeasibility = refinedFeasibility;
+                finalFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? finalFeasibilityDesc;
 
-            finalEffect = refinedRoot.properties.effect_description?.value ?? finalEffect;
-            finalEffectDesc = refinedRoot.properties.effect_description?.description ?? finalEffectDesc;
+                finalPotential = refinedPotential;
+                finalPotentialDesc = refinedRoot.properties.potential_damage?.description ?? finalPotentialDesc;
+
+                finalEffect = refinedRoot.properties.effect_description?.value ?? finalEffect;
+                finalEffectDesc = refinedRoot.properties.effect_description?.description ?? finalEffectDesc;
+            }
         }
         catch (System.Exception e)
         {
@@ -216,7 +225,6 @@ public class ChatAI : MonoBehaviour
         }
 
         // === FINAL OUTPUT ===
-
         responseText.text = $"Feasibility: {finalFeasibility} ({finalFeasibilityDesc})\n" +
                             $"Potential: {finalPotential} ({finalPotentialDesc})\n" +
                             $"Effect: {finalEffect} ({finalEffectDesc})";
@@ -224,7 +232,6 @@ public class ChatAI : MonoBehaviour
         Debug.Log("<color=white>[Final Refined Result]</color>:\n" + responseText.text);
 
         // === COMBAT APPLICATION ===
-
         if (battleManager.player.isUsingConsumeTurnItem)
         {
             Debug.Log("Using consume-turn item — skipping direct attack.");
@@ -245,6 +252,7 @@ public class ChatAI : MonoBehaviour
             );
         }
     }
+
 
     public IEnumerator SendEnemyMessage(Character enemy, Character target, string proposedAction)
     {
@@ -373,15 +381,24 @@ public class ChatAI : MonoBehaviour
 
             var refinedRoot = JsonUtility.FromJson<RootProperties>(cleanedJson);
 
-            // Preserve values, but use refined descriptions
-            float finalFeasibility = baseFeasibility;
-            string finalFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? baseFeasibilityDesc;
+            float refinedFeasibility = refinedRoot.properties.feasibility?.value ?? baseFeasibility;
+            float refinedPotential = refinedRoot.properties.potential_damage?.value ?? basePotential;
 
-            float finalPotential = basePotential;
-            string finalPotentialDesc = refinedRoot.properties.potential_damage?.description ?? basePotentialDesc;
+            if (Mathf.Approximately(refinedFeasibility, 3f) && Mathf.Approximately(refinedPotential, 4f))
+            {
+                Debug.LogWarning("[SendEnemyMessage - Refinement] Default values detected in refinement — using initial values.");
+            }
+            else
+            {
+                baseFeasibility = refinedFeasibility;
+                baseFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? baseFeasibilityDesc;
 
-            string finalEffect = baseEffect;
-            string finalEffectDesc = refinedRoot.properties.effect_description?.description ?? baseEffectDesc;
+                basePotential = refinedPotential;
+                basePotentialDesc = refinedRoot.properties.potential_damage?.description ?? basePotentialDesc;
+
+                baseEffect = refinedRoot.properties.effect_description?.value ?? baseEffect;
+                baseEffectDesc = refinedRoot.properties.effect_description?.description ?? baseEffectDesc;
+            }
 
             // === STEP 3: Resolve Enemy Attack ===
             battleManager.StartCoroutine(
@@ -389,10 +406,10 @@ public class ChatAI : MonoBehaviour
                     enemy,
                     target,
                     enemy.selectedAction,
-                    finalFeasibility,
-                    finalPotential,
-                    finalEffect,
-                    finalEffectDesc
+                    baseFeasibility,
+                    basePotential,
+                    baseEffect,
+                    baseEffectDesc
                 )
             );
         }
@@ -402,6 +419,7 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
     }
+
 
     public string EscapeJsonString(string str)
     {
