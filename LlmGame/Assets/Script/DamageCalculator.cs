@@ -64,9 +64,7 @@ public class DamageCalculator : MonoBehaviour
                         DamageType.Electric => weapon.damageElectric,
                         DamageType.Radiation => weapon.damageRadiation,
                         DamageType.Explosive => weapon.damageExplosive,
-                        DamageType.Digital => weapon.damageDigital,
                         DamageType.Plasma => weapon.damagePlasma,
-                        DamageType.Laser => weapon.damageLaser,
                         DamageType.Chemical => weapon.damageChemical,
                         DamageType.Viral => weapon.damageViral,
                         _ => 0
@@ -83,7 +81,7 @@ public class DamageCalculator : MonoBehaviour
         return damageBreakdown;
     }
 
-    public float CalculateDamage(
+    public DamageResult CalculateDamage(
         float feasibility, float potential, float baseDamage,
         string userMessage, Character attacker, Character target)
     {
@@ -104,7 +102,6 @@ public class DamageCalculator : MonoBehaviour
         if (selectedParts == null || selectedParts.Count == 0)
         {
             Debug.LogWarning("⚠️ No selected body parts.");
-            return 0f;
         }
 
         // 2. Add income modifiers from exposed weak points on selected target parts
@@ -203,13 +200,16 @@ public class DamageCalculator : MonoBehaviour
         }
 
         Debug.Log($"[Final Damage]: {scaledFinalDamage}");
-        return scaledFinalDamage;
+
+        battleManager.chatAI.baseFeasibility = finalFeasibility;
+        battleManager.chatAI.basePotential = finalPotential;
+
+        return new DamageResult(scaledFinalDamage, finalFeasibility, finalPotential);
     }
 
 
-    public float CalculateDamageNoCreativity(
-        float feasibility, float potential, float baseDamage,
-        Character attacker, Character target)
+    public DamageResult CalculateDamageNoCreativity(
+        float feasibility, float potential, float baseDamage, Character attacker, Character target)
     {
         const float constant = 2f;
 
@@ -264,7 +264,6 @@ public class DamageCalculator : MonoBehaviour
         if (selectedParts == null || selectedParts.Count == 0)
         {
             Debug.LogWarning("⚠️ No selected body parts to apply damage.");
-            return 0f;
         }
 
         foreach (var part in selectedParts)
@@ -367,7 +366,10 @@ public class DamageCalculator : MonoBehaviour
             }
         }
 
-        return scaledFinalDamage;
+        battleManager.chatAI.baseFeasibility = finalFeasibility;
+        battleManager.chatAI.basePotential = finalPotential;
+
+        return new DamageResult(scaledFinalDamage, finalFeasibility, finalPotential);
     }
 
 }

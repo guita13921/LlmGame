@@ -21,6 +21,10 @@ public class Character : MonoBehaviour
     public int maxHP;
     public int maxMP;
     public int speed;
+    public int shield;
+
+    [Header("Resource")]
+    public int money;
 
     [Header("Body Parts")]
     public BodyPartConfig bodyPartConfig;

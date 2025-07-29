@@ -86,8 +86,6 @@ public class DamageModifierSkill : ScriptableObject
 
         // ✅ Trigger skill-related item and defense checks
         PromptBuilder.CheckAndActivateItems(battleManager, skillMessage, target);
-        battleManager.CheckAndActivateDefensiveItems(user, target);
-
         // ✅ Build and send prompt to AI
         string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, target, skillMessage);
         battleManager.StartCoroutine(battleManager.chatAI.SendMessageToAI(finalPrompt));

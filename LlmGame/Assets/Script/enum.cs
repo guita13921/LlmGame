@@ -7,6 +7,12 @@ public enum ItemType
     Other
 }
 
+public enum WeaponType
+{
+    Melee_Weapon,
+    Range_Weapon
+}
+
 public enum UsageType
 {
     OneTime,
@@ -20,9 +26,7 @@ public enum DamageType
     Electric,       // Shock batons, taser darts, EMP grenades
     Radiation,      // Dirty energy weapons, nuclear micro-explosives
     Explosive,      // Grenades, rocket launchers
-    Digital,        // Direct neural interface attacks (hacking a cyberbrain)
     Plasma,         // High-energy plasma weapons
-    Laser,          // Laser rifles, cutting beams
     Chemical,       // Gas attacks, chemical bombs
     Viral,          // Digital viruses that affect both tech and biology
 }

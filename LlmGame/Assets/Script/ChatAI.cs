@@ -13,6 +13,12 @@ public class ChatAI : MonoBehaviour
     public TMP_Text responseText;
     public GameObject inputPanel;
 
+    public float baseFeasibility = 0f;
+    public float basePotential = 0f;
+    public string baseFeasibilityDesc = "";
+    public string basePotentialDesc = "";
+    public string baseEffect = "";
+    public string baseEffectDesc = "";
 
     private string apiUrl = "https://diphtxovye.execute-api.ap-northeast-1.amazonaws.com/chatWithAI";
 
@@ -31,6 +37,7 @@ public class ChatAI : MonoBehaviour
         string safeMessage = PromptBuilder.SanitizeUserMessage(userMessage);
 
         Character targetEnemy = battleManager.selectedTarget;
+        Character player = battleManager.player; // You need this reference
 
         if (targetEnemy == null || !targetEnemy.IsAlive())
         {
@@ -44,9 +51,17 @@ public class ChatAI : MonoBehaviour
             return;
         }
 
+        int messageCost = userMessage.Length;
+
+        if (messageCost > player.focus)
+        {
+            Debug.LogWarning($"Message too complex! Cost ({messageCost}) exceeds your Focus ({player.focus}).");
+            return;
+        }
+
         battleManager.SetUserMessage(safeMessage);
 
-        PromptBuilder.CheckAndActivateItems(battleManager, safeMessage, targetEnemy);
+        PromptBuilder.CheckAndActivateItems(battleManager, userMessage, targetEnemy);
 
         List<DamageType> enemyDamageTypes = new List<DamageType>();
 
@@ -55,11 +70,10 @@ public class ChatAI : MonoBehaviour
             enemyDamageTypes.AddRange(weapon.damageType);
         }
 
-        battleManager.CheckAndActivateDefensiveItems(battleManager.player, targetEnemy);
-
         string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage);
         StartCoroutine(SendMessageToAI(finalPrompt));
     }
+
 
     public IEnumerator SendMessageToAI(string userMessage)
     {
@@ -79,14 +93,6 @@ public class ChatAI : MonoBehaviour
         bool validResponseReceived = false;
         RootProperties baseRoot = null;
 
-        float finalFeasibility = 0f;
-        float finalPotential = 0f;
-        string finalFeasibilityDesc = "";
-        string finalPotentialDesc = "";
-        string finalEffect = "";
-        string finalEffectDesc = "";
-
-        // === FIRST STAGE: INITIAL AI RESPONSE ===
         while (attempts < maxAttempts && !validResponseReceived)
         {
             attempts++;
@@ -131,14 +137,15 @@ public class ChatAI : MonoBehaviour
                     continue;
                 }
 
-                finalFeasibility = currentFeasibility;
-                finalPotential = currentPotential;
-                finalFeasibilityDesc = baseRoot.properties.feasibility?.description ?? "No description";
-                finalPotentialDesc = baseRoot.properties.potential_damage?.description ?? "No description";
-                finalEffect = baseRoot.properties.effect_description?.value ?? "No effect";
-                finalEffectDesc = baseRoot.properties.effect_description?.description ?? "No description";
+                baseFeasibility = currentFeasibility;
+                basePotential = currentPotential;
+                baseFeasibilityDesc = baseRoot.properties.feasibility?.description ?? "No description";
+                basePotentialDesc = baseRoot.properties.potential_damage?.description ?? "No description";
+                baseEffect = baseRoot.properties.effect_description?.value ?? "No effect";
+                baseEffectDesc = baseRoot.properties.effect_description?.description ?? "No description";
 
                 validResponseReceived = true;
+
             }
             catch (System.Exception e)
             {
@@ -155,82 +162,6 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
 
-        // === SECOND STAGE: REFINEMENT PROMPT ===
-        string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
-            battleManager,
-            battleManager.player,
-            targetEnemy,
-            finalFeasibility,
-            finalFeasibilityDesc,
-            finalPotential,
-            finalPotentialDesc,
-            finalEffect,
-            finalEffectDesc
-        );
-
-        string refinementJson = "{\"message\":\"" + EscapeJsonString(refinementPrompt) + "\"}";
-
-        var refinementRequest = new UnityWebRequest(apiUrl, "POST");
-        byte[] refinementRaw = Encoding.UTF8.GetBytes(refinementJson);
-        refinementRequest.uploadHandler = new UploadHandlerRaw(refinementRaw);
-        refinementRequest.downloadHandler = new DownloadHandlerBuffer();
-        refinementRequest.SetRequestHeader("Content-Type", "application/json");
-
-        yield return refinementRequest.SendWebRequest();
-
-        if (refinementRequest.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError($"[Refinement] HTTP Error: {refinementRequest.responseCode} - {refinementRequest.error}");
-            yield break;
-        }
-
-        string refinementResponseText = refinementRequest.downloadHandler.text;
-        Debug.Log("<color=orange>[Refinement Response]</color>\n" + refinementResponseText);
-
-        try
-        {
-            var refinementRes = JsonUtility.FromJson<ResponseWrapper>(refinementResponseText);
-            string cleanedRefinementJson = refinementRes.response.Replace("```json", "").Replace("```", "").Trim();
-
-            if (cleanedRefinementJson.StartsWith("{\\\""))
-            {
-                cleanedRefinementJson = cleanedRefinementJson.Trim('"').Replace("\\\"", "\"");
-            }
-
-            RootProperties refinedRoot = JsonUtility.FromJson<RootProperties>(cleanedRefinementJson);
-
-            float refinedFeasibility = refinedRoot.properties.feasibility?.value ?? finalFeasibility;
-            float refinedPotential = refinedRoot.properties.potential_damage?.value ?? finalPotential;
-
-            if (Mathf.Approximately(refinedFeasibility, 3f) && Mathf.Approximately(refinedPotential, 4f))
-            {
-                Debug.LogWarning("[Refinement] Default values detected in refinement stage — using initial response instead.");
-            }
-            else
-            {
-                finalFeasibility = refinedFeasibility;
-                finalFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? finalFeasibilityDesc;
-
-                finalPotential = refinedPotential;
-                finalPotentialDesc = refinedRoot.properties.potential_damage?.description ?? finalPotentialDesc;
-
-                finalEffect = refinedRoot.properties.effect_description?.value ?? finalEffect;
-                finalEffectDesc = refinedRoot.properties.effect_description?.description ?? finalEffectDesc;
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("[Refinement] Error parsing refinement response: " + e.Message);
-            yield break;
-        }
-
-        // === FINAL OUTPUT ===
-        responseText.text = $"Feasibility: {finalFeasibility} ({finalFeasibilityDesc})\n" +
-                            $"Potential: {finalPotential} ({finalPotentialDesc})\n" +
-                            $"Effect: {finalEffect} ({finalEffectDesc})";
-
-        Debug.Log("<color=white>[Final Refined Result]</color>:\n" + responseText.text);
-
         // === COMBAT APPLICATION ===
         if (battleManager.player.isUsingConsumeTurnItem)
         {
@@ -243,16 +174,23 @@ public class ChatAI : MonoBehaviour
             battleManager.StartCoroutine(
                 battleManager.combatHandler.PlayerAttack(
                     battleManager.player.selectedAction,
-                    finalFeasibility,
-                    finalPotential,
-                    finalEffect,
-                    finalEffectDesc,
+                    baseFeasibility,
+                    basePotential,
+                    baseEffect,
+                    baseEffectDesc,
                     targetEnemy
                 )
             );
         }
-    }
 
+        // === FINAL OUTPUT (After Damage Calculation) ===
+        responseText.text = $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                            $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                            $"Effect: {baseEffect}";
+
+        Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
+
+    }
 
     public IEnumerator SendEnemyMessage(Character enemy, Character target, string proposedAction)
     {
@@ -265,13 +203,6 @@ public class ChatAI : MonoBehaviour
         int attempts = 0;
         bool validResponseReceived = false;
         RootProperties root = null;
-
-        float baseFeasibility = 0f;
-        float basePotential = 0f;
-        string baseFeasibilityDesc = "";
-        string basePotentialDesc = "";
-        string baseEffect = "";
-        string baseEffectDesc = "";
 
         while (attempts < maxAttempts && !validResponseReceived)
         {
@@ -323,6 +254,7 @@ public class ChatAI : MonoBehaviour
                 }
 
                 validResponseReceived = true;
+
             }
             catch (System.Exception e)
             {
@@ -337,87 +269,26 @@ public class ChatAI : MonoBehaviour
             yield break;
         }
 
-        // === STEP 2: REFINEMENT PROMPT ===
-        string refinementPrompt = PromptBuilder.BuildRefinementPrompt(
-            battleManager,
-            enemy,
-            target,
-            baseFeasibility,
-            baseFeasibilityDesc,
-            basePotential,
-            basePotentialDesc,
-            baseEffect,
-            baseEffectDesc
+        // === STEP 2: Apply Enemy Attack Using Initial Response ===
+        battleManager.StartCoroutine(
+            battleManager.combatHandler.ResolveEnemyAttack(
+                enemy,
+                target,
+                enemy.selectedAction,
+                baseFeasibility,
+                basePotential,
+                baseEffect,
+                baseEffectDesc
+            )
         );
 
-        string refinementJson = "{\"message\":\"" + EscapeJsonString(refinementPrompt) + "\"}";
+        // === FINAL OUTPUT (After Damage Calculation) ===
+        responseText.text = $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                            $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                            $"Effect: {baseEffect}";
 
-        var refinementRequest = new UnityWebRequest(apiUrl, "POST");
-        byte[] refinementRaw = Encoding.UTF8.GetBytes(refinementJson);
-        refinementRequest.uploadHandler = new UploadHandlerRaw(refinementRaw);
-        refinementRequest.downloadHandler = new DownloadHandlerBuffer();
-        refinementRequest.SetRequestHeader("Content-Type", "application/json");
+        Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
 
-        yield return refinementRequest.SendWebRequest();
-
-        if (refinementRequest.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError($"[SendEnemyMessage - Refinement] HTTP Error: {refinementRequest.responseCode} - {refinementRequest.error}");
-            yield break;
-        }
-
-        string refinementResponseText = refinementRequest.downloadHandler.text;
-        Debug.Log("<color=orange>[SendEnemyMessage - Refinement Response]</color>\n" + refinementResponseText);
-
-        try
-        {
-            var refinementRes = JsonUtility.FromJson<ResponseWrapper>(refinementResponseText);
-            string cleanedJson = refinementRes.response.Replace("```json", "").Replace("```", "").Trim();
-
-            if (cleanedJson.StartsWith("{\\\""))
-            {
-                cleanedJson = cleanedJson.Trim('"').Replace("\\\"", "\"");
-            }
-
-            var refinedRoot = JsonUtility.FromJson<RootProperties>(cleanedJson);
-
-            float refinedFeasibility = refinedRoot.properties.feasibility?.value ?? baseFeasibility;
-            float refinedPotential = refinedRoot.properties.potential_damage?.value ?? basePotential;
-
-            if (Mathf.Approximately(refinedFeasibility, 3f) && Mathf.Approximately(refinedPotential, 4f))
-            {
-                Debug.LogWarning("[SendEnemyMessage - Refinement] Default values detected in refinement — using initial values.");
-            }
-            else
-            {
-                baseFeasibility = refinedFeasibility;
-                baseFeasibilityDesc = refinedRoot.properties.feasibility?.description ?? baseFeasibilityDesc;
-
-                basePotential = refinedPotential;
-                basePotentialDesc = refinedRoot.properties.potential_damage?.description ?? basePotentialDesc;
-
-                baseEffect = refinedRoot.properties.effect_description?.value ?? baseEffect;
-                baseEffectDesc = refinedRoot.properties.effect_description?.description ?? baseEffectDesc;
-            }
-
-            // === STEP 3: Resolve Enemy Attack ===
-            battleManager.StartCoroutine(
-                battleManager.combatHandler.ResolveEnemyAttack(
-                    enemy,
-                    target,
-                    enemy.selectedAction,
-                    baseFeasibility,
-                    basePotential,
-                    baseEffect,
-                    baseEffectDesc
-                )
-            );
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("[SendEnemyMessage - Refinement] Error parsing refined response: " + e.Message);
-            yield break;
-        }
     }
 
 

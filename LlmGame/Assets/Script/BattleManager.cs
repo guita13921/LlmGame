@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Text;
 using System.Linq;
 using TMPro;
-using UnityEditor.Search;
+using System.Text.RegularExpressions; // Make sure this is at the top
 
 public class BattleManager : MonoBehaviour
 {
@@ -121,7 +121,6 @@ public class BattleManager : MonoBehaviour
                 enemy.selectedAction = enemy.availableActions[0];
 
                 CheckAndActivateEnemyItems(enemy, enemy.selectedAction.actionName);
-                CheckAndActivateDefensiveItems(enemy, target);
 
                 Debug.Log($"Enemy {enemy.characterName} chosen action: {enemy.selectedAction.actionName}");
 
@@ -206,95 +205,35 @@ public class BattleManager : MonoBehaviour
 
     private void ProcessWeaponForActivation(Weapon weapon, string lowerAction, Enemy enemy)
     {
-        if (weapon == null)
+        if (weapon == null || enemy == null)
             return;
+
+        // Extract words from the action string
+        var actionWords = Regex.Matches(lowerAction, @"\b\w+\b")
+                               .Cast<Match>()
+                               .Select(m => m.Value.ToLower())
+                               .ToHashSet(); // For fast keyword lookup
 
         bool keywordFound = false;
 
         foreach (string keyword in weapon.keyWords)
         {
-            if (!string.IsNullOrEmpty(keyword) && lowerAction.Contains(keyword.ToLower()))
+            if (!string.IsNullOrWhiteSpace(keyword) && actionWords.Contains(keyword.ToLower()))
             {
-                weapon.isActive = true;
-                keywordFound = true;
-                enemy.activeItem.Add(weapon);
+                if (!keywordFound)
+                {
+                    weapon.isActive = true;
+                    enemy.activeItem.Add(weapon);
+                    keywordFound = true;
+                }
 
                 Debug.Log($"Sub_Weapon '{weapon.itemName}' activated by keyword: '{keyword}' from action: '{lowerAction}'");
-                break;
             }
         }
 
         if (!keywordFound)
         {
             Debug.Log($"Sub_Weapon '{weapon.itemName}' remains inactive - no keywords matched");
-        }
-    }
-
-    public void CheckAndActivateDefensiveItems(Character attacker, Character target)
-    {
-        HashSet<DamageType> incomingDamageTypes = new HashSet<DamageType>();
-
-        // ✅ 1. Check if a skill is active
-        if (attacker.currentSkill is DamageModifierSkill skill && skill.damageTypes != null && skill.damageTypes.Count > 0)
-        {
-            foreach (var dt in skill.damageTypes)
-            {
-                incomingDamageTypes.Add(dt);
-            }
-
-            Debug.Log($"[Defensive] Using skill '{skill.skillName}' with damage types: {string.Join(", ", skill.damageTypes)}");
-        }
-        else
-        {
-            // ✅ 2. Fallback to weapon items in activeItem
-            foreach (var weaponItem in attacker.activeItem)
-            {
-                if (weaponItem is Weapon weapon)
-                {
-                    foreach (var dt in weapon.damageType)
-                    {
-                        incomingDamageTypes.Add(dt);
-                    }
-                }
-            }
-
-            if (incomingDamageTypes.Count == 0)
-            {
-                incomingDamageTypes.Add(DamageType.Physical);
-                Debug.Log("No damage types detected. Defaulting to Physical damage.");
-            }
-        }
-
-        Debug.Log($"Incoming damage types: {string.Join(", ", incomingDamageTypes.Select(t => t.ToString()))}");
-
-        // ✅ 3. Clear previously active defensive items
-        target.activeItem.RemoveAll(item => item is Defensive);
-
-        // ✅ 4. Evaluate defensive items
-        foreach (var item in target.inventoryItems)
-        {
-            if (item is Defensive defensive)
-            {
-                defensive.isActive = false; // Reset before checking
-
-                bool hasMatchingType = defensive.damageTypeReduce.Any(dt => incomingDamageTypes.Contains(dt));
-
-                if (hasMatchingType)
-                {
-                    defensive.isActive = true;
-
-                    if (!target.activeItem.Contains(defensive))
-                    {
-                        target.activeItem.Add(defensive);
-                    }
-
-                    Debug.Log($"🛡️ Defensive item '{defensive.itemName}' activated! Matches: {string.Join(", ", defensive.damageTypeReduce)}");
-                }
-                else
-                {
-                    Debug.Log($"⚠️ Defensive item '{defensive.itemName}' did not match any damage types.");
-                }
-            }
         }
     }
 

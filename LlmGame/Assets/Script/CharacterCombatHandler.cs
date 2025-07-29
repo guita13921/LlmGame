@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using TMPro;
 
 public class CharacterCombatHandler : MonoBehaviour
 {
     private BattleManager battleManager;
+    public TMP_Text responseText;
 
     private void Awake()
     {
@@ -32,15 +34,16 @@ public class CharacterCombatHandler : MonoBehaviour
 
         if (battleManager.player.isUsingUltimateSkill == false)
         {
-            float calculatedDamage = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
-            Debug.Log("calculatedDamage : " + calculatedDamage);
-            finalDamage = Mathf.RoundToInt(calculatedDamage);
+            DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
+            Debug.Log("calculatedDamage : " + result.damage);
+            finalDamage = Mathf.RoundToInt(result.damage);
+
         }
         else
         {
-            float calculatedDamage = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
-            Debug.Log("calculatedDamage : " + calculatedDamage);
-            finalDamage = Mathf.RoundToInt(calculatedDamage);
+            DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
+            Debug.Log("calculatedDamage : " + result.damage);
+            finalDamage = Mathf.RoundToInt(result.damage);
         }
 
         // ✅ Prepare damage
@@ -63,7 +66,7 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         // ✅ Log
-        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName}";
+        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
@@ -112,8 +115,8 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         float baseDamage = enemy.attack;
-        float calculatedDamage = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, enemy, target);
-        int finalDamage = Mathf.RoundToInt(calculatedDamage);
+        DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, enemy, target);
+        int finalDamage = Mathf.RoundToInt(result.damage);
 
         enemy.pendingDamage = finalDamage;
         enemy.damageTarget = target;
@@ -125,7 +128,7 @@ public class CharacterCombatHandler : MonoBehaviour
         // ✅ Wait for animation to finish
         yield return battleManager.WaitForAnimation(enemy, chosenAction.animationTrigger);
 
-        string log = $"Turn {battleManager.turnCount}: {enemy.characterName} used {chosenAction.actionName}  → Target: {target.characterName}";
+        string log = $"Turn {battleManager.turnCount}: {enemy.characterName} used {chosenAction.actionName}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
@@ -151,4 +154,6 @@ public class CharacterCombatHandler : MonoBehaviour
     }
 
     #endregion
+
+
 }
