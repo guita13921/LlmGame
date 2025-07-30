@@ -1,0 +1,13 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class NanoVascularMicrorobot : PassiveItemBase
+{
+    public override void ApplyEffect(Character character)
+    {
+        Debug.Log("NanoVascularMicrorobot");
+        character.maxHP += 25;
+        character.currentHP += 25;
+    }
+}

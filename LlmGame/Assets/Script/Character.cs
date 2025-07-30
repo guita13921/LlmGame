@@ -21,7 +21,7 @@ public class Character : MonoBehaviour
     public int maxHP;
     public int maxMP;
     public int speed;
-    public int shield;
+    public int maxShield;
 
     [Header("Resource")]
     public int money;
@@ -49,6 +49,7 @@ public class Character : MonoBehaviour
     [Header("Runtime")]
     public int currentHP;
     public int currentMP;
+    public int currentshield;
     public float turnGauge = 0f;
 
     [Header("Inventory")]
@@ -69,6 +70,7 @@ public class Character : MonoBehaviour
         animator = GetComponent<Animator>();
         currentHP = maxHP;
         currentMP = maxMP;
+        currentshield = maxShield;
 
         if (bodyPartConfig != null)
         {
@@ -139,7 +141,6 @@ public class Character : MonoBehaviour
             return;
         }
 
-        // Safety checks
         if (selectedAction == null || selectedAction.hitEffects == null || currentHitIndex >= selectedAction.hitEffects.Count)
         {
             Debug.LogWarning($"{characterName} has no more hitEffects left or invalid index.");
@@ -147,21 +148,32 @@ public class Character : MonoBehaviour
         }
 
         var hitData = selectedAction.hitEffects[currentHitIndex];
-
         float portion = hitData.damagePortion;
         int thisHitDamage = Mathf.RoundToInt(pendingDamage * portion);
+
+        // 🔥 BEFORE damage: allow passive items to modify it
+        foreach (var reaction in damageTarget.GetComponents<IDamageReaction>())
+        {
+            reaction.OnBeforeDamage(this, damageTarget, ref thisHitDamage);
+        }
+
+        // 💥 Apply damage
         damageTarget.TakeDamage(thisHitDamage);
+
+        // 💡 AFTER damage: notify items
+        foreach (var reaction in damageTarget.GetComponents<IDamageReaction>())
+        {
+            reaction.OnAfterDamage(this, damageTarget, thisHitDamage);
+        }
 
         Debug.Log($"{characterName} Apply Hit #{currentHitIndex + 1}: {portion * 100f}% → {thisHitDamage} damage to {damageTarget.characterName}");
 
-        // Play VFX
         if (hitData.vfxPrefab != null)
         {
             GameObject vfx = Instantiate(hitData.vfxPrefab, damageTarget.transform.position + hitData.vfxOffset, Quaternion.identity);
             Destroy(vfx, hitData.lifeTime);
         }
 
-        // Play SFX
         if (hitData.sfxClip != null)
         {
             AudioSource.PlayClipAtPoint(hitData.sfxClip, damageTarget.transform.position);

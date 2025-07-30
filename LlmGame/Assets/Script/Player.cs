@@ -1,17 +1,22 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : Character
 {
-    [Header("Player Info")]
-    public string classType;
-
-    [Header("Player Stat")]
-    public int bodyLimit;
-
+    public List<PassiveItemData> equippedPassiveItems;
 
     void Start()
     {
-        //ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Stun, 1));
+        EquipAllPassiveItems();
     }
+
+    public void EquipAllPassiveItems()
+    {
+        foreach (var itemData in equippedPassiveItems)
+        {
+            itemData.EquipTo(this);
+        }
+    }
+
 }

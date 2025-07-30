@@ -176,9 +176,7 @@ public class DamageCalculator : MonoBehaviour
                     DamageType.Electric => armor.reduceDamageElectric,
                     DamageType.Radiation => armor.reduceDamageRadiation,
                     DamageType.Explosive => armor.reduceDamageExplosive,
-                    DamageType.Digital => armor.reduceDamageDigital,
                     DamageType.Plasma => armor.reduceDamagePlasma,
-                    DamageType.Laser => armor.reduceDamageLaser,
                     DamageType.Chemical => armor.reduceDamageChemical,
                     DamageType.Viral => armor.reduceDamageViral,
                     _ => 0f
@@ -228,9 +226,7 @@ public class DamageCalculator : MonoBehaviour
             { DamageType.Electric, skill.damageElectric },
             { DamageType.Radiation, skill.damageRadiation },
             { DamageType.Explosive, skill.damageExplosive },
-            { DamageType.Digital, skill.damageDigital },
             { DamageType.Plasma, skill.damagePlasma },
-            { DamageType.Laser, skill.damageLaser },
             { DamageType.Chemical, skill.damageChemical },
             { DamageType.Viral, skill.damageViral }
         };
@@ -323,9 +319,7 @@ public class DamageCalculator : MonoBehaviour
                     DamageType.Electric => armor.reduceDamageElectric,
                     DamageType.Radiation => armor.reduceDamageRadiation,
                     DamageType.Explosive => armor.reduceDamageExplosive,
-                    DamageType.Digital => armor.reduceDamageDigital,
                     DamageType.Plasma => armor.reduceDamagePlasma,
-                    DamageType.Laser => armor.reduceDamageLaser,
                     DamageType.Chemical => armor.reduceDamageChemical,
                     DamageType.Viral => armor.reduceDamageViral,
                     _ => 0f
