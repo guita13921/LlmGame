@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public abstract class PassiveItemBase : MonoBehaviour, IPassiveItem
 {
     public abstract void ApplyEffect(Character character);

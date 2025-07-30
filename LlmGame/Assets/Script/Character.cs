@@ -47,9 +47,9 @@ public class Character : MonoBehaviour
     public bool isUsingUltimateSkill = false;
 
     [Header("Runtime")]
-    public int currentHP;
-    public int currentMP;
-    public int currentshield;
+    [SerializeField] public int currentHP;
+    [SerializeField] public int currentMP;
+    [SerializeField] public int currentshield;
     public float turnGauge = 0f;
 
     [Header("Inventory")]
@@ -151,19 +151,39 @@ public class Character : MonoBehaviour
         float portion = hitData.damagePortion;
         int thisHitDamage = Mathf.RoundToInt(pendingDamage * portion);
 
-        // 🔥 BEFORE damage: allow passive items to modify it
-        foreach (var reaction in damageTarget.GetComponents<IDamageReaction>())
+
+        // 🔥 BEFORE damage: check equipped PassiveItemData if damageTarget is Player
+        if (damageTarget is Player playerTarget)
         {
-            reaction.OnBeforeDamage(this, damageTarget, ref thisHitDamage);
+            foreach (var itemData in playerTarget.equippedPassiveItems)
+            {
+                if (itemData.itemPrefab == null) continue;
+
+                IDamageReaction reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                {
+                    reaction.OnBeforeDamage(this, playerTarget, ref thisHitDamage);
+                }
+            }
         }
 
         // 💥 Apply damage
         damageTarget.TakeDamage(thisHitDamage);
 
-        // 💡 AFTER damage: notify items
-        foreach (var reaction in damageTarget.GetComponents<IDamageReaction>())
+
+        // 💡 AFTER damage: prefab passive effects from equipped items
+        if (damageTarget is Player playerTargetAfter)
         {
-            reaction.OnAfterDamage(this, damageTarget, thisHitDamage);
+            foreach (var itemData in playerTargetAfter.equippedPassiveItems)
+            {
+                if (itemData.itemPrefab == null) continue;
+
+                IDamageReaction reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                {
+                    reaction.OnAfterDamage(this, playerTargetAfter, thisHitDamage);
+                }
+            }
         }
 
         Debug.Log($"{characterName} Apply Hit #{currentHitIndex + 1}: {portion * 100f}% → {thisHitDamage} damage to {damageTarget.characterName}");
@@ -181,6 +201,7 @@ public class Character : MonoBehaviour
 
         currentHitIndex++;
     }
+
 
     public void ApplyStatusEffect(TurnStatusEffect newEffect)
     {

@@ -80,5 +80,6 @@ public enum StatusEffectType
     DefenseDown,
     AttackDown,
     FocusDown,
-    Custom // Add more as needed
+    Bleed,
+    Custom
 }

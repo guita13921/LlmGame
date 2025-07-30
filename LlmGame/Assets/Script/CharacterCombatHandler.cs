@@ -83,6 +83,29 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         yield return new WaitForSeconds(2.0f);
 
+        // ✅ Trigger turn-end logic for player
+        if (battleManager.currentActingCharacter is Player player)
+        {
+            // 🔁 Runtime-attached MonoBehaviours (instantiated)
+            foreach (var listener in player.GetComponents<ITurnListener>())
+            {
+                listener.OnTurnEnd(player);
+            }
+
+            // 🔁 PassiveItemData prefabs (optional if stateless)
+            foreach (var itemData in player.equippedPassiveItems)
+            {
+                if (itemData.itemPrefab == null) continue;
+
+                ITurnListener prefabListener = itemData.itemPrefab.GetComponent<ITurnListener>();
+                if (prefabListener != null)
+                {
+                    prefabListener.OnTurnEnd(player);
+                }
+            }
+        }
+
+        // ✅ End battle check
         if (battleManager.CheckBattleEnd())
         {
             battleManager.battleActive = false;
@@ -94,6 +117,8 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.currentActingCharacter = null;
         battleManager.chatAI.HideInputUI();
     }
+
+
 
     #endregion
 
@@ -136,12 +161,11 @@ public class CharacterCombatHandler : MonoBehaviour
     }
 
 
-
-
     private IEnumerator EndEnemyTurn()
     {
         yield return new WaitForSeconds(2.0f);
 
+        // ✅ End battle check
         if (battleManager.CheckBattleEnd())
         {
             battleManager.battleActive = false;
@@ -152,6 +176,7 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.isActionPhase = false;
         battleManager.currentActingCharacter = null;
     }
+
 
     #endregion
 

@@ -23,6 +23,6 @@ public class Weapon : Item
     public List<DamageType> damageType;
 
     [Header("WeaponType")]
-    public WeaponType weaponType;
+    public WeaponType weaponType;   //    Melee_Weapon, Range_Weapon
 
 }
