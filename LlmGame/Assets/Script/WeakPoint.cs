@@ -14,13 +14,8 @@ public class WeakPointData : ScriptableObject
     [Range(-10f, 10f)] public float outcome_potentialModifier = 0f;
 
     public string weakPointName;
-    public bool isExposed = false;
 
     [TextArea]
     public string weakPointDescription;
 
-    void Awake()
-    {
-        isExposed = false;
-    }
 }

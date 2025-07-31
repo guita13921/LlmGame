@@ -25,4 +25,7 @@ public class Weapon : Item
     [Header("WeaponType")]
     public WeaponType weaponType;   //    Melee_Weapon, Range_Weapon
 
+    [Header("Weak Point")]
+    public WeakPointData weakPointType;
+
 }

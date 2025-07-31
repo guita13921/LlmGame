@@ -88,7 +88,7 @@ public class ChatAI : MonoBehaviour
         string json = "{\"message\":\"" + EscapeJsonString(userMessage) + "\"}";
         Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + userMessage);
 
-        int maxAttempts = 10;
+        int maxAttempts = 3;
         int attempts = 0;
         bool validResponseReceived = false;
         RootProperties baseRoot = null;
@@ -159,7 +159,8 @@ public class ChatAI : MonoBehaviour
         {
             Debug.LogError("[SendMessageToAI] Failed to receive valid response after multiple attempts.");
             responseText.text = "AI did not respond with a valid action. Try again.";
-            yield break;
+            baseFeasibility = 5;
+            basePotential = 5;
         }
 
         // === COMBAT APPLICATION ===
@@ -199,7 +200,7 @@ public class ChatAI : MonoBehaviour
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
         Debug.Log("<color=yellow>[SendEnemyMessage] Initial Prompt:</color>\n" + prompt);
 
-        int maxAttempts = 10;
+        int maxAttempts = 3;
         int attempts = 0;
         bool validResponseReceived = false;
         RootProperties root = null;
@@ -266,7 +267,8 @@ public class ChatAI : MonoBehaviour
         if (!validResponseReceived)
         {
             Debug.LogError("[SendEnemyMessage] Failed to get valid response after max attempts.");
-            yield break;
+            baseFeasibility = 5;
+            basePotential = 5;
         }
 
         // === STEP 2: Apply Enemy Attack Using Initial Response ===
@@ -290,7 +292,6 @@ public class ChatAI : MonoBehaviour
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
 
     }
-
 
     public string EscapeJsonString(string str)
     {

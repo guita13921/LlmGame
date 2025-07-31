@@ -48,8 +48,6 @@ public class BattleManager : MonoBehaviour
             e.turnGauge = 0f;
             allCharacters.Add(e);
         }
-
-
     }
 
     private void Update()
@@ -325,7 +323,5 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"{character.characterName}'s turn was skipped due to stun.");
         isActionPhase = false;
     }
-
-
 
 }

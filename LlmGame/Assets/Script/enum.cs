@@ -75,11 +75,18 @@ public class StatusEffect
 public enum StatusEffectType
 {
     Stun,
-    Shock,
-    Flame,
     DefenseDown,
     AttackDown,
     FocusDown,
     Bleed,
+    Poison,
     Custom
+}
+
+public enum StatusChanceType
+{
+    Bleed,
+    Poison,
+    Burn,
+    Critical
 }

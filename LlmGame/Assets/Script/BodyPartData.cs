@@ -31,19 +31,11 @@ public class BodyPartData : ScriptableObject
 
     public bool IsDestroyed => health <= 0;
 
-    public void ApplyDamage(int totalDamage, bool hasReduce = true)
+    public void ApplyDamage(int totalDamage, bool hasReduce = true, Weapon weaponUsed = null)
     {
-
-        int damageToPart = 0;
-
-        if (hasReduce)
-        {
-            damageToPart = Mathf.RoundToInt(totalDamage * damageToPartRatio);
-        }
-        else
-        {
-            damageToPart = Mathf.RoundToInt(totalDamage);
-        }
+        int damageToPart = hasReduce
+            ? Mathf.RoundToInt(totalDamage * damageToPartRatio)
+            : Mathf.RoundToInt(totalDamage);
 
         int beforeHealth = this.health;
         this.health -= damageToPart;
@@ -51,18 +43,23 @@ public class BodyPartData : ScriptableObject
         if (health < 0) health = 0;
 
         // 🧠 Debug log
-        Debug.Log($"💥 [Damage{totalDamage}] {type} took {damageToPart} damage. HP: {beforeHealth} → {health}");
+        Debug.Log($"💥 [Damage {totalDamage}] {type} took {damageToPart} damage. HP: {beforeHealth} → {health}");
 
-        // Check for destruction
+        // ✅ Check for destruction
         if (IsDestroyed && becomesWeakPointWhenDestroyed)
         {
             if (linkedWeakPoint != null)
             {
-                linkedWeakPoint.isExposed = true;
                 Debug.Log($"⚠️ [BodyPart] {type} destroyed — weak point '{linkedWeakPoint.weakPointName}' is now exposed.");
+            }
+
+            // ✅ If a weapon with a weak point type was used, assign it
+            if (weaponUsed != null && weaponUsed.weakPointType != null)
+            {
+                linkedWeakPoint = ScriptableObject.Instantiate(weaponUsed.weakPointType);
+                Debug.Log($"🔄 Assigned new weak point from weapon: {linkedWeakPoint.weakPointName}");
             }
         }
     }
-
 
 }

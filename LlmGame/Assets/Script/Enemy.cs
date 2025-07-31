@@ -16,6 +16,18 @@ public class Enemy : Character
 
     [Header("Action")]
     public List<string> actions;
+
+    void Start()
+    {
+        TurnStatusEffect bleed = new TurnStatusEffect(
+            StatusEffectType.Bleed,
+            duration: this.characterType == CharacterType.Human ? 2 : 1,
+            magnitude: 1,
+            source: battleManager.player
+        );
+
+        this.ApplyStatusEffect(bleed);
+    }
 }
 
 

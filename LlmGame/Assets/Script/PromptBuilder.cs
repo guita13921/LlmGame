@@ -10,6 +10,8 @@ public static class PromptBuilder
     {
         string history = GetBattleHistory(battleManager);
 
+        string effect = battleManager.combatHandler.TryApplyStatusEffects(battleManager.player, targetEnemy);
+
         // Detect selected parts in enemy based on user's action
         if (battleManager.player.isUsingUltimateSkill == false) PromptBuilder.DetectSelectedBodyParts(userMessage, targetEnemy, battleManager);
 
@@ -45,6 +47,8 @@ public static class PromptBuilder
 
             Proposed action by {battleManager.player.characterName}:
             {userMessage}
+
+            The effect that occurs: {effect}
 
             Please evaluate what happens next in this fantasy adventure story. Consider the encounter history so actions create meaningful narrative progression.
             Take into account the current health status and character descriptions.
@@ -88,6 +92,8 @@ public static class PromptBuilder
     {
         string history = GetBattleHistory(battleManager);
 
+        string effect = battleManager.combatHandler.TryApplyStatusEffects(enemy, target);
+
         // Detect selected parts in player based on enemy's action
         PromptBuilder.DetectSelectedBodyParts(proposedAction, target, battleManager);
 
@@ -119,6 +125,8 @@ public static class PromptBuilder
 
         Proposed action by {enemy.characterName}:
         {proposedAction}
+
+        The effect that occurs: {effect}
 
         Please evaluate what happens next in this fantasy adventure story. Consider the encounter history so actions create meaningful narrative progression.
         Take into account the current health status and character descriptions.
@@ -210,43 +218,6 @@ public static class PromptBuilder
         return itemsText.ToString();
     }
 
-    public static string FormatBodyParts(List<BodyPartData> parts)
-    {
-        if (parts == null || parts.Count == 0) return "No body part data.";
-
-        StringBuilder sb = new StringBuilder();
-        foreach (var part in parts)
-        {
-            sb.AppendLine($"- {part.type} ({part.composition}): {part.state}, HP: {part.health} / {part.maxHealth}, Vital: {part.isVital}");
-
-            if (part.equippedArmor != null)
-            {
-                sb.AppendLine($"  Equipped Armor: {part.equippedArmor.armorName}");
-                sb.AppendLine($"    Description: {part.equippedArmor.description}");
-            }
-        }
-        return sb.ToString();
-    }
-
-    public static string FormatWeakPointsFromBodyParts(List<BodyPartData> parts)
-    {
-        if (parts == null || parts.Count == 0) return "No weak point data.";
-
-        StringBuilder sb = new StringBuilder();
-        bool foundExposed = false;
-
-        foreach (var part in parts)
-        {
-            if (part.linkedWeakPoint != null && part.linkedWeakPoint.isExposed)
-            {
-                foundExposed = true;
-                sb.AppendLine($"- {part.linkedWeakPoint.weakPointName} (Description: {part.linkedWeakPoint.weakPointDescription})");
-            }
-        }
-
-        return foundExposed ? sb.ToString() : "No exposed weak points.";
-    }
-
     public static void CheckAndActivateItems(BattleManager battleManager, string userMessage, Character targetEnemy)
     {
         string lowerMessage = userMessage.ToLower();
@@ -325,6 +296,46 @@ public static class PromptBuilder
 
         Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
     }
+
+
+    /*
+        public static string FormatBodyParts(List<BodyPartData> parts)
+        {
+            if (parts == null || parts.Count == 0) return "No body part data.";
+
+            StringBuilder sb = new StringBuilder();
+            foreach (var part in parts)
+            {
+                sb.AppendLine($"- {part.type} ({part.composition}): {part.state}, HP: {part.health} / {part.maxHealth}, Vital: {part.isVital}");
+
+                if (part.equippedArmor != null)
+                {
+                    sb.AppendLine($"  Equipped Armor: {part.equippedArmor.armorName}");
+                    sb.AppendLine($"    Description: {part.equippedArmor.description}");
+                }
+            }
+            return sb.ToString();
+        }
+
+        public static string FormatWeakPointsFromBodyParts(List<BodyPartData> parts)
+        {
+            if (parts == null || parts.Count == 0) return "No weak point data.";
+
+            StringBuilder sb = new StringBuilder();
+            bool foundExposed = false;
+
+            foreach (var part in parts)
+            {
+                if (part.linkedWeakPoint != null && part.linkedWeakPoint.isExposed)
+                {
+                    foundExposed = true;
+                    sb.AppendLine($"- {part.linkedWeakPoint.weakPointName} (Description: {part.linkedWeakPoint.weakPointDescription})");
+                }
+            }
+
+            return foundExposed ? sb.ToString() : "No exposed weak points.";
+        }
+    */
 
     public static void DetectSelectedBodyParts(string message, Character target, BattleManager battleManager)
     {

@@ -70,6 +70,8 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
+        Debug.Log(target.GetBodyPartStatus());
+
         yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
     }
 
@@ -177,8 +179,46 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.currentActingCharacter = null;
     }
 
-
     #endregion
 
+    public string TryApplyStatusEffects(Character attacker, Character target)
+    {
+        List<string> appliedEffects = new();
+
+        // 🩸 Bleed chance roll
+        if (attacker.possibilityPool.Roll(StatusChanceType.Bleed))
+        {
+            int duration = target.characterType == CharacterType.Human ? 2 : 1;
+
+            TurnStatusEffect bleed = new TurnStatusEffect(
+                StatusEffectType.Bleed,
+                duration,
+                1,
+                attacker
+            );
+
+            target.ApplyStatusEffect(bleed);
+            appliedEffects.Add($"inflicted Bleed on {target.characterName} for {duration} turn(s)");
+        }
+
+        // ☠️ Poison chance roll
+        if (attacker.possibilityPool.Roll(StatusChanceType.Poison))
+        {
+            TurnStatusEffect poison = new TurnStatusEffect(StatusEffectType.Poison, 3, 1);
+            target.ApplyStatusEffect(poison);
+
+            appliedEffects.Add($"inflicted Poison on {target.characterName}");
+        }
+
+        // 💬 Return effects in narration-style format
+        if (appliedEffects.Count > 0)
+        {
+            return " Effects: " + string.Join(". ", appliedEffects) + ".";
+        }
+        else
+        {
+            return " No special effects.";
+        }
+    }
 
 }

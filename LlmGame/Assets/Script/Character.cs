@@ -6,7 +6,7 @@ public class Character : MonoBehaviour
     [Header("Animation")]
     public Animator animator;
     [SerializeField] public bool animationFinished = false;
-    BattleManager battleManager;
+    public BattleManager battleManager;
 
     [Header("Basic Info")]
     public string characterName;
@@ -63,10 +63,13 @@ public class Character : MonoBehaviour
     public List<Item> activeItem;
     public bool isUsingConsumeTurnItem;
 
+    public PossibilityPool possibilityPool { get; private set; }
+    [SerializeField] public List<PassiveItemData> equippedPassiveItems;
 
     public virtual void Awake()
     {
         battleManager = FindAnyObjectByType<BattleManager>();
+        possibilityPool = new PossibilityPool();
         animator = GetComponent<Animator>();
         currentHP = maxHP;
         currentMP = maxMP;
@@ -82,6 +85,26 @@ public class Character : MonoBehaviour
     {
         // Find BattleManager in the scene (or assign manually if you prefer)
         battleManager = FindObjectOfType<BattleManager>();
+    }
+
+    public string GetBodyPartStatus()
+    {
+        if (bodyParts == null || bodyParts.Count == 0)
+            return "No body parts assigned.";
+
+        List<string> statusLines = new();
+
+        foreach (var part in bodyParts)
+        {
+            string partName = part.type.ToString();
+            string partState = part.state.ToString();
+            int currentHP = part.health;
+            int maxHP = part.maxHealth;
+
+            statusLines.Add($"{partName}: {currentHP}/{maxHP} HP - {partState} - {part.linkedWeakPoint}");
+        }
+
+        return string.Join("\n", statusLines);
     }
 
     public virtual void TakeDamage(int dmg)
@@ -202,6 +225,7 @@ public class Character : MonoBehaviour
         currentHitIndex++;
     }
 
+    #region StatusEffect
 
     public void ApplyStatusEffect(TurnStatusEffect newEffect)
     {
@@ -233,11 +257,6 @@ public class Character : MonoBehaviour
                     Debug.Log($"{characterName} is stunned and will skip this turn.");
                     break;
 
-                case StatusEffectType.Flame:
-                    int burnDamage = Mathf.RoundToInt(maxHP * 0.05f); // 5% of max HP
-                    TakeDamage(burnDamage);
-                    Debug.Log($"{characterName} takes {burnDamage} burn damage from Flame.");
-                    break;
 
                 case StatusEffectType.DefenseDown:
                     if (!effect.isApplied)
@@ -266,7 +285,49 @@ public class Character : MonoBehaviour
                     }
                     break;
 
-                    // Add more effects here
+                case StatusEffectType.Bleed:
+                    {
+                        int bleedDamage = Mathf.RoundToInt(maxHP * 0.05f); // 5% of max HP
+                        bool spreadToAllParts = false;
+
+                        Character source = effect.source;
+
+                        if (source != null)
+                        {
+                            foreach (var itemData in (source as Player)?.equippedPassiveItems ?? new List<PassiveItemData>())
+                            {
+                                if (itemData.itemPrefab == null) continue;
+
+                                var tuner = itemData.itemPrefab.GetComponent<BloodTuner>();
+
+                                if (tuner != null)
+                                {
+                                    spreadToAllParts = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (spreadToAllParts)
+                        {
+                            Debug.Log($"{characterName} suffers BLEED on ALL body parts for {bleedDamage} damage each.");
+
+                            foreach (var part in bodyParts)
+                            {
+                                if (part != null && !part.IsDestroyed)
+                                    part.ApplyDamage(bleedDamage, false);
+                            }
+                        }
+                        else
+                        {
+                            Debug.Log($"{characterName} suffers BLEED for {bleedDamage} damage.");
+                            TakeDamage(bleedDamage);
+                        }
+
+                        break;
+                    }
+
+
             }
 
             // Decrement turns
@@ -294,10 +355,14 @@ public class Character : MonoBehaviour
         }
     }
 
+    #endregion
+
     public bool HasStatusEffect(StatusEffectType type)
     {
         return activeStatusEffects.Exists(effect => effect.effectType == type && effect.remainingTurns > 0);
     }
+
+    #region  Equipment
 
     public bool EquipWeapon(Weapon weapon, bool isRightHand)
     {
@@ -348,5 +413,35 @@ public class Character : MonoBehaviour
         if (rightHandWeapon?.isTwoHandWeapon == true)
             rightHandWeapon = null;
     }
+
+    #endregion
+
+    public void EquipPassiveItems()
+    {
+        foreach (var item in equippedPassiveItems)
+        {
+            item.EquipTo(this);
+
+            // Let item modify possibility pool if applicable
+            var modifier = item.itemPrefab.GetComponent<IPossibilityModifier>();
+            if (modifier != null)
+                modifier.ModifyChances(this.possibilityPool);
+        }
+
+    }
+
+    public string GetStatusChances()
+    {
+        Dictionary<StatusChanceType, float> allChances = possibilityPool.GetAllChances();
+        List<string> lines = new();
+
+        foreach (var kvp in allChances)
+        {
+            lines.Add($"{kvp.Key}: {Mathf.RoundToInt(kvp.Value * 100f)}%");
+        }
+
+        return string.Join(", ", lines);
+    }
+
 
 }
