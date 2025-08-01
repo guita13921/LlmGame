@@ -8,6 +8,8 @@ public class CharacterCombatHandler : MonoBehaviour
 {
     private BattleManager battleManager;
     public TMP_Text responseText;
+    private Dictionary<Character, Dictionary<DamageType, float>> lastDamageBreakdown = new();
+
 
     private void Awake()
     {
@@ -35,14 +37,14 @@ public class CharacterCombatHandler : MonoBehaviour
         if (battleManager.player.isUsingUltimateSkill == false)
         {
             DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
-            Debug.Log("calculatedDamage : " + result.damage);
+            //Debug.Log("calculatedDamage : " + result.damage);
             finalDamage = Mathf.RoundToInt(result.damage);
 
         }
         else
         {
-            DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
-            Debug.Log("calculatedDamage : " + result.damage);
+            DamageResult result = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
+            //Debug.Log("calculatedDamage : " + result.damage);
             finalDamage = Mathf.RoundToInt(result.damage);
         }
 
@@ -69,7 +71,6 @@ public class CharacterCombatHandler : MonoBehaviour
         string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
-
         Debug.Log(target.GetBodyPartStatus());
 
         yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
@@ -219,6 +220,16 @@ public class CharacterCombatHandler : MonoBehaviour
         {
             return " No special effects.";
         }
+    }
+
+    public void SaveLastDamageBreakdown(Character attacker, Dictionary<DamageType, float> breakdown)
+    {
+        lastDamageBreakdown[attacker] = breakdown;
+    }
+
+    public Dictionary<DamageType, float> GetLastDamageBreakdown(Character attacker)
+    {
+        return lastDamageBreakdown.TryGetValue(attacker, out var val) ? val : new();
     }
 
 }

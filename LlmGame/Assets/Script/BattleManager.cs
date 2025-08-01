@@ -111,21 +111,69 @@ public class BattleManager : MonoBehaviour
             chatAI.ShowInputUI();
             yield break;
         }
-        else if (character is Enemy enemy)
+
+        if (character is Enemy enemy)
         {
+            if (enemy.availableActions == null || enemy.availableActions.Count == 0)
+            {
+                Debug.LogWarning($"{enemy.characterName} has no available actions.");
+                yield break;
+            }
+
+            enemy.selectedAction = enemy.availableActions[0];
+            if (enemy.selectedAction == null)
+            {
+                Debug.LogError($"{enemy.characterName} has a null selectedAction.");
+                yield break;
+            }
+
+
+            // ✅ Check if enemy should use a consumable instead of attack
+            if (CheckAndActivateEnemyItems(enemy, enemy.selectedAction.actionName, out IEnumerator consumeRoutine))
+            {
+                yield return StartCoroutine(consumeRoutine); // ✅ Use consumable
+                yield break; // ✅ End turn, skip attack
+            }
+
+            // 🎯 Perform normal attack
             Character target = GetRandomOpponent(enemy);
             if (target != null)
             {
-                enemy.selectedAction = enemy.availableActions[0];
-
-                CheckAndActivateEnemyItems(enemy, enemy.selectedAction.actionName);
-
                 Debug.Log($"Enemy {enemy.characterName} chosen action: {enemy.selectedAction.actionName}");
-
                 combatHandler.EnemyAttack(enemy, target, enemy.selectedAction);
             }
         }
     }
+
+    /*
+    private Character GetLowestHPTargetInTeam(Enemy user)
+    {
+        List<Character> allies = GetAlliesOf(user);
+
+        Character lowest = null;
+        int lowestHP = int.MaxValue;
+
+        foreach (var ally in allies)
+        {
+            if (ally.IsAlive() && ally.currentHP < ally.maxHP && ally.currentHP < lowestHP)
+            {
+                lowestHP = ally.currentHP;
+                lowest = ally;
+            }
+        }
+
+        return lowest;
+    }
+
+    // Replace with your actual method to get allies of a character
+    private List<Character> GetAlliesOf(Character character)
+    {
+        return allCharacters.FindAll(c =>
+            c.characterType == character.characterType &&
+            c.IsAlive());
+    }
+    */
+
 
     public Character GetRandomOpponent(Character self)
     {
@@ -180,26 +228,60 @@ public class BattleManager : MonoBehaviour
         return enemy.actions[randomIndex];
     }
 
-    private void CheckAndActivateEnemyItems(Enemy enemy, string enemyAction)
+    private bool CheckAndActivateEnemyItems(Enemy enemy, string enemyAction, out IEnumerator consumeRoutine)
     {
         string lowerAction = enemyAction.ToLower();
 
-        // Clear all item activation states
-        foreach (var item in enemy.inventoryItems)
-        {
-            item.isActive = false;
-        }
-
         enemy.activeItem.Clear();
+        consumeRoutine = null;
 
-        // Check left hand weapon
+        // 🔁 Reset activation states
+        foreach (var item in enemy.inventoryItems)
+            item.isActive = false;
+
+        // ✅ Weapon activation
         ProcessWeaponForActivation(enemy.leftHandWeapon, lowerAction, enemy);
-
-        // Check right hand weapon
         ProcessWeaponForActivation(enemy.rightHandWeapon, lowerAction, enemy);
 
-        Debug.Log($"Total enemy active items: {enemy.activeItem.Count}");
+        // ✅ Optional: Activate items based on keywords
+        foreach (var item in enemy.inventoryItems)
+        {
+            if (item == null || item.keyWords == null) continue;
+
+            foreach (string keyword in item.keyWords)
+            {
+                string lowerKeyword = keyword.ToLower();
+                // Check if this item is a usable consumable
+                if (item is ConsumeTurnItem consumeItem)
+                {
+                    Character healTarget = enemy;
+                    item.isActive = true;
+                    enemy.activeItem.Add(item);
+
+                    enemy.isUsingConsumeTurnItem = true;
+                    if (healTarget != null)
+                    {
+                        Debug.Log($"Enemy {enemy.characterName} will use {consumeItem.itemName} on {healTarget.characterName}");
+                        enemy.isUsingConsumeTurnItem = true;
+                        consumeRoutine = consumeItem.UseOnTarget(enemy, healTarget, this);
+                        return true;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("No valid heal target found.");
+                    }
+
+                    Debug.Log($"🔍 [Enemy Item AI] {enemy.characterName} activates healing item: {item.itemName}");
+                    return true; // ✅ Use healing item and end turn
+
+                }
+            }
+        }
+
+        return false; // No matching item to consume
     }
+
+
 
     private void ProcessWeaponForActivation(Weapon weapon, string lowerAction, Enemy enemy)
     {
@@ -300,11 +382,21 @@ public class BattleManager : MonoBehaviour
         character.animationFinished = false;
         character.animator.SetTrigger(animationTriggerName);
 
-        while (!character.animationFinished)
+        float timeout = 3f;
+        float timer = 0f;
+
+        while (!character.animationFinished && timer < timeout)
         {
+            timer += Time.deltaTime;
             yield return null;
         }
+
+        if (!character.animationFinished)
+        {
+            Debug.LogWarning($"Animation '{animationTriggerName}' for {character.characterName} timed out!");
+        }
     }
+
 
     public void EndPlayerTurn()
     {

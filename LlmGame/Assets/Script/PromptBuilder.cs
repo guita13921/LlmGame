@@ -261,9 +261,6 @@ public static class PromptBuilder
             foreach (string keyword in item.keyWords)
             {
 
-                Debug.Log(lowerMessage);
-                Debug.Log(keyword);
-
                 if (!string.IsNullOrEmpty(keyword) && lowerMessage.Contains(keyword.ToLower()))
                 {
                     item.isActive = true;

@@ -5,7 +5,7 @@ using UnityEngine;
 public class ConsumeTurnItem : Item
 {
     [Header("Animation Trigger")]
-    public string aniamtionTrigger;
+    public string animationTrigger;
 
     public virtual IEnumerator UseOnTarget(Character user, Character target, BattleManager battleManager)
     {

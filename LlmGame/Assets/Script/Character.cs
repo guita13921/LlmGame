@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Character : MonoBehaviour
@@ -65,6 +67,7 @@ public class Character : MonoBehaviour
 
     public PossibilityPool possibilityPool { get; private set; }
     [SerializeField] public List<PassiveItemData> equippedPassiveItems;
+    private Dictionary<string, int> customIntData = new();
 
     public virtual void Awake()
     {
@@ -110,6 +113,7 @@ public class Character : MonoBehaviour
     public virtual void TakeDamage(int dmg)
     {
         int finalDamage = Mathf.Max(dmg - defense, 0);
+        Debug.Log(defense);
         currentHP -= finalDamage;
         if (currentHP < 0) currentHP = 0;
 
@@ -122,6 +126,29 @@ public class Character : MonoBehaviour
     public virtual void OnDeath()
     {
         Debug.Log($"{characterName} has died!");
+
+        // 1️⃣ Notify components on this character (self-listeners)
+        foreach (var listener in GetComponents<IDeathListener>())
+        {
+            listener.OnDeath(this);
+        }
+
+        // 2️⃣ Also notify the Player’s passive item listeners
+        Player player = FindObjectOfType<Player>();
+        if (player != null)
+        {
+            foreach (var itemData in player.equippedPassiveItems)
+            {
+                if (itemData.itemPrefab == null) continue;
+
+                var deathListener = itemData.itemPrefab.GetComponent<IDeathListener>();
+                if (deathListener != null)
+                {
+                    deathListener.OnDeath(this);
+                }
+            }
+        }
+
     }
 
     private void OnMouseDown()
@@ -174,38 +201,45 @@ public class Character : MonoBehaviour
         float portion = hitData.damagePortion;
         int thisHitDamage = Mathf.RoundToInt(pendingDamage * portion);
 
-
-        // 🔥 BEFORE damage: check equipped PassiveItemData if damageTarget is Player
-        if (damageTarget is Player playerTarget)
+        // 🔥 BEFORE damage: Defensive passives from damageTarget (e.g. shield, damage reduction)
+        if (damageTarget is Player playerTargetBefore)
         {
-            foreach (var itemData in playerTarget.equippedPassiveItems)
+            foreach (var itemData in playerTargetBefore.equippedPassiveItems)
             {
                 if (itemData.itemPrefab == null) continue;
 
-                IDamageReaction reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
+                var reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
                 if (reaction != null)
-                {
-                    reaction.OnBeforeDamage(this, playerTarget, ref thisHitDamage);
-                }
+                    reaction.OnBeforeDamage(this, damageTarget, ref thisHitDamage);
             }
         }
 
         // 💥 Apply damage
         damageTarget.TakeDamage(thisHitDamage);
 
-
-        // 💡 AFTER damage: prefab passive effects from equipped items
+        // 💡 AFTER damage: Passive reactions from damageTarget
         if (damageTarget is Player playerTargetAfter)
         {
             foreach (var itemData in playerTargetAfter.equippedPassiveItems)
             {
                 if (itemData.itemPrefab == null) continue;
 
-                IDamageReaction reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
+                var reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
                 if (reaction != null)
-                {
-                    reaction.OnAfterDamage(this, playerTargetAfter, thisHitDamage);
-                }
+                    reaction.OnAfterDamage(this, damageTarget, thisHitDamage);
+            }
+        }
+
+        // ✅ NEW: Trigger passive reactions from the attacker
+        if (this is Player playerAttacker)
+        {
+            foreach (var itemData in playerAttacker.equippedPassiveItems)
+            {
+                if (itemData.itemPrefab == null) continue;
+
+                var reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                    reaction.OnAfterDamage(playerAttacker, damageTarget, thisHitDamage);
             }
         }
 
@@ -224,6 +258,7 @@ public class Character : MonoBehaviour
 
         currentHitIndex++;
     }
+
 
     #region StatusEffect
 
@@ -250,13 +285,11 @@ public class Character : MonoBehaviour
         {
             TurnStatusEffect effect = activeStatusEffects[i];
 
-            // Apply effect logic before reducing turn count
             switch (effect.effectType)
             {
                 case StatusEffectType.Stun:
                     Debug.Log($"{characterName} is stunned and will skip this turn.");
                     break;
-
 
                 case StatusEffectType.DefenseDown:
                     if (!effect.isApplied)
@@ -285,22 +318,31 @@ public class Character : MonoBehaviour
                     }
                     break;
 
+                case StatusEffectType.Radiation:
+                    {
+                        int radDamage = Mathf.RoundToInt(maxHP * 0.04f);
+                        Debug.Log($"{characterName} suffers RADIATION for {radDamage} damage.");
+                        TakeDamage(radDamage);
+
+                        // 💡 Check for Irradiation Matrix on the attacker
+                        TryApplyHealReductionDebuff(effect.source);
+                        break;
+                    }
+
+
+
                 case StatusEffectType.Bleed:
                     {
-                        int bleedDamage = Mathf.RoundToInt(maxHP * 0.05f); // 5% of max HP
+                        int bleedDamage = Mathf.RoundToInt(maxHP * 0.05f);
                         bool spreadToAllParts = false;
 
                         Character source = effect.source;
-
                         if (source != null)
                         {
                             foreach (var itemData in (source as Player)?.equippedPassiveItems ?? new List<PassiveItemData>())
                             {
                                 if (itemData.itemPrefab == null) continue;
-
-                                var tuner = itemData.itemPrefab.GetComponent<BloodTuner>();
-
-                                if (tuner != null)
+                                if (itemData.itemPrefab.GetComponent<BloodTuner>() != null)
                                 {
                                     spreadToAllParts = true;
                                     break;
@@ -310,11 +352,10 @@ public class Character : MonoBehaviour
 
                         if (spreadToAllParts)
                         {
-                            Debug.Log($"{characterName} suffers BLEED on ALL body parts for {bleedDamage} damage each.");
-
+                            Debug.Log($"{characterName} suffers BLEED on ALL parts for {bleedDamage} damage.");
                             foreach (var part in bodyParts)
                             {
-                                if (part != null && !part.IsDestroyed)
+                                if (!part.IsDestroyed)
                                     part.ApplyDamage(bleedDamage, false);
                             }
                         }
@@ -327,13 +368,23 @@ public class Character : MonoBehaviour
                         break;
                     }
 
+                case StatusEffectType.Poison:
+                    {
+                        int poisonDamage = Mathf.RoundToInt(maxHP * 0.03f);
+                        Debug.Log($"{characterName} suffers POISON for {poisonDamage} damage.");
+                        TakeDamage(poisonDamage);
+
+                        // Check for Nerve Rot Vials on source
+                        TryApplyNerveRotVialDebuff(effect.source);
+                        break;
+                    }
 
             }
 
-            // Decrement turns
+            // ⬇️ Turn countdown
             effect.remainingTurns--;
 
-            // Remove and revert stat effects if expired
+            // 🧹 Expiration & stat reversal
             if (effect.remainingTurns <= 0)
             {
                 switch (effect.effectType)
@@ -354,6 +405,78 @@ public class Character : MonoBehaviour
             }
         }
     }
+
+    private void TryApplyNerveRotVialDebuff(Character source)
+    {
+        if (source == null || !(source is Player playerSource)) return;
+
+        foreach (var itemData in playerSource.equippedPassiveItems)
+        {
+            if (itemData.itemPrefab == null) continue;
+
+            if (itemData.itemPrefab.GetComponent<NerveRotVials>() != null)
+            {
+                // ✅ Limit to max 3 stacks
+                int currentStacks = activeStatusEffects
+                    .Count(e => e.effectType == StatusEffectType.DefenseDown && e.source == source);
+
+                if (currentStacks >= 3)
+                {
+                    Debug.Log($"{characterName} already has max Nerve Rot stacks.");
+                    return;
+                }
+
+                TurnStatusEffect debuff = new TurnStatusEffect(
+                    StatusEffectType.DefenseDown,
+                    2, // turns
+                    2  // magnitude
+                );
+                debuff.source = source;
+                ApplyStatusEffect(debuff);
+
+                Debug.Log($"{characterName} suffers -2 Defense from Nerve Rot Vials.");
+                return;
+            }
+        }
+    }
+
+    public bool TryGetCustomInt(string key, out int value)
+    {
+        return customIntData.TryGetValue(key, out value);
+    }
+
+    public void SetCustomInt(string key, int value)
+    {
+        customIntData[key] = value;
+    }
+
+    private void TryApplyHealReductionDebuff(Character source)
+    {
+        if (source == null || !(source is Player playerSource)) return;
+
+        foreach (var itemData in playerSource.equippedPassiveItems)
+        {
+            if (itemData.itemPrefab == null) continue;
+
+            if (itemData.itemPrefab.GetComponent<IrradiationMatrix>() != null)
+            {
+                // Prevent duplicates
+                if (HasStatusEffect(StatusEffectType.HealReduction)) return;
+
+                TurnStatusEffect debuff = new TurnStatusEffect(
+                    StatusEffectType.HealReduction,
+                    3, // duration in turns
+                    50 // 50% healing reduction
+                );
+                debuff.source = source;
+
+                ApplyStatusEffect(debuff);
+                Debug.Log($"{characterName} is afflicted with HEAL REDUCTION (-50% healing) for 3 turns.");
+                return;
+            }
+        }
+    }
+
 
     #endregion
 
@@ -442,6 +565,5 @@ public class Character : MonoBehaviour
 
         return string.Join(", ", lines);
     }
-
 
 }

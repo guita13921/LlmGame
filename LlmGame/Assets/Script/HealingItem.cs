@@ -7,12 +7,25 @@ public class HealingItem : ConsumeTurnItem
 {
     [Header("Stat")]
     public int healingAmount;
-
     public override IEnumerator UseOnTarget(Character user, Character target, BattleManager battleManager)
     {
+        if (user == null || target == null || battleManager == null)
+        {
+            Debug.LogError("[HealingItem] Null reference: user, target, or battleManager is null.");
+            yield break;
+        }
+
         Debug.Log($"{user.characterName} uses {itemName} on {target.characterName}");
 
-        yield return battleManager.StartCoroutine(battleManager.WaitForAnimation(user, this.aniamtionTrigger));
+        if (!string.IsNullOrEmpty(animationTrigger))
+        {
+            yield return battleManager.StartCoroutine(battleManager.WaitForAnimation(user, animationTrigger));
+        }
+        else
+        {
+            Debug.LogWarning("[HealingItem] animationTrigger is null or empty.");
+            yield return new WaitForSeconds(0.25f); // fallback wait
+        }
 
         target.currentHP = Mathf.Min(target.maxHP, target.currentHP + healingAmount);
         Debug.Log($"{target.characterName} healed for {healingAmount} HP");
@@ -32,9 +45,8 @@ public class HealingItem : ConsumeTurnItem
         }
 
         battleManager.chatAI.ShowInputUI();
-
-        // ✅ End the player's turn
         battleManager.EndPlayerTurn();
     }
+
 
 }

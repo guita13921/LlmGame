@@ -27,7 +27,7 @@ public enum DamageType
     Radiation,      // Dirty energy weapons, nuclear micro-explosives
     Explosive,      // Grenades, rocket launchers
     Plasma,         // High-energy plasma weapons
-    Chemical,       // Gas attacks, chemical bombs
+    Poison,       // Gas attacks, chemical bombs
     Viral,          // Digital viruses that affect both tech and biology
 }
 
@@ -80,7 +80,8 @@ public enum StatusEffectType
     FocusDown,
     Bleed,
     Poison,
-    Custom
+    Radiation,
+    HealReduction // ✅ Let compiler assign next value
 }
 
 public enum StatusChanceType

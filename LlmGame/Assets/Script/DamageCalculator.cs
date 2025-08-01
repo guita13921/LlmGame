@@ -65,7 +65,7 @@ public class DamageCalculator : MonoBehaviour
                         DamageType.Radiation => weapon.damageRadiation,
                         DamageType.Explosive => weapon.damageExplosive,
                         DamageType.Plasma => weapon.damagePlasma,
-                        DamageType.Chemical => weapon.damageChemical,
+                        DamageType.Poison => weapon.damageChemical,
                         DamageType.Viral => weapon.damageViral,
                         _ => 0
                     };
@@ -178,7 +178,7 @@ public class DamageCalculator : MonoBehaviour
                     DamageType.Radiation => armor.reduceDamageRadiation,
                     DamageType.Explosive => armor.reduceDamageExplosive,
                     DamageType.Plasma => armor.reduceDamagePlasma,
-                    DamageType.Chemical => armor.reduceDamageChemical,
+                    DamageType.Poison => armor.reduceDamageChemical,
                     DamageType.Viral => armor.reduceDamageViral,
                     _ => 0f
                 };
@@ -231,7 +231,7 @@ public class DamageCalculator : MonoBehaviour
             { DamageType.Radiation, skill.damageRadiation },
             { DamageType.Explosive, skill.damageExplosive },
             { DamageType.Plasma, skill.damagePlasma },
-            { DamageType.Chemical, skill.damageChemical },
+            { DamageType.Poison, skill.damageChemical },
             { DamageType.Viral, skill.damageViral }
         };
 
@@ -336,7 +336,7 @@ public class DamageCalculator : MonoBehaviour
                     DamageType.Radiation => armor.reduceDamageRadiation,
                     DamageType.Explosive => armor.reduceDamageExplosive,
                     DamageType.Plasma => armor.reduceDamagePlasma,
-                    DamageType.Chemical => armor.reduceDamageChemical,
+                    DamageType.Poison => armor.reduceDamageChemical,
                     DamageType.Viral => armor.reduceDamageViral,
                     _ => 0f
                 };
@@ -381,6 +381,5 @@ public class DamageCalculator : MonoBehaviour
 
         return new DamageResult(scaledFinalDamage, finalFeasibility, finalPotential);
     }
-
 
 }
