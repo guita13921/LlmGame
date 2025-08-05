@@ -10,7 +10,7 @@ public enum ItemType
 public enum WeaponType
 {
     Melee_Weapon,
-    Range_Weapon
+    Ranged_Weapon
 }
 
 public enum UsageType

@@ -6,8 +6,8 @@ public class ArmorData : ScriptableObject
 {
     [Header("General Armor Stats")]
     public string armorName;
-    public float reducePotentialDamage;  // Reduces potential multiplier
-    public float reduceFeasibility;      // Reduces feasibility multiplier
+    public float reducePotentialDamage;
+    public float reduceFeasibility;
     public string description;
 
     [Header("DamageType Reduction")]
@@ -21,8 +21,6 @@ public class ArmorData : ScriptableObject
     public int reduceDamageLaser;
     public int reduceDamageChemical;
     public int reduceDamageViral;
-    public List<DamageType> damageTypeReduce; // Used for UI/display, optional for logic
+    public List<DamageType> damageTypeReduce;
 
-    [Header("BodyWeight")]
-    public int weightCost;
 }

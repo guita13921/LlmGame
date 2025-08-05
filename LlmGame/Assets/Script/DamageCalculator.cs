@@ -70,6 +70,12 @@ public class DamageCalculator : MonoBehaviour
                         _ => 0
                     };
 
+                    // 🔥 Apply Critical Damage Multiplier if applicable
+                    if (character.isCritical)
+                    {
+                        value = Mathf.RoundToInt(value * 1.5f);
+                    }
+
                     if (!damageBreakdown.ContainsKey(dt))
                         damageBreakdown[dt] = value;
                     else
@@ -80,6 +86,7 @@ public class DamageCalculator : MonoBehaviour
 
         return damageBreakdown;
     }
+
 
     public DamageResult CalculateDamage(
         float feasibility, float potential, float baseDamage,
@@ -199,8 +206,27 @@ public class DamageCalculator : MonoBehaviour
 
         foreach (var part in selectedTargetParts)
         {
-            part.ApplyDamage(Mathf.RoundToInt(splitDamage), true, usedWeapon);
+            int damageToApply = Mathf.RoundToInt(splitDamage);
+
+            // 🔥 Apply OnHit Modifiers from Passive Items (like Head Targeting)
+            if (attacker is Player attackerPlayer)
+            {
+                foreach (var itemData in attackerPlayer.equippedPassiveItems)
+                {
+                    if (itemData.itemPrefab == null) continue;
+
+                    IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
+                    if (hitModifier != null)
+                    {
+                        hitModifier.OnHit(attacker, part, ref damageToApply);
+                    }
+                }
+            }
+
+            // 💥 Apply damage to the body part (with modified damage)
+            part.ApplyDamage(damageToApply, true, usedWeapon);
         }
+
 
         Debug.Log($"[Final Damage]: {scaledFinalDamage}");
 
@@ -215,7 +241,7 @@ public class DamageCalculator : MonoBehaviour
         float feasibility, float potential, float baseDamage,
         Character attacker, Character target)
     {
-        const float constant = 2f;
+        const float constant = 1f;
 
         // 1️⃣ Gather Damage from skill or weapon
         Dictionary<DamageType, int> weaponDamageBreakdown = new();
@@ -363,16 +389,51 @@ public class DamageCalculator : MonoBehaviour
 
             foreach (var part in selectedTargetParts)
             {
-                int damageAmount = Mathf.RoundToInt(part.maxHealth * percent);
-                part.ApplyDamage(damageAmount, false, weapon);
+                int damageToApply = Mathf.RoundToInt(damagePerPart);
+
+                // 🔥 Apply OnHit Modifiers
+                if (attacker is Player attackerPlayer)
+                {
+                    foreach (var itemData in attackerPlayer.equippedPassiveItems)
+                    {
+                        if (itemData.itemPrefab == null) continue;
+
+                        IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
+                        if (hitModifier != null)
+                        {
+                            hitModifier.OnHit(attacker, part, ref damageToApply);
+                        }
+                    }
+                }
+
+                part.ApplyDamage(damageToApply, true, weapon);
             }
+
         }
         else
         {
             foreach (var part in selectedTargetParts)
             {
-                part.ApplyDamage(Mathf.RoundToInt(damagePerPart), true, weapon);
+                int damageToApply = Mathf.RoundToInt(damagePerPart);
+
+                // 🔥 Apply OnHit Modifiers
+                if (attacker is Player attackerPlayer)
+                {
+                    foreach (var itemData in attackerPlayer.equippedPassiveItems)
+                    {
+                        if (itemData.itemPrefab == null) continue;
+
+                        IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
+                        if (hitModifier != null)
+                        {
+                            hitModifier.OnHit(attacker, part, ref damageToApply);
+                        }
+                    }
+                }
+
+                part.ApplyDamage(damageToApply, true, weapon);
             }
+
         }
 
         // 8️⃣ Store LLM values for UI

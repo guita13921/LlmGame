@@ -76,7 +76,6 @@ public class CharacterCombatHandler : MonoBehaviour
         yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
     }
 
-
     public void UseItem(List<Item> item, string outcomeType)
     {
         Debug.Log($"Use Item :{item} -> {outcomeType}");
@@ -185,6 +184,18 @@ public class CharacterCombatHandler : MonoBehaviour
     public string TryApplyStatusEffects(Character attacker, Character target)
     {
         List<string> appliedEffects = new();
+
+        // 🎯 Critical Hit Roll
+        bool isCriticalHit = attacker.possibilityPool.Roll(StatusChanceType.Critical);
+        if (isCriticalHit)
+        {
+            appliedEffects.Add($"landed a CRITICAL HIT on {target.characterName}");
+            attacker.isCritical = true;  // 🔥 Mark attacker for damage calculation
+        }
+        else
+        {
+            attacker.isCritical = false;
+        }
 
         // 🩸 Bleed chance roll
         if (attacker.possibilityPool.Roll(StatusChanceType.Bleed))

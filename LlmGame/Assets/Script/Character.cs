@@ -43,6 +43,9 @@ public class Character : MonoBehaviour
     [Header("Status Effects")]
     [SerializeField] public List<TurnStatusEffect> activeStatusEffects = new List<TurnStatusEffect>();
 
+    [Header("Critical")]
+    public bool isCritical;
+
     [Header("Skills")]
     public List<DamageModifierSkill> damageModifierSkills = new List<DamageModifierSkill>();
     public DamageModifierSkill currentSkill;

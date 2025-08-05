@@ -37,15 +37,11 @@ public class BodyPartData : ScriptableObject
             ? Mathf.RoundToInt(totalDamage * damageToPartRatio)
             : Mathf.RoundToInt(totalDamage);
 
-        int beforeHealth = this.health;
-        this.health -= damageToPart;
+        int beforeHealth = health;
+        health = Mathf.Max(0, health - damageToPart);
 
-        if (health < 0) health = 0;
-
-        // 🧠 Debug log
         Debug.Log($"💥 [Damage {totalDamage}] {type} took {damageToPart} damage. HP: {beforeHealth} → {health}");
 
-        // ✅ Check for destruction
         if (IsDestroyed && becomesWeakPointWhenDestroyed)
         {
             if (linkedWeakPoint != null)
@@ -53,7 +49,6 @@ public class BodyPartData : ScriptableObject
                 Debug.Log($"⚠️ [BodyPart] {type} destroyed — weak point '{linkedWeakPoint.weakPointName}' is now exposed.");
             }
 
-            // ✅ If a weapon with a weak point type was used, assign it
             if (weaponUsed != null && weaponUsed.weakPointType != null)
             {
                 linkedWeakPoint = ScriptableObject.Instantiate(weaponUsed.weakPointType);
@@ -61,5 +56,7 @@ public class BodyPartData : ScriptableObject
             }
         }
     }
+
+
 
 }
