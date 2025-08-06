@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using TMPro;
+using Unity.VisualScripting;
+using System;
 
 public class CharacterCombatHandler : MonoBehaviour
 {
@@ -34,7 +36,7 @@ public class CharacterCombatHandler : MonoBehaviour
         float baseDamage = player.attack;
         int finalDamage;
 
-        if (battleManager.player.isUsingUltimateSkill == false)
+        if (battleManager.player.isUsingUltimateSkill)
         {
             DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
             //Debug.Log("calculatedDamage : " + result.damage);
@@ -68,7 +70,7 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         // ✅ Log
-        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
+        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {Math.Max(target.currentHP - finalDamage, 0)} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
         Debug.Log(target.GetBodyPartStatus());
@@ -185,8 +187,24 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         List<string> appliedEffects = new();
 
-        // 🎯 Critical Hit Roll
-        bool isCriticalHit = attacker.possibilityPool.Roll(StatusChanceType.Critical);
+        // 🧠 Check if any passive guarantees crit (like BloodRushCore)
+        bool forceCrit = false;
+
+        foreach (var behavior in attacker.runtimePassiveBehaviors)
+        {
+            if (behavior is BloodRushCore brc && brc.IsReady())
+            {
+                forceCrit = true;
+
+                // ❌ Don’t consume here!
+                // brc.Consume(); ← REMOVE THIS
+                break;
+            }
+        }
+
+        attacker.isCritical = forceCrit || attacker.possibilityPool.Roll(StatusChanceType.Critical);
+        bool isCriticalHit = forceCrit || attacker.possibilityPool.Roll(StatusChanceType.Critical);
+
         if (isCriticalHit)
         {
             appliedEffects.Add($"landed a CRITICAL HIT on {target.characterName}");

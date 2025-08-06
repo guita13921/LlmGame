@@ -55,6 +55,7 @@ public class Character : MonoBehaviour
     [SerializeField] public int currentHP;
     [SerializeField] public int currentMP;
     [SerializeField] public int currentshield;
+    public List<MonoBehaviour> runtimePassiveBehaviors = new();
     public float turnGauge = 0f;
 
     [Header("Inventory")]
@@ -116,7 +117,6 @@ public class Character : MonoBehaviour
     public virtual void TakeDamage(int dmg)
     {
         int finalDamage = Mathf.Max(dmg - defense, 0);
-        Debug.Log(defense);
         currentHP -= finalDamage;
         if (currentHP < 0) currentHP = 0;
 
@@ -204,32 +204,39 @@ public class Character : MonoBehaviour
         float portion = hitData.damagePortion;
         int thisHitDamage = Mathf.RoundToInt(pendingDamage * portion);
 
-        // 🔥 BEFORE damage: Defensive passives from damageTarget (e.g. shield, damage reduction)
-        if (damageTarget is Player playerTargetBefore)
+        // ✅ BEFORE damage: Offensive passives from attacker
+        if (this is Player playerAttackerBefore)
         {
-            foreach (var itemData in playerTargetBefore.equippedPassiveItems)
+            foreach (var behavior in playerAttackerBefore.runtimePassiveBehaviors)
             {
-                if (itemData.itemPrefab == null) continue;
-
-                var reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
-                if (reaction != null)
-                    reaction.OnBeforeDamage(this, damageTarget, ref thisHitDamage);
+                if (behavior is IDamageReaction reaction)
+                    reaction.OnBeforeDamage(playerAttackerBefore, damageTarget, ref thisHitDamage);
             }
         }
 
         // 💥 Apply damage
         damageTarget.TakeDamage(thisHitDamage);
 
+        // ✅ 💉 Consume BloodRushCore if crit applied
+        if (this is Player playerAttackerCrit && playerAttackerCrit.isCritical)
+        {
+            foreach (var behavior in playerAttackerCrit.runtimePassiveBehaviors)
+            {
+                if (behavior is BloodRushCore brc && brc.IsReady())
+                {
+                    brc.Consume();
+                    Debug.Log("🩸 BloodRushCore consumed after critical hit.");
+                }
+            }
+        }
+
         // 💡 AFTER damage: Passive reactions from damageTarget
         if (damageTarget is Player playerTargetAfter)
         {
-            foreach (var itemData in playerTargetAfter.equippedPassiveItems)
+            foreach (var behavior in playerTargetAfter.runtimePassiveBehaviors)
             {
-                if (itemData.itemPrefab == null) continue;
-
-                var reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
-                if (reaction != null)
-                    reaction.OnAfterDamage(this, damageTarget, thisHitDamage);
+                if (behavior is IDamageReaction reaction)
+                    reaction.OnBeforeDamage(playerTargetAfter, damageTarget, ref thisHitDamage);
             }
         }
 
@@ -267,7 +274,17 @@ public class Character : MonoBehaviour
 
     public void ApplyStatusEffect(TurnStatusEffect newEffect)
     {
-        // Optional: merge with existing effect
+        // 🔒 Check for immunity from passives
+        foreach (var blocker in GetComponentsInChildren<IStatusEffectListener>())
+        {
+            if (blocker.ShouldBlockStatus(this, newEffect))
+            {
+                Debug.Log($"🛡️ {characterName} blocked {newEffect.effectType} due to passive immunity.");
+                return;
+            }
+        }
+
+        // ✅ Continue with merge or add
         var existing = activeStatusEffects.Find(e => e.effectType == newEffect.effectType);
         if (existing != null)
         {
@@ -284,6 +301,7 @@ public class Character : MonoBehaviour
 
     public virtual void ProcessStatusEffects()
     {
+
         for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
         {
             TurnStatusEffect effect = activeStatusEffects[i];
@@ -294,6 +312,7 @@ public class Character : MonoBehaviour
                     Debug.Log($"{characterName} is stunned and will skip this turn.");
                     break;
 
+                // 🔻 Debuffs
                 case StatusEffectType.DefenseDown:
                     if (!effect.isApplied)
                     {
@@ -321,18 +340,43 @@ public class Character : MonoBehaviour
                     }
                     break;
 
+                // 🔺 Buffs
+                case StatusEffectType.AttackUp:
+                    if (!effect.isApplied)
+                    {
+                        attack += effect.magnitude;
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s attack is increased by {effect.magnitude}.");
+                    }
+                    break;
+
+                case StatusEffectType.DefenseUp:
+                    if (!effect.isApplied)
+                    {
+                        defense += effect.magnitude;
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s defense is increased by {effect.magnitude}.");
+                    }
+                    break;
+
+                case StatusEffectType.SpeedUp:
+                    if (!effect.isApplied)
+                    {
+                        speed += effect.magnitude;
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s speed is increased by {effect.magnitude}.");
+                    }
+                    break;
+
+                // 🧪 Damage-over-time effects
                 case StatusEffectType.Radiation:
                     {
                         int radDamage = Mathf.RoundToInt(maxHP * 0.04f);
                         Debug.Log($"{characterName} suffers RADIATION for {radDamage} damage.");
                         TakeDamage(radDamage);
-
-                        // 💡 Check for Irradiation Matrix on the attacker
                         TryApplyHealReductionDebuff(effect.source);
                         break;
                     }
-
-
 
                 case StatusEffectType.Bleed:
                     {
@@ -340,6 +384,7 @@ public class Character : MonoBehaviour
                         bool spreadToAllParts = false;
 
                         Character source = effect.source;
+
                         if (source != null)
                         {
                             foreach (var itemData in (source as Player)?.equippedPassiveItems ?? new List<PassiveItemData>())
@@ -366,6 +411,15 @@ public class Character : MonoBehaviour
                         {
                             Debug.Log($"{characterName} suffers BLEED for {bleedDamage} damage.");
                             TakeDamage(bleedDamage);
+
+                            // 🔔 Notify observers (e.g., Blood Rush Core)
+                            if (source != null)
+                            {
+                                foreach (var observer in source.GetComponentsInChildren<IStatusEffectListener>())
+                                {
+                                    observer.OnBleedDamageDealt(this, bleedDamage, source);
+                                }
+                            }
                         }
 
                         break;
@@ -376,22 +430,20 @@ public class Character : MonoBehaviour
                         int poisonDamage = Mathf.RoundToInt(maxHP * 0.03f);
                         Debug.Log($"{characterName} suffers POISON for {poisonDamage} damage.");
                         TakeDamage(poisonDamage);
-
-                        // Check for Nerve Rot Vials on source
                         TryApplyNerveRotVialDebuff(effect.source);
                         break;
                     }
-
             }
 
-            // ⬇️ Turn countdown
+            // ⏳ Countdown
             effect.remainingTurns--;
 
-            // 🧹 Expiration & stat reversal
+            // 🧹 Expire effect
             if (effect.remainingTurns <= 0)
             {
                 switch (effect.effectType)
                 {
+                    // Reverse debuffs
                     case StatusEffectType.DefenseDown:
                         defense += effect.magnitude;
                         break;
@@ -400,6 +452,17 @@ public class Character : MonoBehaviour
                         break;
                     case StatusEffectType.FocusDown:
                         focus += effect.magnitude;
+                        break;
+
+                    // Reverse buffs
+                    case StatusEffectType.AttackUp:
+                        attack -= effect.magnitude;
+                        break;
+                    case StatusEffectType.DefenseUp:
+                        defense -= effect.magnitude;
+                        break;
+                    case StatusEffectType.SpeedUp:
+                        speed -= effect.magnitude;
                         break;
                 }
 
@@ -480,7 +543,6 @@ public class Character : MonoBehaviour
         }
     }
 
-
     #endregion
 
     public bool HasStatusEffect(StatusEffectType type)
@@ -542,18 +604,28 @@ public class Character : MonoBehaviour
 
     #endregion
 
-    public void EquipPassiveItems()
+    public void EquipAllPassives()
     {
+        runtimePassiveBehaviors.Clear(); // Reset to avoid duplicates
+
         foreach (var item in equippedPassiveItems)
         {
-            item.EquipTo(this);
-
-            // Let item modify possibility pool if applicable
-            var modifier = item.itemPrefab.GetComponent<IPossibilityModifier>();
-            if (modifier != null)
-                modifier.ModifyChances(this.possibilityPool);
+            item.EquipTo(this); // this handles tracking internally
         }
 
+        foreach (var part in bodyParts)
+        {
+            part.EquipArmorTo(this); // same idea
+        }
+    }
+
+    public void RegisterRuntimePassive(GameObject instance)
+    {
+        foreach (var comp in instance.GetComponents<MonoBehaviour>())
+        {
+            runtimePassiveBehaviors.Add(comp);
+            if (comp is IPassiveItem item) item.ApplyEffect(this);
+        }
     }
 
     public string GetStatusChances()
@@ -568,5 +640,7 @@ public class Character : MonoBehaviour
 
         return string.Join(", ", lines);
     }
+
+
 
 }

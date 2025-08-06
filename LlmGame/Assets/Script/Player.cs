@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class Player : Character
 {
-
     void Start()
     {
-        EquipPassiveItems();
+        EquipAllPassives();
         Debug.Log(GetStatusChances());
+        //this.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Stun, 2, 0));
     }
 
 }

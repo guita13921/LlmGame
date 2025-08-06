@@ -75,8 +75,18 @@ public class BattleManager : MonoBehaviour
                 isActionPhase = true;
                 character.turnGauge = 0f;
 
+                foreach (var ticker in character.GetComponentsInChildren<ITurnListener>())
+                {
+                    ticker.OnTurnStart(character);
+                }
+
                 // ⬇️ Process status effects BEFORE they take their action
                 character.ProcessStatusEffects();
+
+                foreach (var ticker in character.GetComponentsInChildren<ITurnListener>())
+                {
+                    ticker.OnTurnEnd(character);
+                }
 
                 // ⬇️ If stunned, skip action
                 if (character.HasStatusEffect(StatusEffectType.Stun))
@@ -96,7 +106,6 @@ public class BattleManager : MonoBehaviour
             }
         }
     }
-
 
     private IEnumerator DoAction(Character character)
     {
@@ -126,7 +135,6 @@ public class BattleManager : MonoBehaviour
                 Debug.LogError($"{enemy.characterName} has a null selectedAction.");
                 yield break;
             }
-
 
             // ✅ Check if enemy should use a consumable instead of attack
             if (CheckAndActivateEnemyItems(enemy, enemy.selectedAction.actionName, out IEnumerator consumeRoutine))
@@ -281,8 +289,6 @@ public class BattleManager : MonoBehaviour
         return false; // No matching item to consume
     }
 
-
-
     private void ProcessWeaponForActivation(Weapon weapon, string lowerAction, Enemy enemy)
     {
         if (weapon == null || enemy == null)
@@ -396,7 +402,6 @@ public class BattleManager : MonoBehaviour
             Debug.LogWarning($"Animation '{animationTriggerName}' for {character.characterName} timed out!");
         }
     }
-
 
     public void EndPlayerTurn()
     {

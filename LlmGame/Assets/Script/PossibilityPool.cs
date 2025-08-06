@@ -7,13 +7,16 @@ public class PossibilityPool
 {
     private Dictionary<StatusChanceType, float> baseChances = new();
     private Dictionary<StatusChanceType, float> modifiers = new();
+    private float critMultiplierBase = 1.5f;
+    private float critMultiplierModifier = 0f;
+
 
     public PossibilityPool()
     {
         // Set default base chances
-        baseChances[StatusChanceType.Bleed] = 0.5f;
-        baseChances[StatusChanceType.Poison] = 0.25f;
-        baseChances[StatusChanceType.Critical] = 0.1f;
+        baseChances[StatusChanceType.Bleed] = 0.0f;
+        baseChances[StatusChanceType.Poison] = 0.0f;
+        baseChances[StatusChanceType.Critical] = 0.0f;
     }
 
     public void SetBaseChance(StatusChanceType type, float chance)
@@ -51,4 +54,24 @@ public class PossibilityPool
         }
         return result;
     }
+
+    public void SetBaseCriticalMultiplier(float value)
+    {
+        critMultiplierBase = Mathf.Max(1f, value);
+    }
+
+    public void AddCriticalMultiplierBonus(float value)
+    {
+        critMultiplierModifier += value;
+    }
+
+    public float GetFinalCriticalMultiplier()
+    {
+        float final = critMultiplierBase + critMultiplierModifier;
+        Debug.Log($"💥 GetFinalCriticalMultiplier: {critMultiplierBase} + {critMultiplierModifier} = {final}");
+        return final;
+    }
+
+
+
 }

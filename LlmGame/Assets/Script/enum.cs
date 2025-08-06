@@ -33,7 +33,6 @@ public enum DamageType
 
 public enum CharacterType
 {
-    Cyborg,
     Android,
     Human
 }
@@ -46,9 +45,6 @@ public enum BodyPartType
     RightArm,
     LeftLeg,
     RightLeg,
-    LeftEye,
-    RightEye,
-    Heart
 }
 
 public enum BodyPartState
@@ -81,6 +77,9 @@ public enum StatusEffectType
     Bleed,
     Poison,
     Radiation,
+    AttackUp,
+    DefenseUp,
+    SpeedUp,
     HealReduction // ✅ Let compiler assign next value
 }
 

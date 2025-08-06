@@ -16,6 +16,16 @@ public class BloodTuner : MonoBehaviour, IPassiveItem, IStatusEffectListener
         throw new System.NotImplementedException();
     }
 
+    public void OnBleedDamageDealt(Character target, int damage, Character source)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public bool ShouldBlockStatus(Character character, TurnStatusEffect effect)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public bool ShouldSpreadBleed(Character character)
     {
         return true; // Always true when this is equipped

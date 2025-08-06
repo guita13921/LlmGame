@@ -49,7 +49,20 @@ public class DamageCalculator : MonoBehaviour
 
     public Dictionary<DamageType, int> GetActiveWeaponDamageBreakdown(Character character)
     {
-        Dictionary<DamageType, int> damageBreakdown = new Dictionary<DamageType, int>();
+        Dictionary<DamageType, int> damageBreakdown = new();
+
+        // 🛠️ Allow crit-modifiers to apply first
+        foreach (var behavior in character.runtimePassiveBehaviors)
+        {
+            if (behavior is IPossibilityModifier mod)
+            {
+                mod.ModifyCritical(character, character.possibilityPool); // 🧠 This must happen first
+            }
+        }
+
+        float critMultiplier = character.isCritical
+            ? character.possibilityPool.GetFinalCriticalMultiplier()
+            : 1f;
 
         foreach (var activeItem in character.activeItem)
         {
@@ -70,11 +83,7 @@ public class DamageCalculator : MonoBehaviour
                         _ => 0
                     };
 
-                    // 🔥 Apply Critical Damage Multiplier if applicable
-                    if (character.isCritical)
-                    {
-                        value = Mathf.RoundToInt(value * 1.5f);
-                    }
+                    value = Mathf.RoundToInt(value * critMultiplier);
 
                     if (!damageBreakdown.ContainsKey(dt))
                         damageBreakdown[dt] = value;
@@ -86,7 +95,6 @@ public class DamageCalculator : MonoBehaviour
 
         return damageBreakdown;
     }
-
 
     public DamageResult CalculateDamage(
         float feasibility, float potential, float baseDamage,
@@ -241,7 +249,7 @@ public class DamageCalculator : MonoBehaviour
         float feasibility, float potential, float baseDamage,
         Character attacker, Character target)
     {
-        const float constant = 1f;
+        const float constant = 1.0f;
 
         // 1️⃣ Gather Damage from skill or weapon
         Dictionary<DamageType, int> weaponDamageBreakdown = new();

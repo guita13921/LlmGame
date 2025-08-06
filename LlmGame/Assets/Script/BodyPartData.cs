@@ -57,6 +57,40 @@ public class BodyPartData : ScriptableObject
         }
     }
 
+    public void EquipArmorTo(Character character)
+    {
+        if (equippedArmor == null || equippedArmor.itemBehaviorPrefab == null)
+            return;
+
+        GameObject instance = Instantiate(equippedArmor.itemBehaviorPrefab, character.transform);
+
+        foreach (var component in instance.GetComponents<MonoBehaviour>())
+        {
+            character.runtimePassiveBehaviors.Add(component);
+
+            if (component is IPassiveItem passive)
+                passive.ApplyEffect(character);
+        }
+
+        Debug.Log($"✅ Equipped armor with behavior: {equippedArmor.armorName}");
+    }
+
+    public bool TryEquipArmor(ArmorData armor)
+    {
+        if (armor == null)
+            return false;
+
+        if (!armor.compatibleBodyParts.Contains(type))
+        {
+            Debug.LogWarning($"❌ Cannot equip {armor.armorName} to {type}: incompatible slot.");
+            return false;
+        }
+
+        equippedArmor = armor;
+        Debug.Log($"✅ {armor.armorName} equipped to {type}.");
+        return true;
+    }
+
 
 
 }

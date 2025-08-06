@@ -33,6 +33,14 @@ public class Enemy : Character
             source: battleManager.player
         );
 
+        TurnStatusEffect Bleed = new TurnStatusEffect(
+            StatusEffectType.Bleed,
+            duration: 99,
+            magnitude: 1,
+            source: battleManager.player
+        );
+
+        this.ApplyStatusEffect(Bleed);
         //this.ApplyStatusEffect(posion);
         //this.ApplyStatusEffect(Radiation);
     }

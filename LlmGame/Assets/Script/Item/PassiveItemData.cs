@@ -21,16 +21,24 @@ public class PassiveItemData : ScriptableObject
             return;
         }
 
+        // ✅ Instantiate the prefab
         GameObject instance = Instantiate(itemPrefab, character.transform);
-        var passiveComponent = instance.GetComponent<IPassiveItem>();
 
+        // ✅ Apply effect
+        var passiveComponent = instance.GetComponent<IPassiveItem>();
         if (passiveComponent != null)
         {
             passiveComponent.ApplyEffect(character);
         }
-        else
+
+        // ✅ Track all attached MonoBehaviours
+        foreach (var component in instance.GetComponents<MonoBehaviour>())
         {
-            Debug.LogWarning($"{itemName} prefab does not have an IPassiveItem component.");
+            character.runtimePassiveBehaviors.Add(component);
         }
+
+        Debug.Log($"✅ Equipped passive item: {itemName}, tracked {instance.GetComponents<MonoBehaviour>().Length} behaviors.");
     }
+
+
 }

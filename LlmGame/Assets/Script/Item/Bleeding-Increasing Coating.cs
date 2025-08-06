@@ -17,6 +17,11 @@ public class BleedingIncreasingCoating : MonoBehaviour, IPassiveItem, IPossibili
         pool.AddModifier(StatusChanceType.Bleed, bleedChanceBonus);
     }
 
+    public void ModifyCritical(Character character, PossibilityPool pool)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();
