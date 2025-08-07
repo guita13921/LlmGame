@@ -6,6 +6,7 @@ public class ArmorData : ScriptableObject
 {
     [Header("General Armor Stats")]
     public string armorName;
+    [TextArea]
     public string description;
 
     [Header("Slot Compatibility")]

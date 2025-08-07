@@ -256,35 +256,38 @@ public class BattleManager : MonoBehaviour
         {
             if (item == null || item.keyWords == null) continue;
 
-            foreach (string keyword in item.keyWords)
+            if (item is ConsumeTurnItem consumeItem)
             {
-                string lowerKeyword = keyword.ToLower();
-                // Check if this item is a usable consumable
-                if (item is ConsumeTurnItem consumeItem)
+                foreach (string keyword in item.keyWords)
                 {
-                    Character healTarget = enemy;
-                    item.isActive = true;
-                    enemy.activeItem.Add(item);
+                    string lowerKeyword = keyword.ToLower();
 
-                    enemy.isUsingConsumeTurnItem = true;
-                    if (healTarget != null)
+                    // 🧪 Example: trigger on keyword match
+                    if (lowerKeyword == "heal" || lowerKeyword == "emergency" || lowerKeyword == "recovery")
                     {
-                        Debug.Log($"Enemy {enemy.characterName} will use {consumeItem.itemName} on {healTarget.characterName}");
+                        Character healTarget = enemy;
+                        item.isActive = true;
+                        enemy.activeItem.Add(item);
+
                         enemy.isUsingConsumeTurnItem = true;
-                        consumeRoutine = consumeItem.UseOnTarget(enemy, healTarget, this);
+
+                        if (healTarget != null)
+                        {
+                            Debug.Log($"Enemy {enemy.characterName} will use {consumeItem.itemName} on {healTarget.characterName}");
+                            consumeRoutine = consumeItem.UseOnTarget(enemy, healTarget, this);
+                            return true;
+                        }
+                        else
+                        {
+                            Debug.LogWarning("No valid heal target found.");
+                        }
+
                         return true;
                     }
-                    else
-                    {
-                        Debug.LogWarning("No valid heal target found.");
-                    }
-
-                    Debug.Log($"🔍 [Enemy Item AI] {enemy.characterName} activates healing item: {item.itemName}");
-                    return true; // ✅ Use healing item and end turn
-
                 }
             }
         }
+
 
         return false; // No matching item to consume
     }

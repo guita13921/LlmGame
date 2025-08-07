@@ -188,73 +188,17 @@ public class Character : MonoBehaviour
 
     public void ApplyDamageAtHit()
     {
-        if (damageTarget == null || !damageTarget.IsAlive())
-        {
-            Debug.LogWarning("damageTarget is null or dead.");
-            return;
-        }
+        if (damageTarget == null || !damageTarget.IsAlive()) return;
 
-        if (selectedAction == null || selectedAction.hitEffects == null || currentHitIndex >= selectedAction.hitEffects.Count)
-        {
-            Debug.LogWarning($"{characterName} has no more hitEffects left or invalid index.");
-            return;
-        }
+        if (selectedAction == null || selectedAction.hitEffects == null || currentHitIndex >= selectedAction.hitEffects.Count) return;
 
         var hitData = selectedAction.hitEffects[currentHitIndex];
         float portion = hitData.damagePortion;
         int thisHitDamage = Mathf.RoundToInt(pendingDamage * portion);
 
-        // ✅ BEFORE damage: Offensive passives from attacker
-        if (this is Player playerAttackerBefore)
-        {
-            foreach (var behavior in playerAttackerBefore.runtimePassiveBehaviors)
-            {
-                if (behavior is IDamageReaction reaction)
-                    reaction.OnBeforeDamage(playerAttackerBefore, damageTarget, ref thisHitDamage);
-            }
-        }
-
-        // 💥 Apply damage
         damageTarget.TakeDamage(thisHitDamage);
 
-        // ✅ 💉 Consume BloodRushCore if crit applied
-        if (this is Player playerAttackerCrit && playerAttackerCrit.isCritical)
-        {
-            foreach (var behavior in playerAttackerCrit.runtimePassiveBehaviors)
-            {
-                if (behavior is BloodRushCore brc && brc.IsReady())
-                {
-                    brc.Consume();
-                    Debug.Log("🩸 BloodRushCore consumed after critical hit.");
-                }
-            }
-        }
-
-        // 💡 AFTER damage: Passive reactions from damageTarget
-        if (damageTarget is Player playerTargetAfter)
-        {
-            foreach (var behavior in playerTargetAfter.runtimePassiveBehaviors)
-            {
-                if (behavior is IDamageReaction reaction)
-                    reaction.OnBeforeDamage(playerTargetAfter, damageTarget, ref thisHitDamage);
-            }
-        }
-
-        // ✅ NEW: Trigger passive reactions from the attacker
-        if (this is Player playerAttacker)
-        {
-            foreach (var itemData in playerAttacker.equippedPassiveItems)
-            {
-                if (itemData.itemPrefab == null) continue;
-
-                var reaction = itemData.itemPrefab.GetComponent<IDamageReaction>();
-                if (reaction != null)
-                    reaction.OnAfterDamage(playerAttacker, damageTarget, thisHitDamage);
-            }
-        }
-
-        Debug.Log($"{characterName} Apply Hit #{currentHitIndex + 1}: {portion * 100f}% → {thisHitDamage} damage to {damageTarget.characterName}");
-
+        // VFX / SFX
         if (hitData.vfxPrefab != null)
         {
             GameObject vfx = Instantiate(hitData.vfxPrefab, damageTarget.transform.position + hitData.vfxOffset, Quaternion.identity);
@@ -269,22 +213,38 @@ public class Character : MonoBehaviour
         currentHitIndex++;
     }
 
-
     #region StatusEffect
 
     public void ApplyStatusEffect(TurnStatusEffect newEffect)
     {
-        // 🔒 Check for immunity from passives
-        foreach (var blocker in GetComponentsInChildren<IStatusEffectListener>())
+        Character source = newEffect.source;
+
+        if (source != null)
         {
-            if (blocker.ShouldBlockStatus(this, newEffect))
+            bool toxicVisorFound = false;
+
+            // ✅ Check armor behaviors on source's body parts
+            foreach (var bodyPart in source.bodyParts)
             {
-                Debug.Log($"🛡️ {characterName} blocked {newEffect.effectType} due to passive immunity.");
-                return;
+                var armor = bodyPart.equippedArmor;
+                if (armor == null || armor.itemBehaviorPrefab == null) continue;
+
+                if (armor.itemBehaviorPrefab.GetComponent<ToxicVisor>() != null)
+                {
+                    toxicVisorFound = true;
+                    break;
+                }
+            }
+
+            // ✅ Apply Toxic Visor logic
+            if (toxicVisorFound &&
+                (newEffect.effectType == StatusEffectType.Poison || newEffect.effectType == StatusEffectType.Radiation))
+            {
+                newEffect.remainingTurns += 1;
             }
         }
 
-        // ✅ Continue with merge or add
+        // ✅ Merge with existing effect if one already exists
         var existing = activeStatusEffects.Find(e => e.effectType == newEffect.effectType);
         if (existing != null)
         {
@@ -298,6 +258,7 @@ public class Character : MonoBehaviour
 
         Debug.Log($"{characterName} gains {newEffect.effectType} for {newEffect.remainingTurns} turns.");
     }
+
 
     public virtual void ProcessStatusEffects()
     {

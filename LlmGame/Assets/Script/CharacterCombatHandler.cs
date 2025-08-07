@@ -34,39 +34,134 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         float baseDamage = player.attack;
-        int finalDamage;
+        int calculatedDamage;
 
+        // ✅ Damage Calculation
+        DamageResult result;
         if (battleManager.player.isUsingUltimateSkill)
         {
-            DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
-            //Debug.Log("calculatedDamage : " + result.damage);
-            finalDamage = Mathf.RoundToInt(result.damage);
-
+            result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, player, target);
         }
         else
         {
-            DamageResult result = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
-            //Debug.Log("calculatedDamage : " + result.damage);
-            finalDamage = Mathf.RoundToInt(result.damage);
+            result = battleManager.damageCalculator.CalculateDamage(feasibility, potential, baseDamage, battleManager.lastUserMessage, player, target);
         }
 
-        // ✅ Prepare damage
+        calculatedDamage = Mathf.RoundToInt(result.damage);
+
+        // ================================
+        // ✅ BEFORE DAMAGE MODIFIERS
+        // ================================
+
+        int finalDamage = calculatedDamage;
+
+        // Attacker passives & items
+        foreach (var behavior in player.runtimePassiveBehaviors)
+        {
+            if (behavior is IDamageReaction reaction)
+                reaction.OnBeforeDamage(player, target, ref finalDamage);
+        }
+
+        foreach (var item in player.equippedPassiveItems)
+        {
+            if (item.itemPrefab == null) continue;
+            var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
+            if (reaction != null)
+                reaction.OnBeforeDamage(player, target, ref finalDamage);
+        }
+
+        // Target passives, items, armor
+        if (target is Player targetPlayer)
+        {
+            foreach (var behavior in targetPlayer.runtimePassiveBehaviors)
+            {
+                if (behavior is IDamageReaction reaction)
+                    reaction.OnBeforeDamage(player, targetPlayer, ref finalDamage);
+            }
+
+            foreach (var item in targetPlayer.equippedPassiveItems)
+            {
+                if (item.itemPrefab == null) continue;
+                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                    reaction.OnBeforeDamage(player, targetPlayer, ref finalDamage);
+            }
+
+            foreach (var bodyPart in targetPlayer.bodyParts)
+            {
+                var armor = bodyPart.equippedArmor;
+                if (armor == null || armor.itemBehaviorPrefab == null) continue;
+
+                var reaction = armor.itemBehaviorPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                {
+                    reaction.OnBeforeDamage(player, targetPlayer, ref finalDamage);
+                }
+            }
+
+        }
+
+        // ✅ Assign for use in animation event
         player.pendingDamage = finalDamage;
         player.damageTarget = target;
         player.currentHitIndex = 0;
-
-
-        // ✅ Assign selected action so hits can use hitEffects
         player.selectedAction = chosenAction;
 
-        // ✅ Play Animation
-        if (battleManager.player.isUsingUltimateSkill == true)
+        // ✅ Play animation (calls ApplyDamageAtHit which now just applies `pendingDamage`)
+        if (player.isUsingUltimateSkill)
         {
             yield return battleManager.WaitForAnimation(player, battleManager.player.currentSkill.aniamtionTrigger);
         }
         else
         {
             yield return battleManager.WaitForAnimation(player, chosenAction.animationTrigger);
+        }
+
+        // ✅ AFTER DAMAGE REACTIONS
+        if (target is Player targetAfter)
+        {
+            // Defender reactions
+            foreach (var behavior in targetAfter.runtimePassiveBehaviors)
+            {
+                if (behavior is IDamageReaction reaction)
+                    reaction.OnAfterDamage(player, targetAfter, finalDamage);
+            }
+
+            foreach (var item in targetAfter.equippedPassiveItems)
+            {
+                if (item.itemPrefab == null) continue;
+                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                    reaction.OnAfterDamage(player, targetAfter, finalDamage);
+            }
+
+            foreach (var bodyPart in targetAfter.bodyParts)
+            {
+
+                var armor = bodyPart.equippedArmor;
+                if (armor == null || armor.itemBehaviorPrefab == null) continue;
+
+                var reaction = armor.itemBehaviorPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                {
+                    reaction.OnAfterDamage(player, targetAfter, finalDamage);
+                }
+            }
+        }
+
+        // Attacker reactions
+        foreach (var behavior in player.runtimePassiveBehaviors)
+        {
+            if (behavior is IDamageReaction reaction)
+                reaction.OnAfterDamage(player, target, finalDamage);
+        }
+
+        foreach (var item in player.equippedPassiveItems)
+        {
+            if (item.itemPrefab == null) continue;
+            var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
+            if (reaction != null)
+                reaction.OnAfterDamage(player, target, finalDamage);
         }
 
         // ✅ Log
@@ -122,8 +217,6 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.chatAI.HideInputUI();
     }
 
-
-
     #endregion
 
     #region Enemy
@@ -134,7 +227,6 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.StartCoroutine(battleManager.chatAI.SendEnemyMessage(enemy, target, chosenAction.actionName));
     }
 
-    // จัดการผลของการโจมตี
     public IEnumerator ResolveEnemyAttack(Character enemy, Character target, CharacterActionData chosenAction, float feasibility, float potential, string effectValue, string effectDesc)
     {
         if (enemy == null || target == null || !target.IsAlive())
@@ -143,27 +235,119 @@ public class CharacterCombatHandler : MonoBehaviour
             yield break;
         }
 
+        // ======================================
+        // 🔸 Step 1: Calculate Base Damage
+        // ======================================
         float baseDamage = enemy.attack;
         DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, enemy, target);
-        int finalDamage = Mathf.RoundToInt(result.damage);
+        int calculatedDamage = Mathf.RoundToInt(result.damage);
+        int finalDamage = calculatedDamage;
 
+        // ======================================
+        // 🔸 Step 2: Apply OnBeforeDamage
+        // ======================================
+
+        // Attacker passives
+        foreach (var behavior in enemy.runtimePassiveBehaviors)
+        {
+            if (behavior is IDamageReaction reaction)
+                reaction.OnBeforeDamage(enemy, target, ref finalDamage);
+        }
+
+        // Target passives
+        if (target is Player playerTarget)
+        {
+            foreach (var behavior in playerTarget.runtimePassiveBehaviors)
+            {
+                if (behavior is IDamageReaction reaction)
+                    reaction.OnBeforeDamage(enemy, playerTarget, ref finalDamage);
+            }
+
+            // Equipped passive items
+            foreach (var item in playerTarget.equippedPassiveItems)
+            {
+                if (item.itemPrefab == null) continue;
+                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                    reaction.OnBeforeDamage(enemy, playerTarget, ref finalDamage);
+            }
+
+            // Armor on body parts
+            foreach (var part in playerTarget.bodyParts)
+            {
+                var armor = part.equippedArmor;
+                if (armor == null || armor.itemBehaviorPrefab == null) continue;
+
+                var reaction = armor.itemBehaviorPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                    reaction.OnBeforeDamage(enemy, playerTarget, ref finalDamage);
+            }
+        }
+
+        // ======================================
+        // 🔸 Step 3: Assign Final Damage for Animation
+        // ======================================
         enemy.pendingDamage = finalDamage;
         enemy.damageTarget = target;
         enemy.currentHitIndex = 0;
-
-        // ✅ Assign selected action
         enemy.selectedAction = chosenAction;
 
-        // ✅ Wait for animation to finish
+        // ======================================
+        // 🔸 Step 4: Play Animation → Triggers ApplyDamageAtHit()
+        // ======================================
         yield return battleManager.WaitForAnimation(enemy, chosenAction.animationTrigger);
 
+        // ======================================
+        // 🔸 Step 5: Apply OnAfterDamage
+        // ======================================
+
+        // Target reactions (Player)
+        if (target is Player playerAfter)
+        {
+            foreach (var behavior in playerAfter.runtimePassiveBehaviors)
+            {
+                if (behavior is IDamageReaction reaction)
+                    reaction.OnAfterDamage(enemy, playerAfter, finalDamage);
+            }
+
+            foreach (var item in playerAfter.equippedPassiveItems)
+            {
+                if (item.itemPrefab == null) continue;
+                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                    reaction.OnAfterDamage(enemy, playerAfter, finalDamage);
+            }
+
+            foreach (var part in playerAfter.bodyParts)
+            {
+                var armor = part.equippedArmor;
+                if (armor == null || armor.itemBehaviorPrefab == null) continue;
+
+                var reaction = armor.itemBehaviorPrefab.GetComponent<IDamageReaction>();
+                if (reaction != null)
+                    reaction.OnAfterDamage(enemy, playerAfter, finalDamage);
+            }
+        }
+
+        // Attacker post-attack reactions
+        foreach (var behavior in enemy.runtimePassiveBehaviors)
+        {
+            if (behavior is IDamageReaction reaction)
+                reaction.OnAfterDamage(enemy, target, finalDamage);
+        }
+
+        // ======================================
+        // 🔸 Step 6: Log
+        // ======================================
         string log = $"Turn {battleManager.turnCount}: {enemy.characterName} used {chosenAction.actionName}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
+        // ======================================
+        // 🔸 Step 7: End Turn
+        // ======================================
         yield return battleManager.StartCoroutine(EndEnemyTurn());
     }
-
 
     private IEnumerator EndEnemyTurn()
     {
@@ -234,7 +418,7 @@ public class CharacterCombatHandler : MonoBehaviour
         // ☠️ Poison chance roll
         if (attacker.possibilityPool.Roll(StatusChanceType.Poison))
         {
-            TurnStatusEffect poison = new TurnStatusEffect(StatusEffectType.Poison, 3, 1);
+            TurnStatusEffect poison = new TurnStatusEffect(StatusEffectType.Poison, 3, 1, attacker);
             target.ApplyStatusEffect(poison);
 
             appliedEffects.Add($"inflicted Poison on {target.characterName}");
