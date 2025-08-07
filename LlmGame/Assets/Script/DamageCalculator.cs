@@ -155,14 +155,34 @@ public class DamageCalculator : MonoBehaviour
         float finalFeasibility = Mathf.Max(0f, feasibility + feasibilityModifierSum);
         float finalPotential = Mathf.Max(0f, potential + potentialModifierSum);
 
+        // 🔍 Check for Ghostscope Overlay (ignore feasibility/potential reduction with ranged weapons)
+        bool ignoreArmorPenalty = false;
+        Weapon activeWeapon = attacker is Player ap ? ap.rightHandWeapon ?? ap.leftHandWeapon : null;
+        if (activeWeapon != null && activeWeapon.weaponType == WeaponType.Ranged_Weapon)
+        {
+            foreach (var part in attacker.bodyParts)
+            {
+                var armor = part.equippedArmor;
+                if (armor != null && armor.itemBehaviorPrefab != null &&
+                    armor.itemBehaviorPrefab.GetComponent<GhostscopeOverlay>() != null)
+                {
+                    ignoreArmorPenalty = true;
+                    break;
+                }
+            }
+        }
+
         // 🛡️ 4. Apply armor reduction (target only)
         foreach (var part in selectedTargetParts)
         {
             var armor = part.equippedArmor;
             if (armor == null) continue;
 
-            finalFeasibility *= 1f - Mathf.Clamp01(armor.reduceFeasibility);
-            finalPotential *= 1f - Mathf.Clamp01(armor.reducePotentialDamage);
+            if (!ignoreArmorPenalty)
+            {
+                finalFeasibility *= 1f - Mathf.Clamp01(armor.reduceFeasibility);
+                finalPotential *= 1f - Mathf.Clamp01(armor.reducePotentialDamage);
+            }
         }
 
         // 🧠 5. LLM Scaling
@@ -334,13 +354,32 @@ public class DamageCalculator : MonoBehaviour
         float finalFeasibility = Mathf.Max(0f, feasibility + feasibilityModifierSum);
         float finalPotential = Mathf.Max(0f, potential + potentialModifierSum);
 
+        bool ignoreArmorPenalty = false;
+        Weapon activeWeapon = attacker is Player ap ? ap.rightHandWeapon ?? ap.leftHandWeapon : null;
+        if (activeWeapon != null && activeWeapon.weaponType == WeaponType.Ranged_Weapon)
+        {
+            foreach (var part in attacker.bodyParts)
+            {
+                var armor = part.equippedArmor;
+                if (armor != null && armor.itemBehaviorPrefab != null &&
+                    armor.itemBehaviorPrefab.GetComponent<GhostscopeOverlay>() != null)
+                {
+                    ignoreArmorPenalty = true;
+                    break;
+                }
+            }
+        }
+
         foreach (var part in selectedTargetParts)
         {
             ArmorData armor = part.equippedArmor;
             if (armor == null) continue;
 
-            finalFeasibility *= 1f - Mathf.Clamp01(armor.reduceFeasibility);
-            finalPotential *= 1f - Mathf.Clamp01(armor.reducePotentialDamage);
+            if (!ignoreArmorPenalty)
+            {
+                finalFeasibility *= 1f - Mathf.Clamp01(armor.reduceFeasibility);
+                finalPotential *= 1f - Mathf.Clamp01(armor.reducePotentialDamage);
+            }
         }
 
         // 4️⃣ Final scaling
