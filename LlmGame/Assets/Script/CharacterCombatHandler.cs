@@ -205,7 +205,7 @@ public class CharacterCombatHandler : MonoBehaviour
         // ☠️ Poison chance roll
         if (attacker.possibilityPool.Roll(StatusChanceType.Poison))
         {
-            TurnStatusEffect poison = new TurnStatusEffect(StatusEffectType.Poison, 3, 1);
+            TurnStatusEffect poison = new TurnStatusEffect(StatusEffectType.Poison, 3, 1, attacker);
             target.ApplyStatusEffect(poison);
 
             appliedEffects.Add($"inflicted Poison on {target.characterName}");

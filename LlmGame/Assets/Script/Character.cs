@@ -264,6 +264,23 @@ public class Character : MonoBehaviour
 
     public void ApplyStatusEffect(TurnStatusEffect newEffect)
     {
+        Character source = newEffect.source;
+        if (source != null)
+        {
+            foreach (var itemData in source.equippedPassiveItems)
+            {
+                if (itemData.itemPrefab == null) continue;
+                if (itemData.itemPrefab.GetComponent<ToxicVisor>() != null)
+                {
+                    if (newEffect.effectType == StatusEffectType.Poison || newEffect.effectType == StatusEffectType.Radiation)
+                    {
+                        newEffect.remainingTurns += 1;
+                    }
+                    break;
+                }
+            }
+        }
+
         // Optional: merge with existing effect
         var existing = activeStatusEffects.Find(e => e.effectType == newEffect.effectType);
         if (existing != null)

@@ -188,6 +188,8 @@ public class DamageCalculator : MonoBehaviour
             reducedDamageBreakdown[kvp.Key] = reduced;
         }
 
+        battleManager.combatHandler.SaveLastDamageBreakdown(attacker, reducedDamageBreakdown);
+
         // 🎯 7. Final scaled damage
         float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
         float scaledFinalDamage = Mathf.Max(0f, finalDamage * llmDamageModifier);
@@ -346,6 +348,8 @@ public class DamageCalculator : MonoBehaviour
             reducedDamageBreakdown[dt] = reduced;
             Debug.Log($"[Reduce] {dt}: -{reduction} => {reduced}");
         }
+
+        battleManager.combatHandler.SaveLastDamageBreakdown(attacker, reducedDamageBreakdown);
 
         // 6️⃣ Final damage value
         float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
