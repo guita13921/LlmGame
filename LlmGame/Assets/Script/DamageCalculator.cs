@@ -103,6 +103,7 @@ public class DamageCalculator : MonoBehaviour
         if (selectedTargetParts == null || selectedTargetParts.Count == 0)
         {
             Debug.LogWarning("⚠️ No selected body parts on target.");
+            return new DamageResult(0f, 0f, 0f);
         }
 
         // 🛡️ 1. Income WeakPoints (from target)
@@ -263,6 +264,7 @@ public class DamageCalculator : MonoBehaviour
         if (selectedTargetParts == null || selectedTargetParts.Count == 0)
         {
             Debug.LogWarning("⚠️ No selected body parts on target.");
+            return new DamageResult(0f, 0f, 0f);
         }
 
         // 🛡️ Income weak points from target
