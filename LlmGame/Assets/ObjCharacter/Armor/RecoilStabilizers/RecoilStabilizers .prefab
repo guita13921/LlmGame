@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1868682295817555014}
-  - component: {fileID: 5139152587201473605}
+  - component: {fileID: 5894462021415270493}
   m_Layer: 0
   m_Name: 'RecoilStabilizers '
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5139152587201473605
+--- !u!114 &5894462021415270493
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,6 +41,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7863945771363418171}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2a1be0675966574ea799367c4dd3d29, type: 3}
+  m_Script: {fileID: 11500000, guid: b8b97ec4a569e30439cd8e266d2402f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

@@ -196,14 +196,21 @@ public class DamageCalculator : MonoBehaviour
         Debug.Log($"[Damage] llmScaledBaseDamage: {llmScaledBaseDamage}");
 
         // 🧪 6. Type-based armor reduction (on selected target parts)
+        // 🧪 6. Type-based armor reduction (on selected target parts)
         var reducedDamageBreakdown = new Dictionary<DamageType, float>();
+
         foreach (var kvp in weaponDamageBreakdown)
         {
             float reduction = 0f;
+
             foreach (var part in selectedTargetParts)
             {
                 ArmorData armor = part.equippedArmor;
-                if (armor == null) continue;
+                if (armor == null || armor.itemBehaviorPrefab == null) continue;
+
+                // ✅ Skip if GhostscopeOverlay is equipped on this body part
+                if (armor.itemBehaviorPrefab.GetComponent<GhostscopeOverlay>() != null)
+                    continue;
 
                 reduction += kvp.Key switch
                 {
@@ -222,6 +229,7 @@ public class DamageCalculator : MonoBehaviour
             float reduced = Mathf.Max(0f, kvp.Value - reduction);
             reducedDamageBreakdown[kvp.Key] = reduced;
         }
+
 
         // 🎯 7. Final scaled damage
         float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
@@ -389,19 +397,23 @@ public class DamageCalculator : MonoBehaviour
         Debug.Log($"[LLM] Feasibility: {finalFeasibility}, Potential: {finalPotential}, ScaledBaseDamage: {scaledLLMBaseDamage}");
 
         // 5️⃣ Armor type reductions per damage type
+        // 🧪 6. Type-based armor reduction (on selected target parts)
         var reducedDamageBreakdown = new Dictionary<DamageType, float>();
+
         foreach (var kvp in weaponDamageBreakdown)
         {
-            DamageType dt = kvp.Key;
-            float original = kvp.Value;
             float reduction = 0f;
 
             foreach (var part in selectedTargetParts)
             {
                 ArmorData armor = part.equippedArmor;
-                if (armor == null) continue;
+                if (armor == null || armor.itemBehaviorPrefab == null) continue;
 
-                reduction += dt switch
+                // ✅ Skip if GhostscopeOverlay is equipped on this body part
+                if (armor.itemBehaviorPrefab.GetComponent<GhostscopeOverlay>() != null)
+                    continue;
+
+                reduction += kvp.Key switch
                 {
                     DamageType.Physical => armor.reduceDamagePhysical,
                     DamageType.Fire => armor.reduceDamageFire,
@@ -415,9 +427,8 @@ public class DamageCalculator : MonoBehaviour
                 };
             }
 
-            float reduced = Mathf.Max(0f, original - reduction);
-            reducedDamageBreakdown[dt] = reduced;
-            Debug.Log($"[Reduce] {dt}: -{reduction} => {reduced}");
+            float reduced = Mathf.Max(0f, kvp.Value - reduction);
+            reducedDamageBreakdown[kvp.Key] = reduced;
         }
 
         battleManager.combatHandler.SaveLastDamageBreakdown(attacker, reducedDamageBreakdown);
