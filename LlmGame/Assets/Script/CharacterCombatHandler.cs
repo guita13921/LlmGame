@@ -399,8 +399,16 @@ public class CharacterCombatHandler : MonoBehaviour
             attacker.isCritical = false;
         }
 
+        // ⚡ Stun chance roll
+        if (attacker.possibilityPool.Roll(StatusChanceType.Stun))
+        {
+            TurnStatusEffect stun = new TurnStatusEffect(StatusEffectType.Stun, 1, 0, attacker);
+            target.ApplyStatusEffect(stun);
+            appliedEffects.Add($"stunned {target.characterName}");
+        }
+
         // 🩸 Bleed chance roll
-        if (attacker.possibilityPool.Roll(StatusChanceType.Bleed))
+        if (target.characterType != CharacterType.Android && attacker.possibilityPool.Roll(StatusChanceType.Bleed))
         {
             int duration = target.characterType == CharacterType.Human ? 2 : 1;
 
@@ -416,7 +424,7 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         // ☠️ Poison chance roll
-        if (attacker.possibilityPool.Roll(StatusChanceType.Poison))
+        if (target.characterType != CharacterType.Android && attacker.possibilityPool.Roll(StatusChanceType.Poison))
         {
             TurnStatusEffect poison = new TurnStatusEffect(StatusEffectType.Poison, 3, 1, attacker);
             target.ApplyStatusEffect(poison);

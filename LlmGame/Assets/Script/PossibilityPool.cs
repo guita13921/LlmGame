@@ -16,6 +16,7 @@ public class PossibilityPool
         // Set default base chances
         baseChances[StatusChanceType.Bleed] = 0.0f;
         baseChances[StatusChanceType.Poison] = 0.0f;
+        baseChances[StatusChanceType.Stun] = 0.0f;
         baseChances[StatusChanceType.Critical] = 0.0f;
     }
 
