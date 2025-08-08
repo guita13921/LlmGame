@@ -116,6 +116,10 @@ public class Character : MonoBehaviour
 
     public virtual void TakeDamage(int dmg)
     {
+        if (HasStatusEffect(StatusEffectType.Contaminated))
+        {
+            dmg = Mathf.RoundToInt(dmg * 1.25f);
+        }
         int finalDamage = Mathf.Max(dmg - defense, 0);
         currentHP -= finalDamage;
         if (currentHP < 0) currentHP = 0;
@@ -218,6 +222,8 @@ public class Character : MonoBehaviour
     public void ApplyStatusEffect(TurnStatusEffect newEffect)
     {
         Character source = newEffect.source;
+        if (newEffect.effectType == StatusEffectType.Bleed && characterType == CharacterType.Android) return;
+        if (newEffect.effectType == StatusEffectType.Poison && characterType == CharacterType.Android) return;
 
         if (source != null)
         {
@@ -244,12 +250,20 @@ public class Character : MonoBehaviour
             }
         }
 
+        // Radiation reduces human attack
+        if (newEffect.effectType == StatusEffectType.Radiation && characterType == CharacterType.Human)
+        {
+            int reduction = Mathf.RoundToInt(attack * 0.25f);
+            TurnStatusEffect atkDown = new TurnStatusEffect(StatusEffectType.AttackDown, newEffect.remainingTurns, reduction, newEffect.source);
+            ApplyStatusEffect(atkDown);
+        }
+
         // ✅ Merge with existing effect if one already exists
         var existing = activeStatusEffects.Find(e => e.effectType == newEffect.effectType);
         if (existing != null)
         {
             existing.remainingTurns = Mathf.Max(existing.remainingTurns, newEffect.remainingTurns);
-            existing.magnitude = Mathf.Max(existing.magnitude, newEffect.magnitude);
+            existing.magnitude = Mathf.Min(existing.magnitude + newEffect.magnitude, 3);
         }
         else
         {
@@ -257,6 +271,16 @@ public class Character : MonoBehaviour
         }
 
         Debug.Log($"{characterName} gains {newEffect.effectType} for {newEffect.remainingTurns} turns.");
+        // Check for contamination
+        var poison = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Poison);
+        var radiation = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Radiation);
+        if (poison != null && radiation != null && !HasStatusEffect(StatusEffectType.Contaminated))
+        {
+            int duration = Mathf.Min(poison.remainingTurns, radiation.remainingTurns);
+            TurnStatusEffect contam = new TurnStatusEffect(StatusEffectType.Contaminated, duration, 0, newEffect.source);
+            activeStatusEffects.Add(contam);
+            Debug.Log($"{characterName} becomes CONTAMINATED.");
+        }
     }
 
 
@@ -332,16 +356,23 @@ public class Character : MonoBehaviour
                 // 🧪 Damage-over-time effects
                 case StatusEffectType.Radiation:
                     {
-                        int radDamage = Mathf.RoundToInt(maxHP * 0.04f);
+                        float radPercent = 0.05f;
+                        if (effect.magnitude == 2) radPercent = 0.10f;
+                        else if (effect.magnitude >= 3) radPercent = 0.15f;
+                        int radDamage = Mathf.RoundToInt(maxHP * radPercent);
+                        if (characterType == CharacterType.Android)
+                            radDamage *= 2;
                         Debug.Log($"{characterName} suffers RADIATION for {radDamage} damage.");
                         TakeDamage(radDamage);
                         TryApplyHealReductionDebuff(effect.source);
                         break;
                     }
-
                 case StatusEffectType.Bleed:
                     {
-                        int bleedDamage = Mathf.RoundToInt(maxHP * 0.05f);
+                        float bleedPercent = 0.15f;
+                        if (effect.magnitude == 2) bleedPercent = 0.20f;
+                        else if (effect.magnitude >= 3) bleedPercent = 0.25f;
+                        int bleedDamage = Mathf.RoundToInt(currentHP * bleedPercent);
                         bool spreadToAllParts = false;
 
                         Character source = effect.source;
@@ -385,10 +416,12 @@ public class Character : MonoBehaviour
 
                         break;
                     }
-
                 case StatusEffectType.Poison:
                     {
-                        int poisonDamage = Mathf.RoundToInt(maxHP * 0.03f);
+                        float poisonPercent = 0.05f;
+                        if (effect.magnitude == 2) poisonPercent = 0.10f;
+                        else if (effect.magnitude >= 3) poisonPercent = 0.15f;
+                        int poisonDamage = Mathf.RoundToInt(maxHP * poisonPercent);
                         Debug.Log($"{characterName} suffers POISON for {poisonDamage} damage.");
                         TakeDamage(poisonDamage);
                         TryApplyNerveRotVialDebuff(effect.source);
@@ -430,6 +463,21 @@ public class Character : MonoBehaviour
                 Debug.Log($"{characterName} is no longer affected by {effect.effectType}.");
                 activeStatusEffects.RemoveAt(i);
             }
+        }
+        var poison = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Poison);
+        var radiation = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Radiation);
+        var contam = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Contaminated);
+        if (poison != null && radiation != null)
+        {
+            int duration = Mathf.Min(poison.remainingTurns, radiation.remainingTurns);
+            if (contam != null)
+                contam.remainingTurns = duration;
+            else
+                activeStatusEffects.Add(new TurnStatusEffect(StatusEffectType.Contaminated, duration, 0));
+        }
+        else if (contam != null)
+        {
+            activeStatusEffects.Remove(contam);
         }
     }
 

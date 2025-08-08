@@ -77,6 +77,7 @@ public enum StatusEffectType
     Bleed,
     Poison,
     Radiation,
+    Contaminated,
     AttackUp,
     DefenseUp,
     SpeedUp,
@@ -88,5 +89,6 @@ public enum StatusChanceType
     Bleed,
     Poison,
     Burn,
+    Stun,
     Critical
 }
