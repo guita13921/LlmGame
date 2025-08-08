@@ -235,32 +235,34 @@ public class DamageCalculator : MonoBehaviour
         float finalDamage = reducedDamageBreakdown.Values.Sum() + baseDamage;
         float scaledFinalDamage = Mathf.Max(0f, finalDamage * llmDamageModifier);
 
-        // 💥 8. Apply split damage to selected target parts
-        float splitDamage = scaledFinalDamage / selectedTargetParts.Count;
-
-        Weapon usedWeapon = attacker is Player player ? player.rightHandWeapon : null;
-
-        foreach (var part in selectedTargetParts)
+        // 💥 8. Apply split damage to selected target parts (skip if shield active)
+        if (target.currentshield <= 0)
         {
-            int damageToApply = Mathf.RoundToInt(splitDamage);
+            float splitDamage = scaledFinalDamage / selectedTargetParts.Count;
+            Weapon usedWeapon = attacker is Player player ? player.rightHandWeapon : null;
 
-            // 🔥 Apply OnHit Modifiers from Passive Items (like Head Targeting)
-            if (attacker is Player attackerPlayer)
+            foreach (var part in selectedTargetParts)
             {
-                foreach (var itemData in attackerPlayer.equippedPassiveItems)
-                {
-                    if (itemData.itemPrefab == null) continue;
+                int damageToApply = Mathf.RoundToInt(splitDamage);
 
-                    IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
-                    if (hitModifier != null)
+                // 🔥 Apply OnHit Modifiers from Passive Items (like Head Targeting)
+                if (attacker is Player attackerPlayer)
+                {
+                    foreach (var itemData in attackerPlayer.equippedPassiveItems)
                     {
-                        hitModifier.OnHit(attacker, part, ref damageToApply);
+                        if (itemData.itemPrefab == null) continue;
+
+                        IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
+                        if (hitModifier != null)
+                        {
+                            hitModifier.OnHit(attacker, part, ref damageToApply);
+                        }
                     }
                 }
-            }
 
-            // 💥 Apply damage to the body part (with modified damage)
-            part.ApplyDamage(damageToApply, true, usedWeapon);
+                // 💥 Apply damage to the body part (with modified damage)
+                part.ApplyDamage(damageToApply, true, usedWeapon);
+            }
         }
 
 
@@ -439,61 +441,64 @@ public class DamageCalculator : MonoBehaviour
 
         Debug.Log($"[Final Damage] = {scaledFinalDamage}");
 
-        // 7️⃣ Apply to body parts
-        float damagePerPart = scaledFinalDamage / selectedTargetParts.Count;
-        Weapon weapon = attacker is Player player ? player.rightHandWeapon : null;
-
-        if (attacker.currentSkill != null && attacker.currentSkill.isDamagePercentagePart)
+        // 7️⃣ Apply to body parts (skip if shield active)
+        if (target.currentshield <= 0)
         {
-            float percent = attacker.currentSkill.percentDamgePerPart / 100f;
+            float damagePerPart = scaledFinalDamage / selectedTargetParts.Count;
+            Weapon weapon = attacker is Player player ? player.rightHandWeapon : null;
 
-            foreach (var part in selectedTargetParts)
+            if (attacker.currentSkill != null && attacker.currentSkill.isDamagePercentagePart)
             {
-                int damageToApply = Mathf.RoundToInt(damagePerPart);
+                float percent = attacker.currentSkill.percentDamgePerPart / 100f;
 
-                // 🔥 Apply OnHit Modifiers
-                if (attacker is Player attackerPlayer)
+                foreach (var part in selectedTargetParts)
                 {
-                    foreach (var itemData in attackerPlayer.equippedPassiveItems)
-                    {
-                        if (itemData.itemPrefab == null) continue;
+                    int damageToApply = Mathf.RoundToInt(damagePerPart);
 
-                        IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
-                        if (hitModifier != null)
+                    // 🔥 Apply OnHit Modifiers
+                    if (attacker is Player attackerPlayer)
+                    {
+                        foreach (var itemData in attackerPlayer.equippedPassiveItems)
                         {
-                            hitModifier.OnHit(attacker, part, ref damageToApply);
+                            if (itemData.itemPrefab == null) continue;
+
+                            IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
+                            if (hitModifier != null)
+                            {
+                                hitModifier.OnHit(attacker, part, ref damageToApply);
+                            }
                         }
                     }
+
+                    part.ApplyDamage(damageToApply, true, weapon);
                 }
 
-                part.ApplyDamage(damageToApply, true, weapon);
             }
-
-        }
-        else
-        {
-            foreach (var part in selectedTargetParts)
+            else
             {
-                int damageToApply = Mathf.RoundToInt(damagePerPart);
-
-                // 🔥 Apply OnHit Modifiers
-                if (attacker is Player attackerPlayer)
+                foreach (var part in selectedTargetParts)
                 {
-                    foreach (var itemData in attackerPlayer.equippedPassiveItems)
-                    {
-                        if (itemData.itemPrefab == null) continue;
+                    int damageToApply = Mathf.RoundToInt(damagePerPart);
 
-                        IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
-                        if (hitModifier != null)
+                    // 🔥 Apply OnHit Modifiers
+                    if (attacker is Player attackerPlayer)
+                    {
+                        foreach (var itemData in attackerPlayer.equippedPassiveItems)
                         {
-                            hitModifier.OnHit(attacker, part, ref damageToApply);
+                            if (itemData.itemPrefab == null) continue;
+
+                            IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
+                            if (hitModifier != null)
+                            {
+                                hitModifier.OnHit(attacker, part, ref damageToApply);
+                            }
                         }
                     }
+
+                    part.ApplyDamage(damageToApply, true, weapon);
                 }
 
-                part.ApplyDamage(damageToApply, true, weapon);
             }
-
         }
 
         // 8️⃣ Store LLM values for UI

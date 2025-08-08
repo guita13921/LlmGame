@@ -121,6 +121,14 @@ public class Character : MonoBehaviour
             dmg = Mathf.RoundToInt(dmg * 1.25f);
         }
         int finalDamage = Mathf.Max(dmg - defense, 0);
+
+        if (currentshield > 0)
+        {
+            int shieldDamage = Mathf.Min(currentshield, finalDamage);
+            currentshield -= shieldDamage;
+            finalDamage -= shieldDamage;
+        }
+
         currentHP -= finalDamage;
         if (currentHP < 0) currentHP = 0;
 
@@ -393,10 +401,13 @@ public class Character : MonoBehaviour
                         if (spreadToAllParts)
                         {
                             Debug.Log($"{characterName} suffers BLEED on ALL parts for {bleedDamage} damage.");
-                            foreach (var part in bodyParts)
+                            if (currentshield <= 0)
                             {
-                                if (!part.IsDestroyed)
-                                    part.ApplyDamage(bleedDamage, false);
+                                foreach (var part in bodyParts)
+                                {
+                                    if (!part.IsDestroyed)
+                                        part.ApplyDamage(bleedDamage, false);
+                                }
                             }
                         }
                         else
