@@ -51,6 +51,24 @@ public class DamageModifierSkill : ScriptableObject
         user.currentMP -= mpCost;
         Debug.Log($"{user.characterName} uses {skillName} on {target.characterName}");
 
+        // Apply specific skill effects
+        if (skillName == "Radiant Collapse")
+        {
+            // Permanent Poison and Radiation on target
+            var poison = new TurnStatusEffect(StatusEffectType.Poison, int.MaxValue, 1, user, true);
+            target.ApplyStatusEffect(poison);
+            var radiation = new TurnStatusEffect(StatusEffectType.Radiation, int.MaxValue, 1, user, true);
+            target.ApplyStatusEffect(radiation);
+        }
+        else if (skillName == "Multi-Target Scan")
+        {
+            // Buff user: next 3 attacks have +100% crit chance and +100% crit damage
+            var critChance = new TurnStatusEffect(StatusEffectType.CritChanceUp, 3, 100, user);
+            user.ApplyStatusEffect(critChance);
+            var critDamage = new TurnStatusEffect(StatusEffectType.CritDamageUp, 3, 100, user);
+            user.ApplyStatusEffect(critDamage);
+        }
+
         /*
         // ✅ Optional damage logic (currently commented out)
         */

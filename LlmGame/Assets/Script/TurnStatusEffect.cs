@@ -13,12 +13,16 @@ public class TurnStatusEffect
 
     public bool isApplied = false;
 
-    public TurnStatusEffect(StatusEffectType type, int duration, int magnitude, Character source = null)
+    // Marks effects that should never expire or be removed
+    public bool isPermanent = false;
+
+    public TurnStatusEffect(StatusEffectType type, int duration, int magnitude, Character source = null, bool isPermanent = false)
     {
         this.effectType = type;
         this.remainingTurns = duration;
         this.magnitude = magnitude;
         this.source = source;
+        this.isPermanent = isPermanent;
     }
 }
 

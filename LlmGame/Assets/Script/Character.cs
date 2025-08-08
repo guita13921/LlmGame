@@ -298,28 +298,21 @@ public class Character : MonoBehaviour
         var existing = activeStatusEffects.Find(e => e.effectType == newEffect.effectType);
         if (existing != null)
         {
-            // For damage-over-time effects, stack both duration and magnitude
-            if (newEffect.effectType == StatusEffectType.Bleed ||
-                newEffect.effectType == StatusEffectType.Poison ||
-                newEffect.effectType == StatusEffectType.Radiation)
-            {
-                existing.remainingTurns += newEffect.remainingTurns;
-                existing.magnitude = Mathf.Min(existing.magnitude + newEffect.magnitude, 3);
-            }
+            existing.remainingTurns = existing.isPermanent ? int.MaxValue : Mathf.Max(existing.remainingTurns, newEffect.remainingTurns);
+            if (newEffect.effectType == StatusEffectType.CritChanceUp || newEffect.effectType == StatusEffectType.CritDamageUp)
+                existing.magnitude += newEffect.magnitude;
             else
-            {
-                // Other effects keep the longer duration while stacking magnitude
-                existing.remainingTurns = Mathf.Max(existing.remainingTurns, newEffect.remainingTurns);
                 existing.magnitude = Mathf.Min(existing.magnitude + newEffect.magnitude, 3);
-            }
-
-            Debug.Log($"{characterName} gains additional {newEffect.effectType} (now {existing.magnitude}) for {existing.remainingTurns} turns.");
+            existing.isPermanent = existing.isPermanent || newEffect.isPermanent;
         }
         else
         {
             activeStatusEffects.Add(newEffect);
             Debug.Log($"{characterName} gains {newEffect.effectType} for {newEffect.remainingTurns} turns.");
         }
+
+        string durationText = newEffect.isPermanent ? "permanently" : $"{newEffect.remainingTurns} turns";
+        Debug.Log($"{characterName} gains {newEffect.effectType} for {durationText}.");
         // Check for contamination
         var poison = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Poison);
         var radiation = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Radiation);
@@ -417,6 +410,14 @@ public class Character : MonoBehaviour
                         Debug.Log($"{characterName}'s critical chance is increased by {effect.magnitude}%.");
                     }
                     break;
+                case StatusEffectType.CritDamageUp:
+                    if (!effect.isApplied)
+                    {
+                        possibilityPool.AddCriticalMultiplierBonus(effect.magnitude / 100f);
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s critical damage is increased by {effect.magnitude}%.");
+                    }
+                    break;
 
                 // 🧪 Damage-over-time effects
                 case StatusEffectType.Radiation:
@@ -498,10 +499,11 @@ public class Character : MonoBehaviour
             }
 
             // ⏳ Countdown
-            effect.remainingTurns--;
+            if (!effect.isPermanent)
+                effect.remainingTurns--;
 
             // 🧹 Expire effect
-            if (effect.remainingTurns <= 0)
+            if (!effect.isPermanent && effect.remainingTurns <= 0)
             {
                 switch (effect.effectType)
                 {
@@ -528,6 +530,9 @@ public class Character : MonoBehaviour
                         break;
                     case StatusEffectType.CritChanceUp:
                         possibilityPool.AddModifier(StatusChanceType.Critical, -effect.magnitude / 100f);
+                        break;
+                    case StatusEffectType.CritDamageUp:
+                        possibilityPool.AddCriticalMultiplierBonus(-effect.magnitude / 100f);
                         break;
                 }
 
@@ -627,7 +632,7 @@ public class Character : MonoBehaviour
 
     public bool HasStatusEffect(StatusEffectType type)
     {
-        return activeStatusEffects.Exists(effect => effect.effectType == type && effect.remainingTurns > 0);
+        return activeStatusEffects.Exists(effect => effect.effectType == type && (effect.isPermanent || effect.remainingTurns > 0));
     }
 
     #region  Equipment

@@ -49,12 +49,12 @@ public class ConsumeTurnItem : Item
                 break;
 
             case "Bandage":
-                target.activeStatusEffects.RemoveAll(e => e.effectType == StatusEffectType.Bleed);
+                target.activeStatusEffects.RemoveAll(e => e.effectType == StatusEffectType.Bleed && !e.isPermanent);
                 battleManager.battleLog.Add($"{user.characterName} bandaged {target.characterName}, removing bleeding.");
                 break;
 
             case "Antidote":
-                target.activeStatusEffects.RemoveAll(e => e.effectType == StatusEffectType.Poison);
+                target.activeStatusEffects.RemoveAll(e => e.effectType == StatusEffectType.Poison && !e.isPermanent);
                 battleManager.battleLog.Add($"{user.characterName} cured {target.characterName}'s poison.");
                 break;
 
