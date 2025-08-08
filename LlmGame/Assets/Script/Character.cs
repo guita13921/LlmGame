@@ -263,18 +263,28 @@ public class Character : MonoBehaviour
         var existing = activeStatusEffects.Find(e => e.effectType == newEffect.effectType);
         if (existing != null)
         {
-            existing.remainingTurns = Mathf.Max(existing.remainingTurns, newEffect.remainingTurns);
-            if (newEffect.effectType == StatusEffectType.CritChanceUp)
-                existing.magnitude += newEffect.magnitude;
-            else
+            // For damage-over-time effects, stack both duration and magnitude
+            if (newEffect.effectType == StatusEffectType.Bleed ||
+                newEffect.effectType == StatusEffectType.Poison ||
+                newEffect.effectType == StatusEffectType.Radiation)
+            {
+                existing.remainingTurns += newEffect.remainingTurns;
                 existing.magnitude = Mathf.Min(existing.magnitude + newEffect.magnitude, 3);
+            }
+            else
+            {
+                // Other effects keep the longer duration while stacking magnitude
+                existing.remainingTurns = Mathf.Max(existing.remainingTurns, newEffect.remainingTurns);
+                existing.magnitude = Mathf.Min(existing.magnitude + newEffect.magnitude, 3);
+            }
+
+            Debug.Log($"{characterName} gains additional {newEffect.effectType} (now {existing.magnitude}) for {existing.remainingTurns} turns.");
         }
         else
         {
             activeStatusEffects.Add(newEffect);
+            Debug.Log($"{characterName} gains {newEffect.effectType} for {newEffect.remainingTurns} turns.");
         }
-
-        Debug.Log($"{characterName} gains {newEffect.effectType} for {newEffect.remainingTurns} turns.");
         // Check for contamination
         var poison = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Poison);
         var radiation = activeStatusEffects.Find(e => e.effectType == StatusEffectType.Radiation);
