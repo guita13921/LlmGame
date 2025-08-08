@@ -8,6 +8,8 @@ public class ArmorData : ScriptableObject
     public string armorName;
     [TextArea]
     public string description;
+    public ItemRarity rarity;
+    public int value;
 
     [Header("Slot Compatibility")]
     public List<BodyPartType> compatibleBodyParts; // ✅ NEW FIELD
