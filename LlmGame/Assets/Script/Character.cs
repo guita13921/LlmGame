@@ -55,6 +55,7 @@ public class Character : MonoBehaviour
     [SerializeField] public int currentHP;
     [SerializeField] public int currentMP;
     [SerializeField] public int currentshield;
+    public int mpRegenPerTurn;
     public List<MonoBehaviour> runtimePassiveBehaviors = new();
     public float turnGauge = 0f;
 
@@ -263,7 +264,10 @@ public class Character : MonoBehaviour
         if (existing != null)
         {
             existing.remainingTurns = Mathf.Max(existing.remainingTurns, newEffect.remainingTurns);
-            existing.magnitude = Mathf.Min(existing.magnitude + newEffect.magnitude, 3);
+            if (newEffect.effectType == StatusEffectType.CritChanceUp)
+                existing.magnitude += newEffect.magnitude;
+            else
+                existing.magnitude = Mathf.Min(existing.magnitude + newEffect.magnitude, 3);
         }
         else
         {
@@ -286,6 +290,14 @@ public class Character : MonoBehaviour
 
     public virtual void ProcessStatusEffects()
     {
+        if (mpRegenPerTurn > 0)
+        {
+            int before = currentMP;
+            currentMP = Mathf.Min(maxMP, currentMP + mpRegenPerTurn);
+            int gained = currentMP - before;
+            if (gained > 0)
+                Debug.Log($"{characterName} regenerates {gained} MP.");
+        }
 
         for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
         {
@@ -350,6 +362,14 @@ public class Character : MonoBehaviour
                         speed += effect.magnitude;
                         effect.isApplied = true;
                         Debug.Log($"{characterName}'s speed is increased by {effect.magnitude}.");
+                    }
+                    break;
+                case StatusEffectType.CritChanceUp:
+                    if (!effect.isApplied)
+                    {
+                        possibilityPool.AddModifier(StatusChanceType.Critical, effect.magnitude / 100f);
+                        effect.isApplied = true;
+                        Debug.Log($"{characterName}'s critical chance is increased by {effect.magnitude}%.");
                     }
                     break;
 
@@ -457,6 +477,9 @@ public class Character : MonoBehaviour
                         break;
                     case StatusEffectType.SpeedUp:
                         speed -= effect.magnitude;
+                        break;
+                    case StatusEffectType.CritChanceUp:
+                        possibilityPool.AddModifier(StatusChanceType.Critical, -effect.magnitude / 100f);
                         break;
                 }
 
