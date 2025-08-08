@@ -7,6 +7,13 @@ public enum ItemType
     Other
 }
 
+public enum ItemRarity
+{
+    Common,
+    Rare,
+    Epic
+}
+
 public enum WeaponType
 {
     Melee_Weapon,

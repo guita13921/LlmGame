@@ -11,6 +11,8 @@ public class Item : ScriptableObject
     [TextArea]
     public string itemDescription;
     public ItemType itemType;
+    public ItemRarity rarity;
+    public int value;
 
     [Header("Usage")]
     public UsageType usageType;
