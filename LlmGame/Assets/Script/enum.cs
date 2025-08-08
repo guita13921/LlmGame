@@ -88,7 +88,6 @@ public enum StatusChanceType
 {
     Bleed,
     Poison,
-    Burn,
     Stun,
     Critical
 }

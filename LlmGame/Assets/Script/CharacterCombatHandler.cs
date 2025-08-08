@@ -371,6 +371,9 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         List<string> appliedEffects = new();
 
+        // 🔄 Refresh base chances from the attacker's active weapon(s)
+        ApplyWeaponStatusChances(attacker);
+
         // 🧠 Check if any passive guarantees crit (like BloodRushCore)
         bool forceCrit = false;
 
@@ -441,6 +444,36 @@ public class CharacterCombatHandler : MonoBehaviour
         {
             return " No special effects.";
         }
+    }
+
+    /// <summary>
+    /// Updates the attacker's possibility pool using status effect chances
+    /// provided by any active weapons. Multiple weapons stack additively and
+    /// values are clamped between 0 and 1 by the pool itself.
+    /// </summary>
+    /// <param name="attacker">Character performing the attack.</param>
+    private void ApplyWeaponStatusChances(Character attacker)
+    {
+        float bleed = 0f;
+        float poison = 0f;
+        float stun = 0f;
+        float crit = 0f;
+
+        foreach (var item in attacker.activeItem)
+        {
+            if (item is Weapon w)
+            {
+                bleed += w.bleedChance;
+                poison += w.poisonChance;
+                stun += w.stunChance;
+                crit += w.criticalChance;
+            }
+        }
+
+        attacker.possibilityPool.SetBaseChance(StatusChanceType.Bleed, bleed);
+        attacker.possibilityPool.SetBaseChance(StatusChanceType.Poison, poison);
+        attacker.possibilityPool.SetBaseChance(StatusChanceType.Stun, stun);
+        attacker.possibilityPool.SetBaseChance(StatusChanceType.Critical, crit);
     }
 
     public void SaveLastDamageBreakdown(Character attacker, Dictionary<DamageType, float> breakdown)
