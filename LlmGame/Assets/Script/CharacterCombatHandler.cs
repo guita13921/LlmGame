@@ -164,10 +164,10 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         // ✅ Log
-        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {Math.Max(target.currentHP - finalDamage, 0)} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
-        battleManager.battleLog.Add(log);
-        Debug.Log(log);
-        Debug.Log(target.GetBodyPartStatus());
+        //string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
+        //battleManager.battleLog.Add(log);
+        //Debug.Log(log);
+        //Debug.Log(target.GetBodyPartStatus());
 
         yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
     }

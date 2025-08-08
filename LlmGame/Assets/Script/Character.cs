@@ -197,6 +197,9 @@ public class Character : MonoBehaviour
     {
         Debug.Log($"{characterName} animation complete (via Event)");
         animationFinished = true;
+
+        // 🔥 Log the attack outcome here
+        LogAttackOutcome();
     }
 
     public void ApplyDamageAtHit()
@@ -225,6 +228,30 @@ public class Character : MonoBehaviour
 
         currentHitIndex++;
     }
+
+    public void LogAttackOutcome()
+    {
+        if (damageTarget == null) return;
+
+        string actionText = "";
+
+        // For player, use the input field for flavor text (if exists)
+        if (this is Player && battleManager != null && battleManager.playerInputField != null)
+        {
+            actionText = battleManager.playerInputField.text;
+        }
+        else if (selectedAction != null)
+        {
+            actionText = $"used {selectedAction.actionName}";
+        }
+
+        string log = $"Turn {battleManager.turnCount}: {characterName} {actionText} → Target: {damageTarget.characterName} Result: {damageTarget.currentHP} / {damageTarget.maxHP} ({battleManager.chatAI.baseEffect})";
+        battleManager.battleLog.Add(log);
+
+        Debug.Log(log);
+        Debug.Log(damageTarget.GetBodyPartStatus());
+    }
+
 
     #region StatusEffect
 
