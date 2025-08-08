@@ -28,4 +28,10 @@ public class Weapon : Item
     [Header("Weak Point")]
     public WeakPointData weakPointType;
 
+    [Header("Status Effect Chances")]
+    [Range(0f, 1f)] public float bleedChance;
+    [Range(0f, 1f)] public float poisonChance;
+    [Range(0f, 1f)] public float stunChance;
+    [Range(0f, 1f)] public float criticalChance;
+
 }
