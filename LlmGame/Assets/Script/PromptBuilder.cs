@@ -31,7 +31,7 @@ public static class PromptBuilder
             - {battleManager.player.characterName} (Health: {battleManager.player.currentHP} / {battleManager.player.maxHP})
             - {targetEnemy.characterName} (Health: {targetEnemy.currentHP} / {targetEnemy.maxHP})
 
-            Setting: {battleManager.player.characterName} is in a fantasy adventure encounter with {targetEnemy.characterName}.
+            Setting: {battleManager.player.characterName} is in a encounter with {targetEnemy.characterName}.
 
             Player Character: {battleManager.player.characterType} - {battleManager.player.description}
             Opposing Character: {targetEnemy.characterType} - {targetEnemy.description}
@@ -50,7 +50,7 @@ public static class PromptBuilder
 
             The effect that occurs: {effect}
 
-            Please evaluate what happens next in this fantasy adventure story. Consider the encounter history so actions create meaningful narrative progression.
+            Please evaluate what happens next in this story. Consider the encounter history so actions create meaningful narrative progression.
             Take into account the current health status and character descriptions.
 
             Note: If the proposed action mentions {{Skill}}, this refers to a special character ability that can be activated.
@@ -59,7 +59,7 @@ public static class PromptBuilder
             - Characters can only utilize resources that are currently active and available to them
             - Actions using unavailable or inactive resources should be marked as not feasible
             - Focus on narrative outcomes rather than specific numerical damage values
-            - Maintain appropriate fantasy adventure tone throughout
+            - Maintain appropriate adventure tone throughout
 
             Please respond using this exact JSON structure:
             {{
@@ -112,7 +112,7 @@ public static class PromptBuilder
         - {enemy.characterName} (Health: {enemy.currentHP} / {enemy.maxHP})
         - {target.characterName} (Health: {target.currentHP} / {target.maxHP})
 
-        Setting: {enemy.characterName} is in a fantasy adventure encounter with {target.characterName}.
+        Setting: {enemy.characterName} is in a encounter with {target.characterName}.
 
         Player Character: {target.characterType} - {target.description}
         Opposing Character: {enemy.characterType} - {enemy.description}
@@ -128,7 +128,7 @@ public static class PromptBuilder
 
         The effect that occurs: {effect}
 
-        Please evaluate what happens next in this fantasy adventure story. Consider the encounter history so actions create meaningful narrative progression.
+        Please evaluate what happens next in this adventure story. Consider the encounter history so actions create meaningful narrative progression.
         Take into account the current health status and character descriptions.
 
         Note: If the proposed action mentions {{Skill}}, this refers to a special character ability that can be activated.
@@ -137,7 +137,7 @@ public static class PromptBuilder
         - Characters can only utilize resources that are currently active and available to them
         - Actions using unavailable or inactive resources should be marked as not feasible
         - Focus on narrative outcomes rather than specific numerical damage values
-        - Maintain appropriate fantasy adventure tone throughout
+        - Maintain appropriate adventure tone throughout
 
         Please respond using this exact JSON structure:
         {{

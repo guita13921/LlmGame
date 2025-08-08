@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[CreateAssetMenu(fileName = "New ConsumeTurnItem", menuName = "Inventory/ConsumeTurnItem")]
 public class ConsumeTurnItem : Item
 {
     [Header("Animation Trigger")]

@@ -9,7 +9,6 @@ using System;
 public class CharacterCombatHandler : MonoBehaviour
 {
     private BattleManager battleManager;
-    public TMP_Text responseText;
     private Dictionary<Character, Dictionary<DamageType, float>> lastDamageBreakdown = new();
 
 
