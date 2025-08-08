@@ -81,6 +81,7 @@ public enum StatusEffectType
     AttackUp,
     DefenseUp,
     SpeedUp,
+    CritChanceUp,
     HealReduction // ✅ Let compiler assign next value
 }
 
