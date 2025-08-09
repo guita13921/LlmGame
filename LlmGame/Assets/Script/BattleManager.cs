@@ -6,6 +6,7 @@ using System.Linq;
 using TMPro;
 using System.Text.RegularExpressions; // Make sure this is at the top
 using Map;
+using UnityEngine.SceneManagement;
 
 public class BattleManager : MonoBehaviour
 {
@@ -18,8 +19,11 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public TMP_InputField playerInputField;
 
     [Header("Enemy Pools")]
-    public List<GameObject> minorEnemyPrefabs = new List<GameObject>();
-    public List<GameObject> eliteEnemyPrefabs = new List<GameObject>();
+    public List<GameObject> minorEasyPrefabs = new List<GameObject>();
+    public List<GameObject> minorNormalPrefabs = new List<GameObject>();
+    public List<GameObject> minorHardPrefabs = new List<GameObject>();
+    public List<GameObject> eliteEasyPrefabs = new List<GameObject>();
+    public List<GameObject> eliteHardPrefabs = new List<GameObject>();
     public List<GameObject> bossEnemyPrefabs = new List<GameObject>();
 
     [Header("Show Debug")]
@@ -58,7 +62,7 @@ public class BattleManager : MonoBehaviour
         enemies.Clear();
         if (PlayerData.Instance == null) return;
 
-        GameObject prefab = GetRandomEnemyPrefab(PlayerData.Instance.nextNodeType);
+        GameObject prefab = GetRandomEnemyPrefab(PlayerData.Instance.nextNodeType, PlayerData.Instance.nextEnemyDifficulty);
         if (prefab == null) return;
 
         GameObject enemyObj = Instantiate(prefab);
@@ -71,16 +75,22 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    private GameObject GetRandomEnemyPrefab(NodeType type)
+    private GameObject GetRandomEnemyPrefab(NodeType type, EnemyDifficulty difficulty)
     {
         List<GameObject> pool = null;
         switch (type)
         {
             case NodeType.MinorEnemy:
-                pool = minorEnemyPrefabs;
+                pool = difficulty switch
+                {
+                    EnemyDifficulty.Easy => minorEasyPrefabs,
+                    EnemyDifficulty.Normal => minorNormalPrefabs,
+                    EnemyDifficulty.Hard => minorHardPrefabs,
+                    _ => minorEasyPrefabs
+                };
                 break;
             case NodeType.EliteEnemy:
-                pool = eliteEnemyPrefabs;
+                pool = difficulty == EnemyDifficulty.Easy ? eliteEasyPrefabs : eliteHardPrefabs;
                 break;
             case NodeType.Boss:
                 pool = bossEnemyPrefabs;
@@ -374,6 +384,7 @@ public class BattleManager : MonoBehaviour
         if (!player.IsAlive())
         {
             Debug.Log("Player Defeated!");
+            SceneManager.LoadScene("GameOver");
             return true;
         }
 
@@ -381,6 +392,7 @@ public class BattleManager : MonoBehaviour
         if (!anyEnemyAlive)
         {
             Debug.Log("All Enemies Defeated!");
+            SceneManager.LoadScene("MapGenerate");
         }
 
         return !anyEnemyAlive;

@@ -62,7 +62,7 @@ namespace Map
             Debug.Log("Entering node: " + mapNode.Node.blueprintName + " of type: " + mapNode.Node.nodeType);
             if (PlayerData.Instance != null)
             {
-                PlayerData.Instance.SetNextNode(mapNode.Node.nodeType);
+                PlayerData.Instance.SetNextNode(mapNode.Node.nodeType, mapNode.Node.enemyDifficulty);
             }
 
             string sceneToLoad = string.Empty;

@@ -100,3 +100,10 @@ public enum StatusChanceType
     Stun,
     Critical
 }
+
+public enum EnemyDifficulty
+{
+    Easy,
+    Normal,
+    Hard
+}
