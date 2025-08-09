@@ -27,7 +27,8 @@ public class PlayerData : MonoBehaviour
     public Weapon rightHandWeapon;
     public List<PassiveItemData> equippedPassiveItems = new List<PassiveItemData>();
 
-    private bool initialized = false;
+    [SerializeField] private bool initialized = false;
+    public bool Initialized => initialized;
 
     private void Awake()
     {
@@ -40,8 +41,47 @@ public class PlayerData : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    /// <summary>
+    /// Initialize a brand-new game using a ScriptableObject configuration.
+    /// Call this from your main menu when the player chooses "New Game".
+    /// </summary>
+    public void NewGame(DefaultPlayerConfig config)
+    {
+        if (config == null)
+        {
+            Debug.LogWarning("NewGame called with null DefaultPlayerConfig. Using zero/defaults.");
+        }
+
+        attack = config ? config.attack : 0;
+        defense = config ? config.defense : 0;
+        focus = config ? config.focus : 0;
+        maxHP = config ? config.maxHP : 0;
+        maxMP = config ? config.maxMP : 0;
+        speed = config ? config.speed : 0;
+        maxShield = config ? config.maxShield : 0;
+
+        // Current values
+        currentHP = config ? (config.startWithFullHP ? maxHP : Mathf.Min(currentHP, maxHP)) : 0;
+        currentMP = config ? (config.startWithFullMP ? maxMP : Mathf.Min(currentMP, maxMP)) : 0;
+        currentShield = config ? Mathf.Clamp(config.startShield, 0, maxShield) : 0;
+        money = config ? config.startMoney : 0;
+
+        // Inventory / equipment
+        inventoryItems = config ? new List<Item>(config.startingInventory) : new List<Item>();
+        leftHandWeapon = config ? config.leftHandWeapon : null;
+        rightHandWeapon = config ? config.rightHandWeapon : null;
+        equippedPassiveItems = config ? new List<PassiveItemData>(config.startingPassives) : new List<PassiveItemData>();
+
+        initialized = true;
+    }
+
+    /// <summary>
+    /// Copy runtime Player → PlayerData (in-memory save)
+    /// </summary>
     public void SavePlayer(Player player)
     {
+        if (player == null) return;
+
         attack = player.attack;
         defense = player.defense;
         focus = player.focus;
@@ -49,9 +89,10 @@ public class PlayerData : MonoBehaviour
         maxMP = player.maxMP;
         speed = player.speed;
         maxShield = player.maxShield;
+
         currentHP = player.currentHP;
         currentMP = player.currentMP;
-        currentShield = player.currentshield;
+        currentShield = player.currentshield; // note: Player field name uses 'currentshield' per your example
         money = player.money;
 
         inventoryItems = new List<Item>(player.inventoryItems);
@@ -62,10 +103,16 @@ public class PlayerData : MonoBehaviour
         initialized = true;
     }
 
+    /// <summary>
+    /// Copy PlayerData → runtime Player
+    /// </summary>
     public void LoadPlayer(Player player)
     {
+        if (player == null) return;
+
         if (!initialized)
         {
+            // First-time: use the Player prefab's current Inspector values as the baseline.
             SavePlayer(player);
             return;
         }
@@ -77,15 +124,33 @@ public class PlayerData : MonoBehaviour
         player.maxMP = maxMP;
         player.speed = speed;
         player.maxShield = maxShield;
-        player.currentHP = currentHP;
-        player.currentMP = currentMP;
-        player.currentshield = currentShield;
+
+        player.currentHP = Mathf.Clamp(currentHP, 0, maxHP);
+        player.currentMP = Mathf.Clamp(currentMP, 0, maxMP);
+        player.currentshield = Mathf.Clamp(currentShield, 0, maxShield);
         player.money = money;
 
         player.inventoryItems = new List<Item>(inventoryItems);
         player.leftHandWeapon = leftHandWeapon;
         player.rightHandWeapon = rightHandWeapon;
         player.equippedPassiveItems = new List<PassiveItemData>(equippedPassiveItems);
+    }
+
+    /// <summary>
+    /// Convenience method if you want Player to just "do the right thing".
+    /// If PlayerData isn't initialized yet, it saves Player's current Inspector values into memory.
+    /// Otherwise, it overwrites Player with the saved values.
+    /// </summary>
+    public void LoadOrInitPlayer(Player player)
+    {
+        if (!initialized)
+        {
+            SavePlayer(player);
+        }
+        else
+        {
+            LoadPlayer(player);
+        }
     }
 
     public void SetNextNode(NodeType type)

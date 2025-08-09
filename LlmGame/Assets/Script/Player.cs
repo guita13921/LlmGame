@@ -7,9 +7,10 @@ public class Player : Character
     public override void Awake()
     {
         base.Awake();
+
         if (PlayerData.Instance != null)
         {
-            PlayerData.Instance.LoadPlayer(this);
+            PlayerData.Instance.LoadOrInitPlayer(this);
         }
     }
 
