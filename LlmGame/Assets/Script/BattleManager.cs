@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using TMPro;
 using System.Text.RegularExpressions; // Make sure this is at the top
+using Map;
 
 public class BattleManager : MonoBehaviour
 {
@@ -15,6 +16,11 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public CharacterCombatHandler combatHandler;
     [SerializeField] public DamageCalculator damageCalculator;
     [SerializeField] public TMP_InputField playerInputField;
+
+    [Header("Enemy Pools")]
+    public List<GameObject> minorEnemyPrefabs = new List<GameObject>();
+    public List<GameObject> eliteEnemyPrefabs = new List<GameObject>();
+    public List<GameObject> bossEnemyPrefabs = new List<GameObject>();
 
     [Header("Show Debug")]
     [SerializeField] public bool showDebug;
@@ -41,13 +47,49 @@ public class BattleManager : MonoBehaviour
     private void Start()
     {
         player.turnGauge = 0f;
+        allCharacters.Clear();
         allCharacters.Add(player);
 
-        foreach (var e in enemies)
+        SpawnEnemyForCurrentNode();
+    }
+
+    private void SpawnEnemyForCurrentNode()
+    {
+        enemies.Clear();
+        if (PlayerData.Instance == null) return;
+
+        GameObject prefab = GetRandomEnemyPrefab(PlayerData.Instance.nextNodeType);
+        if (prefab == null) return;
+
+        GameObject enemyObj = Instantiate(prefab);
+        Enemy enemy = enemyObj.GetComponent<Enemy>();
+        if (enemy != null)
         {
-            e.turnGauge = 0f;
-            allCharacters.Add(e);
+            enemy.turnGauge = 0f;
+            enemies.Add(enemy);
+            allCharacters.Add(enemy);
         }
+    }
+
+    private GameObject GetRandomEnemyPrefab(NodeType type)
+    {
+        List<GameObject> pool = null;
+        switch (type)
+        {
+            case NodeType.MinorEnemy:
+                pool = minorEnemyPrefabs;
+                break;
+            case NodeType.EliteEnemy:
+                pool = eliteEnemyPrefabs;
+                break;
+            case NodeType.Boss:
+                pool = bossEnemyPrefabs;
+                break;
+        }
+
+        if (pool == null || pool.Count == 0) return null;
+        int index = Random.Range(0, pool.Count);
+        return pool[index];
     }
 
     private void Update()
