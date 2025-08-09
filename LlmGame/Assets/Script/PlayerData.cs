@@ -7,6 +7,7 @@ public class PlayerData : MonoBehaviour
     public static PlayerData Instance;
 
     public NodeType nextNodeType;
+    public EnemyDifficulty nextEnemyDifficulty;
 
     // Basic stats
     public int attack;
@@ -153,8 +154,9 @@ public class PlayerData : MonoBehaviour
         }
     }
 
-    public void SetNextNode(NodeType type)
+    public void SetNextNode(NodeType type, EnemyDifficulty difficulty)
     {
         nextNodeType = type;
+        nextEnemyDifficulty = difficulty;
     }
 }

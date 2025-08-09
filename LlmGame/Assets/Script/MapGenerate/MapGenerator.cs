@@ -74,7 +74,26 @@ namespace Map
                     ? supportedRandomNodeTypes.Random()
                     : layer.nodeType;
                 string blueprintName = config.nodeBlueprints.Where(b => b.nodeType == nodeType).ToList().Random().name;
-                Node node = new Node(nodeType, blueprintName, new Vector2Int(i, layerIndex))
+
+                EnemyDifficulty difficulty = EnemyDifficulty.Easy;
+                float layerPercent = (layerIndex / (float)config.layers.Count) * 100f;
+                if (nodeType == NodeType.MinorEnemy)
+                {
+                    if (layerPercent < config.minorEasyPercent)
+                        difficulty = EnemyDifficulty.Easy;
+                    else if (layerPercent < config.minorEasyPercent + config.minorNormalPercent)
+                        difficulty = EnemyDifficulty.Normal;
+                    else
+                        difficulty = EnemyDifficulty.Hard;
+                }
+                else if (nodeType == NodeType.EliteEnemy)
+                {
+                    difficulty = layerPercent < config.eliteEasyPercent
+                        ? EnemyDifficulty.Easy
+                        : EnemyDifficulty.Hard;
+                }
+
+                Node node = new Node(nodeType, blueprintName, new Vector2Int(i, layerIndex), difficulty)
                 {
                     position = new Vector2(-offset + i * layer.nodesApartDistance, GetDistanceToLayer(layerIndex))
                 };

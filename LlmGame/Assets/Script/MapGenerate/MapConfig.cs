@@ -20,6 +20,14 @@ namespace Map
 
         [Tooltip("Increase this number to generate more paths")]
         public int extraPaths;
+
+        [Header("Enemy Difficulty Distribution")]
+        [Range(0,100)] public int minorEasyPercent = 30;
+        [Range(0,100)] public int minorNormalPercent = 30;
+        [Range(0,100)] public int minorHardPercent = 40;
+        [Range(0,100)] public int eliteEasyPercent = 50;
+        [Range(0,100)] public int eliteHardPercent = 50;
+
         public List<MapLayer> layers;
     }
 }

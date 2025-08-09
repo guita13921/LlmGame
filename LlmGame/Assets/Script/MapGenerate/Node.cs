@@ -13,14 +13,17 @@ namespace Map
         public readonly List<Vector2Int> outgoing = new List<Vector2Int>();
         [JsonConverter(typeof(StringEnumConverter))]
         public readonly NodeType nodeType;
+        [JsonConverter(typeof(StringEnumConverter))]
+        public readonly EnemyDifficulty enemyDifficulty;
         public readonly string blueprintName;
         public Vector2 position;
 
-        public Node(NodeType nodeType, string blueprintName, Vector2Int point)
+        public Node(NodeType nodeType, string blueprintName, Vector2Int point, EnemyDifficulty difficulty)
         {
             this.nodeType = nodeType;
             this.blueprintName = blueprintName;
             this.point = point;
+            this.enemyDifficulty = difficulty;
         }
 
         public void AddIncoming(Vector2Int p)
