@@ -7,8 +7,10 @@ public class PassiveItemData : ScriptableObject
 {
     public string itemName;
     [TextArea] public string description;
-
-    public GameObject itemPrefab; // Prefab that contains a MonoBehaviour implementing IPassiveItem
+    public Sprite icon; // <- Sprite for UI Image
+    public ItemRarity rarity;
+    public int value;
+    public GameObject itemPrefab;
 
     /// <summary>
     /// Instantiates the passive item prefab on the character and applies its effect.

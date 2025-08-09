@@ -13,9 +13,9 @@ public class StoreSystem : MonoBehaviour
     public List<ArmorData> armors = new();
 
     [Header("Rarity Weights")]
-    [Range(0,100)] public int commonWeight = 60;
-    [Range(0,100)] public int rareWeight = 30;
-    [Range(0,100)] public int epicWeight = 10;
+    [Range(0, 100)] public int commonWeight = 60;
+    [Range(0, 100)] public int rareWeight = 30;
+    [Range(0, 100)] public int epicWeight = 10;
 
     /// <summary>
     /// Create a store stock list with items the player doesn't already own.

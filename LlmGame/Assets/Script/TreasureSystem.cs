@@ -1,17 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Handles treasure rewards, granting the player a random item they don't already own.
-/// Uses the StoreSystem's pools for item selection.
-/// </summary>
 public class TreasureSystem : MonoBehaviour
 {
     public StoreSystem storeReference;
 
-    /// <summary>
-    /// Grants a random item to the player.
-    /// </summary>
+    [Header("Fallback (duplicates)")]
+    [SerializeField] private bool allowDuplicatesWhenEmpty = true;
+    [SerializeField] private List<PassiveItemData> duplicatePool; // assign all possible items here
+
     public ScriptableObject GrantTreasure(Player player)
     {
         if (storeReference == null)
@@ -21,10 +18,23 @@ public class TreasureSystem : MonoBehaviour
         }
 
         List<ScriptableObject> stock = storeReference.GenerateStock(player, 1);
-        if (stock.Count == 0) return null;
+        if (stock != null && stock.Count > 0)
+        {
+            var item = stock[0];
+            storeReference.BuyItem(player, item);
+            return item;
+        }
 
-        ScriptableObject item = stock[0];
-        storeReference.BuyItem(player, item);
-        return item;
+        // Fallback: allow duplicates from a known pool
+        if (allowDuplicatesWhenEmpty && duplicatePool != null && duplicatePool.Count > 0)
+        {
+            int idx = Random.Range(0, duplicatePool.Count);
+            var item = duplicatePool[idx];
+            // Optional: if your store needs to process ownership/effects:
+            storeReference.BuyItem(player, item);
+            return item;
+        }
+
+        return null;
     }
 }
