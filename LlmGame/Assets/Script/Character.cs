@@ -248,8 +248,8 @@ public class Character : MonoBehaviour
         string log = $"Turn {battleManager.turnCount}: {characterName} {actionText} → Target: {damageTarget.characterName} Result: {damageTarget.currentHP} / {damageTarget.maxHP} ({battleManager.chatAI.baseEffect})";
         battleManager.battleLog.Add(log);
 
-        Debug.Log(log);
-        Debug.Log(damageTarget.GetBodyPartStatus());
+        //Debug.Log(log);
+        //Debug.Log(damageTarget.GetBodyPartStatus());
     }
 
 

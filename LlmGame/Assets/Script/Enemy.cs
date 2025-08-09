@@ -40,7 +40,7 @@ public class Enemy : Character
             source: battleManager.player
         );
 
-        this.ApplyStatusEffect(Bleed);
+        //this.ApplyStatusEffect(Bleed);
         //this.ApplyStatusEffect(posion);
         //this.ApplyStatusEffect(Radiation);
     }

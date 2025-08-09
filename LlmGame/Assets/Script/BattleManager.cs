@@ -262,28 +262,24 @@ public class BattleManager : MonoBehaviour
                 {
                     string lowerKeyword = keyword.ToLower();
 
-                    // 🧪 Example: trigger on keyword match
-                    if (lowerKeyword == "heal" || lowerKeyword == "emergency" || lowerKeyword == "recovery")
+                    Character healTarget = enemy;
+                    item.isActive = true;
+                    enemy.activeItem.Add(item);
+
+                    enemy.isUsingConsumeTurnItem = true;
+
+                    if (healTarget != null)
                     {
-                        Character healTarget = enemy;
-                        item.isActive = true;
-                        enemy.activeItem.Add(item);
-
-                        enemy.isUsingConsumeTurnItem = true;
-
-                        if (healTarget != null)
-                        {
-                            Debug.Log($"Enemy {enemy.characterName} will use {consumeItem.itemName} on {healTarget.characterName}");
-                            consumeRoutine = consumeItem.UseOnTarget(enemy, healTarget, this);
-                            return true;
-                        }
-                        else
-                        {
-                            Debug.LogWarning("No valid heal target found.");
-                        }
-
+                        Debug.Log($"Enemy {enemy.characterName} will use {consumeItem.itemName} on {healTarget.characterName}");
+                        consumeRoutine = consumeItem.UseOnTarget(enemy, healTarget, this);
                         return true;
                     }
+                    else
+                    {
+                        Debug.LogWarning("No valid heal target found.");
+                    }
+
+                    return true;
                 }
             }
         }
