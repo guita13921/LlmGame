@@ -18,13 +18,22 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public DamageCalculator damageCalculator;
     [SerializeField] public TMP_InputField playerInputField;
 
+    [System.Serializable]
+    public class EnemyGroup
+    {
+        public List<GameObject> enemies = new List<GameObject>();
+    }
+
     [Header("Enemy Pools")]
-    public List<GameObject> minorEasyPrefabs = new List<GameObject>();
-    public List<GameObject> minorNormalPrefabs = new List<GameObject>();
-    public List<GameObject> minorHardPrefabs = new List<GameObject>();
-    public List<GameObject> eliteEasyPrefabs = new List<GameObject>();
-    public List<GameObject> eliteHardPrefabs = new List<GameObject>();
-    public List<GameObject> bossEnemyPrefabs = new List<GameObject>();
+    public List<EnemyGroup> minorEasyGroups = new List<EnemyGroup>();
+    public List<EnemyGroup> minorNormalGroups = new List<EnemyGroup>();
+    public List<EnemyGroup> minorHardGroups = new List<EnemyGroup>();
+    public List<EnemyGroup> eliteEasyGroups = new List<EnemyGroup>();
+    public List<EnemyGroup> eliteHardGroups = new List<EnemyGroup>();
+    public List<EnemyGroup> bossEnemyGroups = new List<EnemyGroup>();
+
+    [Header("Enemy Spawn Points")]
+    [SerializeField] public Transform[] enemySpawnPoints = new Transform[3];
 
     [Header("Show Debug")]
     [SerializeField] public bool showDebug;
@@ -62,38 +71,49 @@ public class BattleManager : MonoBehaviour
         enemies.Clear();
         if (PlayerData.Instance == null) return;
 
-        GameObject prefab = GetRandomEnemyPrefab(PlayerData.Instance.nextNodeType, PlayerData.Instance.nextEnemyDifficulty);
-        if (prefab == null) return;
+        EnemyGroup group = GetRandomEnemyGroup(PlayerData.Instance.nextNodeType, PlayerData.Instance.nextEnemyDifficulty);
+        if (group == null || group.enemies == null) return;
 
-        GameObject enemyObj = Instantiate(prefab);
-        Enemy enemy = enemyObj.GetComponent<Enemy>();
-        if (enemy != null)
+        int spawnCount = Mathf.Min(group.enemies.Count, enemySpawnPoints.Length);
+        for (int i = 0; i < spawnCount; i++)
         {
-            enemy.turnGauge = 0f;
-            enemies.Add(enemy);
-            allCharacters.Add(enemy);
+            GameObject prefab = group.enemies[i];
+            if (prefab == null) continue;
+
+            Transform spawnPoint = enemySpawnPoints != null && i < enemySpawnPoints.Length ? enemySpawnPoints[i] : null;
+            GameObject enemyObj = spawnPoint != null
+                ? Instantiate(prefab, spawnPoint.position, spawnPoint.rotation)
+                : Instantiate(prefab);
+
+            Enemy enemy = enemyObj.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.turnGauge = 0f;
+                enemies.Add(enemy);
+                allCharacters.Add(enemy);
+            }
         }
     }
 
-    private GameObject GetRandomEnemyPrefab(NodeType type, EnemyDifficulty difficulty)
+    private EnemyGroup GetRandomEnemyGroup(NodeType type, EnemyDifficulty difficulty)
     {
-        List<GameObject> pool = null;
+        List<EnemyGroup> pool = null;
         switch (type)
         {
             case NodeType.MinorEnemy:
                 pool = difficulty switch
                 {
-                    EnemyDifficulty.Easy => minorEasyPrefabs,
-                    EnemyDifficulty.Normal => minorNormalPrefabs,
-                    EnemyDifficulty.Hard => minorHardPrefabs,
-                    _ => minorEasyPrefabs
+                    EnemyDifficulty.Easy => minorEasyGroups,
+                    EnemyDifficulty.Normal => minorNormalGroups,
+                    EnemyDifficulty.Hard => minorHardGroups,
+                    _ => minorEasyGroups
                 };
                 break;
             case NodeType.EliteEnemy:
-                pool = difficulty == EnemyDifficulty.Easy ? eliteEasyPrefabs : eliteHardPrefabs;
+                pool = difficulty == EnemyDifficulty.Easy ? eliteEasyGroups : eliteHardGroups;
                 break;
             case NodeType.Boss:
-                pool = bossEnemyPrefabs;
+                pool = bossEnemyGroups;
                 break;
         }
 
