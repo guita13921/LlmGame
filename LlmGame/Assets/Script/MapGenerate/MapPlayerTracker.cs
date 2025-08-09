@@ -75,9 +75,13 @@ namespace Map
                     sceneToLoad = "BattleScene";
                     break;
                 case NodeType.RestSite:
+                    sceneToLoad = "RestScene";
+                    break;
                 case NodeType.Treasure:
+                    sceneToLoad = "TreasureScene";
+                    break;
                 case NodeType.Mystery:
-                    sceneToLoad = "EventScene";
+                    sceneToLoad = "MysteryScene";
                     break;
                 case NodeType.Store:
                     sceneToLoad = "StoreScene";
