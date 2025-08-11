@@ -10,6 +10,9 @@ using UnityEngine.Events;
 /// </summary>
 public class MysteryEvent : MonoBehaviour
 {
+    [Tooltip("The name/title of this event (shown at the top of the UI).")]
+    public string eventName;
+
     [Tooltip("Short description that will be shown to the player."), TextArea]
     public string description;
 
@@ -36,7 +39,9 @@ public class MysteryEvent : MonoBehaviour
     {
         [Tooltip("Text shown on the button for this option.")]
         public string optionText;
+
         [TextArea]
+        [Tooltip("Additional descriptive text about the option's outcome.")]
         public string descriptionText;
 
         [Tooltip("The outcome that will occur when the option is chosen.")]

@@ -509,6 +509,7 @@
 "Assets/Script/MysteryEvent.cs"
 "Assets/Script/MysteryEventSystem.cs"
 "Assets/Script/MysteryEventUI.cs"
+"Assets/Script/MysterySceneEventHandler.cs"
 "Assets/Script/Player.cs"
 "Assets/Script/PlayerData.cs"
 "Assets/Script/PlayerSaveData.cs"
