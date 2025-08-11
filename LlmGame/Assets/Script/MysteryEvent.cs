@@ -36,6 +36,8 @@ public class MysteryEvent : MonoBehaviour
     {
         [Tooltip("Text shown on the button for this option.")]
         public string optionText;
+        [TextArea]
+        public string descriptionText;
 
         [Tooltip("The outcome that will occur when the option is chosen.")]
         public UnityEvent onSelected;
