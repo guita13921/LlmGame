@@ -13,6 +13,9 @@ public class Item : ScriptableObject
     public ItemRarity rarity;
     public int value;
 
+    [Header("Visual")]
+    public Sprite icon;
+
     [Header("Usage")]
     public UsageType usageType;
     public int remain;

@@ -6,6 +6,7 @@ public class ArmorData : ScriptableObject
 {
     [Header("General Armor Stats")]
     public string armorName;
+    public Sprite icon;
     [TextArea]
     public string description;
     public ItemRarity rarity;
