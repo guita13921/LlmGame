@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Map;
 
 public class MysteryEventUI : MonoBehaviour
 {
@@ -167,7 +168,17 @@ public class MysteryEventUI : MonoBehaviour
         // load next scene
         if (!string.IsNullOrEmpty(nextSceneName))
         {
-            SceneManager.LoadScene(nextSceneName);
+            var data = PlayerData.Instance;
+            if (data != null && (data.nextNodeType == NodeType.MinorEnemy ||
+                                 data.nextNodeType == NodeType.EliteEnemy ||
+                                 data.nextNodeType == NodeType.Boss))
+            {
+                SceneManager.LoadScene("BattleScene");
+            }
+            else
+            {
+                SceneManager.LoadScene(nextSceneName);
+            }
         }
     }
 

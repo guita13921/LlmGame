@@ -102,7 +102,7 @@ public class MysterySceneEventHandler : MonoBehaviour
             return;
         }
         Weapon weapon = weaponPool[Random.Range(0, weaponPool.Count)];
-        player.leftHandWeapon = weapon; // simple assignment for now
+        player.inventoryItems.Add(weapon);
         Log($"Granted weapon: {weapon.name}");
     }
 
