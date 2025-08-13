@@ -29,6 +29,9 @@ public class PlayerData : MonoBehaviour
     public Weapon rightHandWeapon;
     public List<PassiveItemData> equippedPassiveItems = new List<PassiveItemData>();
 
+    // Tracks which passive item effects have already been applied to avoid stacking
+    public HashSet<string> appliedPassiveItemTypes = new HashSet<string>();
+
     // Equipped armor per body part
     public List<EquippedArmorEntry> equippedArmors = new List<EquippedArmorEntry>();
 
@@ -79,6 +82,9 @@ public class PlayerData : MonoBehaviour
         equippedPassiveItems = config ? new List<PassiveItemData>(config.startingPassives) : new List<PassiveItemData>();
 
         equippedArmors = new List<EquippedArmorEntry>(); // remains empty unless equipped manually
+
+        // Clear any previously applied passive effects for a fresh game
+        appliedPassiveItemTypes = new HashSet<string>();
 
         initialized = true;
     }
