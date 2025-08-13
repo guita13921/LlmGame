@@ -89,11 +89,6 @@ public class PlayerData : MonoBehaviour
     public void SavePlayer(Player player)
     {
         if (player == null) return;
-        foreach (var behavior in player.runtimePassiveBehaviors)
-        {
-            if (behavior is IPassiveItem item)
-                item.DeApplyEffect(player);
-        }
 
         attack = player.attack;
         defense = player.defense;
@@ -128,12 +123,6 @@ public class PlayerData : MonoBehaviour
         }
 
         initialized = true;
-
-        foreach (var behavior in player.runtimePassiveBehaviors)
-        {
-            if (behavior is IPassiveItem item)
-                item.ApplyEffect(player);
-        }
     }
 
     /// <summary>

@@ -8,6 +8,7 @@ public abstract class PassiveItemBase : MonoBehaviour, IPassiveItem
     public abstract void ApplyEffect(Character character);
     public abstract void DeApplyEffect(Character character);
 
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();
