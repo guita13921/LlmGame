@@ -120,7 +120,7 @@ public class MysterySceneEventHandler : MonoBehaviour
         ChangeMoney(-smallCreditCost);
         if (msgNoodleItem != null && player != null)
         {
-            if (!player.equippedPassiveItems.Contains(msgNoodleItem))
+            if (!PlayerData.Instance.equippedPassiveItems.Contains(msgNoodleItem))
             {
                 player.EquipPassiveItem(msgNoodleItem);
                 Log($"Received passive item: {msgNoodleItem.name}");
@@ -403,15 +403,15 @@ public class MysterySceneEventHandler : MonoBehaviour
 
     public void TradeWithHomeless()
     {
-        if (player == null || player.equippedPassiveItems.Count == 0)
+        if (player == null || PlayerData.Instance.equippedPassiveItems.Count == 0)
         {
             Log("Trade failed: no items equipped to trade.");
             QueueNextMystery();
             return;
         }
 
-        int idx = Random.Range(0, player.equippedPassiveItems.Count);
-        var removedItem = player.equippedPassiveItems[idx];
+        int idx = Random.Range(0, PlayerData.Instance.equippedPassiveItems.Count);
+        var removedItem = PlayerData.Instance.equippedPassiveItems[idx];
         ItemRarity rarity = removedItem.rarity;
         player.UnequipPassiveItem(removedItem);
         Log($"Traded away: {removedItem.name} (Rarity: {rarity})");

@@ -72,22 +72,23 @@ public class Character : MonoBehaviour
     public bool isUsingConsumeTurnItem;
 
     public PossibilityPool possibilityPool { get; private set; }
-    [SerializeField] public List<PassiveItemData> equippedPassiveItems;
     private Dictionary<string, int> customIntData = new();
 
     public void EquipPassiveItem(PassiveItemData itemData)
     {
-        if (itemData == null || equippedPassiveItems.Contains(itemData)) return;
+        if (itemData == null) return;
+        var list = PlayerData.Instance?.equippedPassiveItems;
+        if (list != null && list.Contains(itemData)) return;
 
-        equippedPassiveItems.Add(itemData);
+        list?.Add(itemData);
         itemData.EquipTo(this);
     }
 
     public void UnequipPassiveItem(PassiveItemData itemData)
     {
         if (itemData == null) return;
-
-        if (equippedPassiveItems.Remove(itemData))
+        var list = PlayerData.Instance?.equippedPassiveItems;
+        if (list != null && list.Remove(itemData))
         {
             EquipAllPassives();
         }
@@ -704,9 +705,13 @@ public class Character : MonoBehaviour
     {
         runtimePassiveBehaviors.Clear(); // Reset to avoid duplicates
 
-        foreach (var item in equippedPassiveItems)
+        var list = PlayerData.Instance?.equippedPassiveItems;
+        if (list != null)
         {
-            item.EquipTo(this); // this handles tracking internally
+            foreach (var item in list)
+            {
+                item.EquipTo(this); // this handles tracking internally
+            }
         }
 
         foreach (var part in bodyParts)

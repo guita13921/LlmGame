@@ -112,7 +112,6 @@ public class PlayerData : MonoBehaviour
         inventoryArmors = new List<ArmorData>(player.inventoryArmors);
         leftHandWeapon = player.leftHandWeapon;
         rightHandWeapon = player.rightHandWeapon;
-        equippedPassiveItems = new List<PassiveItemData>(player.equippedPassiveItems);
 
         // Save equipped armors from body parts
         equippedArmors = new List<EquippedArmorEntry>();
@@ -168,7 +167,6 @@ public class PlayerData : MonoBehaviour
         player.inventoryArmors = new List<ArmorData>(inventoryArmors);
         player.leftHandWeapon = leftHandWeapon;
         player.rightHandWeapon = rightHandWeapon;
-        player.equippedPassiveItems = new List<PassiveItemData>(equippedPassiveItems);
 
         // Load equipped armor into body parts
         foreach (var part in player.bodyParts)

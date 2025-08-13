@@ -215,6 +215,5 @@ MonoBehaviour:
   rightHandWeapon: {fileID: 11400000, guid: 5eb97eab966aeda4d8df1114c3fcc71e, type: 2}
   activeItem: []
   isUsingConsumeTurnItem: 0
-  equippedPassiveItems: []
   archetype: 0
   actions: []

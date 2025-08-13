@@ -256,7 +256,6 @@ MonoBehaviour:
   rightHandWeapon: {fileID: 0}
   activeItem: []
   isUsingConsumeTurnItem: 0
-  equippedPassiveItems: []
 --- !u!114 &7262446337314057770
 MonoBehaviour:
   m_ObjectHideFlags: 0
