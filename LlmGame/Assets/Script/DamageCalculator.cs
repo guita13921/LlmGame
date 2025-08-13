@@ -248,12 +248,9 @@ public class DamageCalculator : MonoBehaviour
                 // 🔥 Apply OnHit Modifiers from Passive Items (like Head Targeting)
                 if (attacker is Player attackerPlayer)
                 {
-                    foreach (var itemData in attackerPlayer.equippedPassiveItems)
+                    foreach (var behavior in attackerPlayer.runtimePassiveBehaviors)
                     {
-                        if (itemData.itemPrefab == null) continue;
-
-                        IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
-                        if (hitModifier != null)
+                        if (behavior is IHitModifier hitModifier)
                         {
                             hitModifier.OnHit(attacker, part, ref damageToApply);
                         }
@@ -458,12 +455,9 @@ public class DamageCalculator : MonoBehaviour
                     // 🔥 Apply OnHit Modifiers
                     if (attacker is Player attackerPlayer)
                     {
-                        foreach (var itemData in attackerPlayer.equippedPassiveItems)
+                        foreach (var behavior in attackerPlayer.runtimePassiveBehaviors)
                         {
-                            if (itemData.itemPrefab == null) continue;
-
-                            IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
-                            if (hitModifier != null)
+                            if (behavior is IHitModifier hitModifier)
                             {
                                 hitModifier.OnHit(attacker, part, ref damageToApply);
                             }
@@ -483,12 +477,9 @@ public class DamageCalculator : MonoBehaviour
                     // 🔥 Apply OnHit Modifiers
                     if (attacker is Player attackerPlayer)
                     {
-                        foreach (var itemData in attackerPlayer.equippedPassiveItems)
+                        foreach (var behavior in attackerPlayer.runtimePassiveBehaviors)
                         {
-                            if (itemData.itemPrefab == null) continue;
-
-                            IHitModifier hitModifier = itemData.itemPrefab.GetComponent<IHitModifier>();
-                            if (hitModifier != null)
+                            if (behavior is IHitModifier hitModifier)
                             {
                                 hitModifier.OnHit(attacker, part, ref damageToApply);
                             }

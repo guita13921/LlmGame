@@ -40,8 +40,7 @@ public class StoreSystem : MonoBehaviour
     {
         if (item is PassiveItemData passive)
         {
-            if (!player.equippedPassiveItems.Contains(passive))
-                player.equippedPassiveItems.Add(passive);
+            player.EquipPassiveItem(passive);
         }
         else if (item is ArmorData armor)
         {

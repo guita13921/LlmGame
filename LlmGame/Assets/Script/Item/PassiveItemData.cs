@@ -26,6 +26,8 @@ public class PassiveItemData : ScriptableObject
         // ✅ Instantiate the prefab
         GameObject instance = Instantiate(itemPrefab, character.transform);
 
+        character.RegisterRuntimePassive(instance);
+
         // ✅ Apply effect
         var passiveComponent = instance.GetComponent<IPassiveItem>();
         if (passiveComponent != null)

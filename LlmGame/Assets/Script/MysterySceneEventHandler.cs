@@ -118,15 +118,17 @@ public class MysterySceneEventHandler : MonoBehaviour
     public void OrderNoodles()
     {
         ChangeMoney(-smallCreditCost);
-        if (msgNoodleItem != null && player != null && !player.equippedPassiveItems.Contains(msgNoodleItem))
+        if (msgNoodleItem != null && player != null)
         {
-            player.equippedPassiveItems.Add(msgNoodleItem);
-            msgNoodleItem.EquipTo(player);
-            Log($"Received passive item: {msgNoodleItem.name}");
-        }
-        else
-        {
-            Log("MSG noodle item not granted (missing item/player or already owned).");
+            if (!player.equippedPassiveItems.Contains(msgNoodleItem))
+            {
+                player.EquipPassiveItem(msgNoodleItem);
+                Log($"Received passive item: {msgNoodleItem.name}");
+            }
+            else
+            {
+                Log("MSG noodle item not granted (missing item/player or already owned).");
+            }
         }
         QueueNextMystery();
     }
@@ -411,7 +413,7 @@ public class MysterySceneEventHandler : MonoBehaviour
         int idx = Random.Range(0, player.equippedPassiveItems.Count);
         var removedItem = player.equippedPassiveItems[idx];
         ItemRarity rarity = removedItem.rarity;
-        player.equippedPassiveItems.RemoveAt(idx);
+        player.UnequipPassiveItem(removedItem);
         Log($"Traded away: {removedItem.name} (Rarity: {rarity})");
         GrantRandomItem(rarity);
         QueueNextMystery();

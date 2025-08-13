@@ -75,6 +75,24 @@ public class Character : MonoBehaviour
     [SerializeField] public List<PassiveItemData> equippedPassiveItems;
     private Dictionary<string, int> customIntData = new();
 
+    public void EquipPassiveItem(PassiveItemData itemData)
+    {
+        if (itemData == null || equippedPassiveItems.Contains(itemData)) return;
+
+        equippedPassiveItems.Add(itemData);
+        itemData.EquipTo(this);
+    }
+
+    public void UnequipPassiveItem(PassiveItemData itemData)
+    {
+        if (itemData == null) return;
+
+        if (equippedPassiveItems.Remove(itemData))
+        {
+            EquipAllPassives();
+        }
+    }
+
     public virtual void Awake()
     {
         battleManager = FindAnyObjectByType<BattleManager>();
@@ -154,12 +172,9 @@ public class Character : MonoBehaviour
         Player player = FindObjectOfType<Player>();
         if (player != null)
         {
-            foreach (var itemData in player.equippedPassiveItems)
+            foreach (var behavior in player.runtimePassiveBehaviors)
             {
-                if (itemData.itemPrefab == null) continue;
-
-                var deathListener = itemData.itemPrefab.GetComponent<IDeathListener>();
-                if (deathListener != null)
+                if (behavior is IDeathListener deathListener)
                 {
                     deathListener.OnDeath(this);
                 }
@@ -444,12 +459,11 @@ public class Character : MonoBehaviour
 
                         Character source = effect.source;
 
-                        if (source != null)
+                        if (source is Player playerSource)
                         {
-                            foreach (var itemData in (source as Player)?.equippedPassiveItems ?? new List<PassiveItemData>())
+                            foreach (var behavior in playerSource.runtimePassiveBehaviors)
                             {
-                                if (itemData.itemPrefab == null) continue;
-                                if (itemData.itemPrefab.GetComponent<BloodTuner>() != null)
+                                if (behavior is BloodTuner)
                                 {
                                     spreadToAllParts = true;
                                     break;
@@ -562,11 +576,9 @@ public class Character : MonoBehaviour
     {
         if (source == null || !(source is Player playerSource)) return;
 
-        foreach (var itemData in playerSource.equippedPassiveItems)
+        foreach (var behavior in playerSource.runtimePassiveBehaviors)
         {
-            if (itemData.itemPrefab == null) continue;
-
-            if (itemData.itemPrefab.GetComponent<NerveRotVials>() != null)
+            if (behavior is NerveRotVials)
             {
                 // ✅ Limit to max 3 stacks
                 int currentStacks = activeStatusEffects
@@ -606,11 +618,9 @@ public class Character : MonoBehaviour
     {
         if (source == null || !(source is Player playerSource)) return;
 
-        foreach (var itemData in playerSource.equippedPassiveItems)
+        foreach (var behavior in playerSource.runtimePassiveBehaviors)
         {
-            if (itemData.itemPrefab == null) continue;
-
-            if (itemData.itemPrefab.GetComponent<IrradiationMatrix>() != null)
+            if (behavior is IrradiationMatrix)
             {
                 // Prevent duplicates
                 if (HasStatusEffect(StatusEffectType.HealReduction)) return;
