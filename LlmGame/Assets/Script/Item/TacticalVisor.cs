@@ -13,6 +13,7 @@ public class TacticalVisor : MonoBehaviour, IPassiveItem
         if (character.rightHandWeapon != null && character.rightHandWeapon.weaponType == WeaponType.Ranged_Weapon)
         {
             character.attack += bonusRangedDamage;
+            character.bonusAttack += bonusRangedDamage;
             Debug.Log($"🔭 Tactical Visor equipped: +{bonusRangedDamage} Ranged Weapon Damage applied to {character.characterName}");
             applied = true;
         }
@@ -23,6 +24,7 @@ public class TacticalVisor : MonoBehaviour, IPassiveItem
         if (applied)
         {
             character.attack -= bonusRangedDamage;
+            character.bonusAttack -= bonusRangedDamage;
             applied = false;
         }
     }

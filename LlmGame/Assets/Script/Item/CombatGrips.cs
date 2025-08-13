@@ -16,6 +16,7 @@ public class CombatGrips : MonoBehaviour, IPassiveItem
         {
             bonusAttack = Mathf.RoundToInt(character.attack * meleeDamageMultiplier);
             character.attack += bonusAttack;
+            character.bonusAttack += bonusAttack;
 
             Debug.Log($"🥊 Combat Grips equipped: +{bonusAttack} Attack (+10%) for melee weapon.");
         }
@@ -31,6 +32,7 @@ public class CombatGrips : MonoBehaviour, IPassiveItem
         if (bonusAttack != 0)
         {
             character.attack -= bonusAttack;
+            character.bonusAttack -= bonusAttack;
             bonusAttack = 0;
         }
     }

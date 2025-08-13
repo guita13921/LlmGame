@@ -9,10 +9,12 @@ public class NeurospikeBooster : PassiveItemBase
     public override void ApplyEffect(Character character)
     {
         character.speed += speedBoost;
+        character.bonusSpeed += speedBoost;
     }
 
     public override void DeApplyEffect(Character character)
     {
         character.speed -= speedBoost;
+        character.bonusSpeed -= speedBoost;
     }
 }

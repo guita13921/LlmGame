@@ -9,11 +9,13 @@ public class CombatMemoryChip : PassiveItemBase
     {
         bonus = (character.focus / 3) * 2;
         character.attack += bonus;
+        character.bonusAttack += bonus;
     }
 
     public override void DeApplyEffect(Character character)
     {
         character.attack -= bonus;
+        character.bonusAttack -= bonus;
         bonus = 0;
     }
 }

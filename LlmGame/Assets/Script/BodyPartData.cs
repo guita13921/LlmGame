@@ -63,14 +63,7 @@ public class BodyPartData : ScriptableObject
             return;
 
         GameObject instance = Instantiate(equippedArmor.itemBehaviorPrefab, character.transform);
-
-        foreach (var component in instance.GetComponents<MonoBehaviour>())
-        {
-            character.runtimePassiveBehaviors.Add(component);
-
-            if (component is IPassiveItem passive)
-                passive.ApplyEffect(character);
-        }
+        character.RegisterRuntimePassive(instance);
 
         Debug.Log($"✅ Equipped armor with behavior: {equippedArmor.armorName}");
     }

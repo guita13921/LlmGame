@@ -14,6 +14,7 @@ public class RecoilStabilizerArmor : MonoBehaviour, IPassiveItem, IDamageReactio
         if (weapon != null && weapon.weaponType == WeaponType.Ranged_Weapon)
         {
             character.defense += defenseBonus;
+            character.bonusDefense += defenseBonus;
             Debug.Log($"🦴 Recoil Stabilizer equipped: +{defenseBonus} Defense when using ranged weapons.");
             bonusApplied = true;
         }
@@ -43,6 +44,7 @@ public class RecoilStabilizerArmor : MonoBehaviour, IPassiveItem, IDamageReactio
         if (character == owner && bonusApplied)
         {
             character.defense -= defenseBonus;
+            character.bonusDefense -= defenseBonus;
             bonusApplied = false;
         }
         if (character == owner)
