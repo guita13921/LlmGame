@@ -1,13 +1,9 @@
+// (Header remains unchanged)
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Map;
 
-/// <summary>
-/// Contains concrete handlers for all MysteryScene events such as the
-/// noodle cart, spooky alleyway, strangers, etc. Methods here can be
-/// wired to <see cref="MysteryEvent.Option.onSelected"/> via the inspector.
-/// </summary>
 public class MysterySceneEventHandler : MonoBehaviour
 {
     [Header("References")]
@@ -16,15 +12,15 @@ public class MysterySceneEventHandler : MonoBehaviour
     public StoreSystem storeSystem;
 
     [Header("Config")]
-    // Updated per design: 50 coin standard small credit cost
     public int smallCreditCost = 50;
     public int droneMpCost = 20;
-    public int hackMpCost = 20; // design says reduce 20 MP for hack
+    public int hackMpCost = 20;
     public PassiveItemData msgNoodleItem;
     public List<Weapon> weaponPool = new();
 
-    // Track karma from the homeless camp event.
     public bool goodKarma = false;
+
+    void Awake() { }
 
     #region Utility + Debug
     private void Log(string msg)
@@ -86,7 +82,6 @@ public class MysterySceneEventHandler : MonoBehaviour
         Log($"Granted item: {item.name} (Rarity: {rarity})");
     }
 
-    // New helper: pick random from provided rarities
     private void GrantRandomItemFromRarities(params ItemRarity[] rarities)
     {
         if (rarities == null || rarities.Length == 0) return;
@@ -111,10 +106,15 @@ public class MysterySceneEventHandler : MonoBehaviour
         PlayerData.Instance?.SetNextNode(type, difficulty);
         Log($"Next encounter queued: {type} ({difficulty})");
     }
+
+    private void QueueNextMystery()
+    {
+        PlayerData.Instance?.SetNextNode(NodeType.Mystery, EnemyDifficulty.None);
+        //Log($"Next node queued: {NodeType.Mystery}");
+    }
     #endregion
 
     #region Noodle Cart
-    // Order a bowl (50 coin) → get passive item : MSG noodle.
     public void OrderNoodles()
     {
         ChangeMoney(-smallCreditCost);
@@ -128,27 +128,31 @@ public class MysterySceneEventHandler : MonoBehaviour
         {
             Log("MSG noodle item not granted (missing item/player or already owned).");
         }
+        QueueNextMystery();
     }
 
-    // Order a bowl and Offer to help clean up (No cost) → Heal 25hp
     public void OrderAndClean()
     {
         ChangeHP(25);
         Log("Helped clean up the stall.");
+        QueueNextMystery();
     }
 
-    // Refuse and walk away → Nothing happens.
-    public void Noodle_WalkAway() { Log("Noodle Cart: walked away (no effect)."); }
+    public void Noodle_WalkAway()
+    {
+        Log("Noodle Cart: walked away (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
     #region Spooky Alleyway
-    // Investigate → 50% loot (Common or Rare); 50%: surprise enemy next encounter (MinorEnemy Normal)
     public void InvestigateAlley()
     {
         if (Random.value < 0.5f)
         {
             Log("Alley: found loot.");
             GrantRandomItemFromRarities(ItemRarity.Common, ItemRarity.Rare);
+            QueueNextMystery();
         }
         else
         {
@@ -157,7 +161,6 @@ public class MysterySceneEventHandler : MonoBehaviour
         }
     }
 
-    // Throw a light drone (reduce 20MP) → Reveal hidden stash (random credits or item). Always yields something.
     public void ThrowLightDrone()
     {
         ChangeMP(-droneMpCost);
@@ -172,14 +175,17 @@ public class MysterySceneEventHandler : MonoBehaviour
             GrantRandomItem();
             Log("Drone revealed a hidden item.");
         }
+        QueueNextMystery();
     }
 
-    // Ignore and pass by → Nothing happens.
-    public void Alley_Ignore() { Log("Alley: ignored (no effect)."); }
+    public void Alley_Ignore()
+    {
+        Log("Alley: ignored (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
-    #region Cloaked Stranger (ชายที่ใส่ผ้าคลุม)
-    // Hear him out → 50% random reward (item/credits) or 50% random curse (lose HP).
+    #region Cloaked Stranger
     public void HearCloakedMan()
     {
         if (Random.value < 0.5f)
@@ -202,17 +208,17 @@ public class MysterySceneEventHandler : MonoBehaviour
             ChangeHP(-dmg);
             Log($"Cloaked man: cursed (-{dmg} HP).");
         }
+        QueueNextMystery();
     }
 
-    // Offer credits for information (50 coin) → Reveal one common item.
     public void PayCloakedMan()
     {
         ChangeMoney(-smallCreditCost);
         Log("Paid cloaked man for information.");
         GrantRandomItem(ItemRarity.Common);
+        QueueNextMystery();
     }
 
-    // Intimidate him → 50% success: gain stolen loot; 50% fail: lose HP.
     public void IntimidateCloakedMan()
     {
         if (Random.value < 0.5f)
@@ -221,33 +227,39 @@ public class MysterySceneEventHandler : MonoBehaviour
             ChangeMoney(credits);
             GrantRandomItem(ItemRarity.Rare);
             Log($"Intimidation succeeded: stole +{credits} credits and rare loot.");
+            QueueNextMystery();
         }
         else
         {
             int dmg = Random.Range(10, 21);
             ChangeHP(-dmg);
             Log($"Intimidation failed: took -{dmg} HP.");
+            QueueNextEncounter(NodeType.MinorEnemy, EnemyDifficulty.Normal);
         }
     }
 
-    // Walk away → Nothing
-    public void Cloaked_WalkAway() { Log("Cloaked stranger: walked away (no effect)."); }
+    public void Cloaked_WalkAway()
+    {
+        Log("Cloaked stranger: walked away (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
-    #region Woman Stranger (ผญ)
-    // Flirt → encounter elite enemy
+    #region Woman Stranger
     public void FlirtWithWoman()
     {
         QueueNextEncounter(NodeType.EliteEnemy, EnemyDifficulty.Normal);
         Log("Flirted with stranger: elite encounter queued.");
     }
 
-    // Ignore and pass by → Nothing happens.
-    public void Woman_Ignore() { Log("Woman: ignored (no effect)."); }
+    public void Woman_Ignore()
+    {
+        Log("Woman: ignored (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
-    #region Man in Suit (ชายใส่สูท)
-    // Offer to work for him → Random job reward (credits, item, or map reveal) and encounter a minor enemy.
+    #region Man in Suit
     public void WorkForSuit()
     {
         int roll = Random.Range(0, 3);
@@ -264,15 +276,12 @@ public class MysterySceneEventHandler : MonoBehaviour
         }
         else
         {
-            // TODO: map reveal feature
             Log("Work for suit: (placeholder) map reveal would occur here.");
-            // e.g., MapSystem.Instance?.RevealNearby();
         }
 
         QueueNextEncounter(NodeType.MinorEnemy, EnemyDifficulty.Normal);
     }
 
-    // Pickpocket him (random) → 40% Gain better credits/passive item; 60% trigger elite enemy.
     public void PickpocketSuit()
     {
         if (Random.value < 0.4f)
@@ -288,6 +297,7 @@ public class MysterySceneEventHandler : MonoBehaviour
                 GrantRandomItem(ItemRarity.Rare);
                 Log("Pickpocket succeeded: stole a rare item.");
             }
+            QueueNextMystery();
         }
         else
         {
@@ -296,13 +306,14 @@ public class MysterySceneEventHandler : MonoBehaviour
         }
     }
 
-    // Walk away → Nothing
-    public void Suit_WalkAway() { Log("Suit: walked away (no effect)."); }
+    public void Suit_WalkAway()
+    {
+        Log("Suit: walked away (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
-    #region Vending Machine (ตู้กด)
-    // Buy an item (50 coin) → Gain a random consumable or nothing.
-    // (We don't have consumables here; using random item or nothing.)
+    #region Vending Machine
     public void BuyFromVending()
     {
         ChangeMoney(-smallCreditCost);
@@ -315,17 +326,17 @@ public class MysterySceneEventHandler : MonoBehaviour
         {
             Log("Vending: nothing dispensed.");
         }
+        QueueNextMystery();
     }
 
-    // Hack it (reduce 20 MP) → Free item.
     public void HackVending()
     {
         ChangeMP(-hackMpCost);
         GrantRandomItem();
         Log("Vending hacked: free item obtained.");
+        QueueNextMystery();
     }
 
-    // Kick it (Random outcome) → 25% Free item, 75% nothing.
     public void KickVending()
     {
         if (Random.value < 0.25f)
@@ -337,14 +348,17 @@ public class MysterySceneEventHandler : MonoBehaviour
         {
             Log("Vending kicked: nothing happened.");
         }
+        QueueNextMystery();
     }
 
-    // Walk away → Nothing
-    public void Vending_WalkAway() { Log("Vending: walked away (no effect)."); }
+    public void Vending_WalkAway()
+    {
+        Log("Vending: walked away (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
-    #region Dumpster (กองขยะ)
-    // Dig through → 50% rare scrap item; 50% catch infection (-HP).
+    #region Dumpster
     public void DigDumpster()
     {
         if (Random.value < 0.5f)
@@ -358,35 +372,39 @@ public class MysterySceneEventHandler : MonoBehaviour
             ChangeHP(-dmg);
             Log($"Dumpster: caught infection (-{dmg} HP).");
         }
+        QueueNextMystery();
     }
 
-    // Send drone (reduce 20 MP) → Safely retrieve loot.
     public void DroneDumpster()
     {
         ChangeMP(-droneMpCost);
         GrantRandomItem(ItemRarity.Rare);
         Log("Dumpster: drone retrieved rare loot safely.");
+        QueueNextMystery();
     }
 
-    // Walk away → Nothing
-    public void Dumpster_WalkAway() { Log("Dumpster: walked away (no effect)."); }
+    public void Dumpster_WalkAway()
+    {
+        Log("Dumpster: walked away (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
-    #region Homeless Camp (แคมป์คนจรจัด)
-    // Share food/credits (50 Pay) → Gain “Good Karma”
+    #region Homeless Camp
     public void ShareWithHomeless()
     {
         ChangeMoney(-smallCreditCost);
         goodKarma = true;
         Log("Shared with homeless: Good Karma gained.");
+        QueueNextMystery();
     }
 
-    // Trade items → Exchange a random item for a different random item (same rarity)
     public void TradeWithHomeless()
     {
         if (player == null || player.equippedPassiveItems.Count == 0)
         {
             Log("Trade failed: no items equipped to trade.");
+            QueueNextMystery();
             return;
         }
 
@@ -396,15 +414,16 @@ public class MysterySceneEventHandler : MonoBehaviour
         player.equippedPassiveItems.RemoveAt(idx);
         Log($"Traded away: {removedItem.name} (Rarity: {rarity})");
         GrantRandomItem(rarity);
+        QueueNextMystery();
     }
 
-    // Steal from them → 50% Gain loot , 50% encounter enemies.
     public void StealFromHomeless()
     {
         if (Random.value < 0.5f)
         {
             GrantRandomItem();
             Log("Stole from homeless: gained loot.");
+            QueueNextMystery();
         }
         else
         {
@@ -413,12 +432,14 @@ public class MysterySceneEventHandler : MonoBehaviour
         }
     }
 
-    // Walk away → Nothing
-    public void Homeless_WalkAway() { Log("Homeless camp: walked away (no effect)."); }
+    public void Homeless_WalkAway()
+    {
+        Log("Homeless camp: walked away (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 
-    #region Police Car Wreck (ซากรถตำรวจ)
-    // Loot the trunk → Gain weapon, but 50% trigger security alarm → encounter enemy
+    #region Police Car Wreck
     public void LootPoliceCar()
     {
         GrantWeapon();
@@ -430,10 +451,10 @@ public class MysterySceneEventHandler : MonoBehaviour
         else
         {
             Log("Police car: no alarm triggered.");
+            QueueNextMystery();
         }
     }
 
-    // Hack onboard computer (reduce 20 MP) → Gain weapon or passive item.
     public void HackPoliceCar()
     {
         ChangeMP(-hackMpCost);
@@ -447,9 +468,13 @@ public class MysterySceneEventHandler : MonoBehaviour
             GrantRandomItem();
             Log("Police car hacked: obtained item.");
         }
+        QueueNextMystery();
     }
 
-    // Walk away → Nothing
-    public void PoliceCar_WalkAway() { Log("Police car: walked away (no effect)."); }
+    public void PoliceCar_WalkAway()
+    {
+        Log("Police car: walked away (no effect).");
+        QueueNextMystery();
+    }
     #endregion
 }

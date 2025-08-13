@@ -381,6 +381,8 @@
 -r:"Library/Bee/artifacts/1900b0aE.dag/UnityEngine.UI.ref.dll"
 -analyzer:"D:/Unity/2022.3.14f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.Properties.SourceGenerator.dll"
 -analyzer:"D:/Unity/2022.3.14f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.SourceGenerators.dll"
+"Assets/EasyTransitions/Editor/TransitionManagerEditor.cs"
+"Assets/EasyTransitions/Editor/TransitionSettingsEditor.cs"
 "Assets/OneLine/OneLine/Editor/Drawers/Array/ArrayButtonsDrawer.cs"
 "Assets/OneLine/OneLine/Editor/Drawers/Array/DynamicArrayDrawer.cs"
 "Assets/OneLine/OneLine/Editor/Drawers/Array/FixedArrayDrawer.cs"

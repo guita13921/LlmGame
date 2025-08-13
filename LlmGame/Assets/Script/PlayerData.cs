@@ -6,7 +6,7 @@ public class PlayerData : MonoBehaviour
 {
     public static PlayerData Instance;
 
-    public NodeType nextNodeType;
+    [SerializeField] public NodeType nextNodeType;
     public EnemyDifficulty nextEnemyDifficulty;
 
     // Basic stats

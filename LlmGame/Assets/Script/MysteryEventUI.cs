@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Map;
+using EasyTransition;
 
 public class MysteryEventUI : MonoBehaviour
 {
@@ -41,6 +42,13 @@ public class MysteryEventUI : MonoBehaviour
     [Tooltip("Scene to load after selection delay.")]
     public string nextSceneName = "MapGenerate";
 
+    [Header("Transition")]
+    [Tooltip("Settings used for transitioning to next scene.")]
+    public TransitionSettings transition;
+
+    [Tooltip("Delay before the transition starts.")]
+    public float startDelay = 0f;
+
     private MysteryEvent mysteryEvent;
     private bool choiceLocked = false; // prevents double click and multiple selections
     private readonly List<Button> spawnedButtons = new();
@@ -56,6 +64,11 @@ public class MysteryEventUI : MonoBehaviour
     {
         MysteryEventSystem.OnEventSpawned -= HandleEventSpawned;
         MysterySceneEventHandler.OnOutcome -= HandleOutcome;
+    }
+
+    public void LoadScene(string _sceneName)
+    {
+        TransitionManager.Instance().Transition(_sceneName, transition, startDelay);
     }
 
     private void TryInitFromExistingOrPool()
@@ -169,16 +182,17 @@ public class MysteryEventUI : MonoBehaviour
         if (!string.IsNullOrEmpty(nextSceneName))
         {
             var data = PlayerData.Instance;
+            string sceneToLoad = nextSceneName;
+
             if (data != null && (data.nextNodeType == NodeType.MinorEnemy ||
                                  data.nextNodeType == NodeType.EliteEnemy ||
                                  data.nextNodeType == NodeType.Boss))
             {
-                SceneManager.LoadScene("BattleScene");
+                Debug.Log(data.nextNodeType);
+                sceneToLoad = "BattleScene";
             }
-            else
-            {
-                SceneManager.LoadScene(nextSceneName);
-            }
+
+            LoadScene(sceneToLoad);
         }
     }
 
