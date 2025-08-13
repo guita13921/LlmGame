@@ -15,6 +15,15 @@ public class BloodRushCore : MonoBehaviour, IPassiveItem, ITurnListener, IStatus
         Debug.Log("🩸 Blood Rush Core equipped.");
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        if (owner == character)
+        {
+            owner = null;
+            ResetState();
+        }
+    }
+
     public void OnTurnStart(Character character)
     {
         if (character != owner) return;

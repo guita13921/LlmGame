@@ -8,4 +8,9 @@ public class TitaniumLatticeArmor : PassiveItemBase
     {
         character.defense += 5;
     }
+
+    public override void DeApplyEffect(Character character)
+    {
+        character.defense -= 5;
+    }
 }

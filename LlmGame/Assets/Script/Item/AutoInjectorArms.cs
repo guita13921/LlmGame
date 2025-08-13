@@ -17,6 +17,15 @@ public class AutoInjectorArms : MonoBehaviour, IPassiveItem, ITurnListener
         Debug.Log("💉 Auto-Injector Arms equipped: will inject buffs every 2 turns.");
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        if (owner == character)
+        {
+            owner = null;
+            turnCounter = 0;
+        }
+    }
+
     public void OnTurnStart(Character character)
     {
         if (character != owner) return;

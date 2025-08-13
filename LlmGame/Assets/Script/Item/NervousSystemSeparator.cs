@@ -5,14 +5,20 @@ using UnityEngine;
 
 public class NervousSystemSeparator : MonoBehaviour, IPassiveItem
 {
+    private int focusBoost;
+
     public void ApplyEffect(Character character)
     {
         BattleManager battleManager = FindAnyObjectByType<BattleManager>();
-
-        int focusBoost = battleManager.enemies.Count * 2;
+        focusBoost = battleManager != null ? battleManager.enemies.Count * 2 : 0;
         character.focus += focusBoost;
-
         Debug.Log($"{character.characterName} gains +{focusBoost} Focus from Nervous System Separator.");
+    }
+
+    public void DeApplyEffect(Character character)
+    {
+        character.focus -= focusBoost;
+        focusBoost = 0;
     }
 
     public void OnAfterDamage(Character source, Character target, int finalDamage)

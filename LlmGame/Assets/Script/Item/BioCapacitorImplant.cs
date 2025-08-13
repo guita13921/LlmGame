@@ -9,4 +9,10 @@ public class BioCapacitorImplant : PassiveItemBase
         character.maxMP += 15;
         character.currentMP += 15;
     }
+
+    public override void DeApplyEffect(Character character)
+    {
+        character.maxMP -= 15;
+        character.currentMP = Mathf.Clamp(character.currentMP - 15, 0, character.maxMP);
+    }
 }

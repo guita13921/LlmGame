@@ -27,6 +27,8 @@ public class WeakpointTargetingSystem : MonoBehaviour, IPassiveItem
 
     public void ApplyEffect(Character character) { }
 
+    public void DeApplyEffect(Character character) { }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();

@@ -12,6 +12,8 @@ public class GyroStabilizedFeet : MonoBehaviour, IPassiveItem, IStatusEffectList
         Debug.Log("🌀 Gyro-Stabilized Feet equipped: Blocking " + string.Join(", ", blockedEffects));
     }
 
+    public void DeApplyEffect(Character character) { }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();

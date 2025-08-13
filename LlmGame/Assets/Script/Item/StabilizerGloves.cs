@@ -10,6 +10,12 @@ public class StabilizerGloves : MonoBehaviour, IPassiveItem, IDamageReaction
         owner = character;
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        if (owner == character)
+            owner = null;
+    }
+
     public void OnBeforeDamage(Character source, Character target, ref int damage)
     {
         if (source != owner) return;

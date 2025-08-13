@@ -13,6 +13,8 @@ public class NerveRotVials : MonoBehaviour, IPassiveItem, IDamageReaction
         // Not needed at equip time
     }
 
+    public void DeApplyEffect(Character character) { }
+
     public void OnBeforeDamage(Character source, Character target, ref int damage)
     {
         // Not used

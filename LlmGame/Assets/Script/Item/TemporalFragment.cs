@@ -16,6 +16,16 @@ public class TemporalFragment : MonoBehaviour, IPassiveItem
         }
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        var battleManager = FindObjectOfType<BattleManager>();
+        if (battleManager != null && battleManager.currentActingCharacter == character)
+        {
+            battleManager.currentActingCharacter = null;
+            battleManager.isActionPhase = false;
+        }
+    }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();

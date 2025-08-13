@@ -12,6 +12,8 @@ public class PrecisionArms : MonoBehaviour, IPassiveItem, IPossibilityModifier
         Debug.Log("🦾 Precision Arms equipped: +10% Critical Chance");
     }
 
+    public void DeApplyEffect(Character character) { }
+
     public void ModifyChances(PossibilityPool pool)
     {
         pool.AddModifier(StatusChanceType.Critical, critChanceBonus);
