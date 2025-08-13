@@ -12,6 +12,8 @@ public class BiohazardReactor : MonoBehaviour, IPassiveItem, IDamageReaction
         // No immediate effect
     }
 
+    public void DeApplyEffect(Character character) { }
+
     public void OnBeforeDamage(Character source, Character target, ref int damage)
     {
         if (source == null || target == null) return;

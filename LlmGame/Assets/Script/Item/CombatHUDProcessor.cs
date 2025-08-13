@@ -12,6 +12,15 @@ public class CombatHUDProcessor : MonoBehaviour, IPassiveItem, ITurnListener, ID
         Debug.Log("📡 Combat HUD Processor equipped: first ranged attack each turn deals +20 explosive damage.");
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        if (owner == character)
+        {
+            owner = null;
+            usedThisTurn = false;
+        }
+    }
+
     public void OnTurnStart(Character character)
     {
         if (character == owner)

@@ -13,6 +13,11 @@ public class SprintBoosters : MonoBehaviour, IPassiveItem
         Debug.Log($"🦿 Sprint Boosters equipped: +{speedBonus} Speed to {character.characterName}");
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        character.speed -= speedBonus;
+    }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();

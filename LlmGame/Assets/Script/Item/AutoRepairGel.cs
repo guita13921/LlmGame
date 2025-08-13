@@ -12,6 +12,11 @@ public class AutoRepairGel : MonoBehaviour, IPassiveItem, ITurnListener
         // No immediate effect
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        turnCounter = 0;
+    }
+
     public void OnTurnStart(Character character)
     {
         // Not needed

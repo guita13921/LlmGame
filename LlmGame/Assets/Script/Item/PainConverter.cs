@@ -17,6 +17,11 @@ public class PainConverter : MonoBehaviour, IPassiveItem, IDamageReaction, ITurn
         // No immediate effect
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        healedThisTurn = false;
+    }
+
     public void OnTurnStart(Character character)
     {
         healedThisTurn = false; // Reset for new turn

@@ -9,6 +9,8 @@ public class InjectorGauntlets : MonoBehaviour, IPassiveItem, IDamageReaction
         // No immediate effect
     }
 
+    public void DeApplyEffect(Character character) { }
+
     public void OnBeforeDamage(Character source, Character target, ref int damage) { }
 
     public void OnAfterDamage(Character source, Character target, int finalDamage)

@@ -8,4 +8,9 @@ public class CognitiveLoopEnhancer : PassiveItemBase
     {
         character.focus += 5;
     }
+
+    public override void DeApplyEffect(Character character)
+    {
+        character.focus -= 5;
+    }
 }

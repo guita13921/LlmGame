@@ -22,6 +22,14 @@ public class RangedWeaponFocus : MonoBehaviour, IPassiveItem
         }
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        if (character is Player player)
+        {
+            player.possibilityPool.AddModifier(StatusChanceType.Critical, -critBonus);
+        }
+    }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();

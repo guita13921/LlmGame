@@ -15,6 +15,15 @@ public class AdrenalSurge : MonoBehaviour, IPassiveItem, IDamageReaction, ITurnL
         // Nothing to do immediately
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        if (buffActive)
+        {
+            character.speed -= boostAmount;
+            buffActive = false;
+        }
+    }
+
     // 🔥 Trigger when character takes damage
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {

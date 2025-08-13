@@ -14,6 +14,12 @@ public class EmbeddedPainkiller : MonoBehaviour, IPassiveItem, IDamageReaction
         character.currentHP += 15;
     }
 
+    public void DeApplyEffect(Character character)
+    {
+        character.maxHP -= 15;
+        character.currentHP = Mathf.Clamp(character.currentHP - 15, 0, character.maxHP);
+    }
+
     public void OnBeforeDamage(Character source, Character target, ref int damage)
     {
         float reduced = damage * (damageReductionPercent / 100f);

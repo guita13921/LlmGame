@@ -6,6 +6,8 @@ public class ContagionCore : MonoBehaviour, IDeathListener, IPassiveItem
 {
     public void ApplyEffect(Character character) { }
 
+    public void DeApplyEffect(Character character) { }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
         throw new System.NotImplementedException();

@@ -5,6 +5,7 @@ public class RecoilStabilizerArmor : MonoBehaviour, IPassiveItem, IDamageReactio
     private Character owner;
     private const int defenseBonus = 10;
     private const int damageBonus = 10;
+    private bool bonusApplied = false;
 
     public void ApplyEffect(Character character)
     {
@@ -14,6 +15,7 @@ public class RecoilStabilizerArmor : MonoBehaviour, IPassiveItem, IDamageReactio
         {
             character.defense += defenseBonus;
             Debug.Log($"🦴 Recoil Stabilizer equipped: +{defenseBonus} Defense when using ranged weapons.");
+            bonusApplied = true;
         }
     }
 
@@ -35,4 +37,15 @@ public class RecoilStabilizerArmor : MonoBehaviour, IPassiveItem, IDamageReactio
     }
 
     public void OnAfterDamage(Character source, Character target, int finalDamage) { }
+
+    public void DeApplyEffect(Character character)
+    {
+        if (character == owner && bonusApplied)
+        {
+            character.defense -= defenseBonus;
+            bonusApplied = false;
+        }
+        if (character == owner)
+            owner = null;
+    }
 }
