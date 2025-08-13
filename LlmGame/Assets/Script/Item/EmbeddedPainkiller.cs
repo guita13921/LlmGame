@@ -11,12 +11,14 @@ public class EmbeddedPainkiller : MonoBehaviour, IPassiveItem, IDamageReaction
     {
         Debug.Log("ApplyEffect EmbeddedPainkiller");
         character.maxHP += 15;
+        character.bonusMaxHP += 15;
         character.currentHP += 15;
     }
 
     public void DeApplyEffect(Character character)
     {
         character.maxHP -= 15;
+        character.bonusMaxHP -= 15;
         character.currentHP = Mathf.Clamp(character.currentHP - 15, 0, character.maxHP);
     }
 

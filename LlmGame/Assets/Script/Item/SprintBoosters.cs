@@ -10,12 +10,14 @@ public class SprintBoosters : MonoBehaviour, IPassiveItem
     public void ApplyEffect(Character character)
     {
         character.speed += speedBonus;
+        character.bonusSpeed += speedBonus;
         Debug.Log($"🦿 Sprint Boosters equipped: +{speedBonus} Speed to {character.characterName}");
     }
 
     public void DeApplyEffect(Character character)
     {
         character.speed -= speedBonus;
+        character.bonusSpeed -= speedBonus;
     }
 
     public void OnAfterDamage(Character source, Character target, int finalDamage)

@@ -96,17 +96,17 @@ public class PlayerData : MonoBehaviour
     {
         if (player == null) return;
 
-        attack = player.attack;
-        defense = player.defense;
-        focus = player.focus;
-        maxHP = player.maxHP;
-        maxMP = player.maxMP;
-        speed = player.speed;
-        maxShield = player.maxShield;
+        attack = player.attack - player.bonusAttack;
+        defense = player.defense - player.bonusDefense;
+        focus = player.focus - player.bonusFocus;
+        maxHP = player.maxHP - player.bonusMaxHP;
+        maxMP = player.maxMP - player.bonusMaxMP;
+        speed = player.speed - player.bonusSpeed;
+        maxShield = player.maxShield - player.bonusMaxShield;
 
-        currentHP = player.currentHP;
-        currentMP = player.currentMP;
-        currentShield = player.currentshield;
+        currentHP = Mathf.Clamp(player.currentHP, 0, maxHP);
+        currentMP = Mathf.Clamp(player.currentMP, 0, maxMP);
+        currentShield = Mathf.Clamp(player.currentshield, 0, maxShield);
         money = player.money;
 
         inventoryItems = new List<Item>(player.inventoryItems);
@@ -152,6 +152,14 @@ public class PlayerData : MonoBehaviour
         player.maxMP = maxMP;
         player.speed = speed;
         player.maxShield = maxShield;
+
+        player.bonusAttack = 0;
+        player.bonusDefense = 0;
+        player.bonusFocus = 0;
+        player.bonusMaxHP = 0;
+        player.bonusMaxMP = 0;
+        player.bonusSpeed = 0;
+        player.bonusMaxShield = 0;
 
         player.currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         player.currentMP = Mathf.Clamp(currentMP, 0, maxMP);

@@ -25,6 +25,15 @@ public class Character : MonoBehaviour
     public int speed;
     public int maxShield;
 
+    [Header("Bonus Stats")]
+    public int bonusAttack;
+    public int bonusDefense;
+    public int bonusFocus;
+    public int bonusMaxHP;
+    public int bonusMaxMP;
+    public int bonusSpeed;
+    public int bonusMaxShield;
+
     [Header("Resource")]
     public int money;
 

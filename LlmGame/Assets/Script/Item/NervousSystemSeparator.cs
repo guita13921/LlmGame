@@ -12,12 +12,14 @@ public class NervousSystemSeparator : MonoBehaviour, IPassiveItem
         BattleManager battleManager = FindAnyObjectByType<BattleManager>();
         focusBoost = battleManager != null ? battleManager.enemies.Count * 2 : 0;
         character.focus += focusBoost;
+        character.bonusFocus += focusBoost;
         Debug.Log($"{character.characterName} gains +{focusBoost} Focus from Nervous System Separator.");
     }
 
     public void DeApplyEffect(Character character)
     {
         character.focus -= focusBoost;
+        character.bonusFocus -= focusBoost;
         focusBoost = 0;
     }
 
