@@ -60,7 +60,8 @@ public class Character : MonoBehaviour
     public float turnGauge = 0f;
 
     [Header("Inventory")]
-    public List<Item> inventoryItems;
+    [SerializeField] public List<Item> inventoryItems;
+    [SerializeField] public List<ArmorData> inventoryArmors;
 
     [Header("Equipment")]
     public Weapon leftHandWeapon;

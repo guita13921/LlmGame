@@ -378,12 +378,11 @@ public class CharacterCombatHandler : MonoBehaviour
 
         foreach (var behavior in attacker.runtimePassiveBehaviors)
         {
+            if (behavior == null) continue;
+
             if (behavior is BloodRushCore brc && brc.IsReady())
             {
                 forceCrit = true;
-
-                // ❌ Don’t consume here!
-                // brc.Consume(); ← REMOVE THIS
                 break;
             }
         }

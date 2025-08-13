@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,7 +21,12 @@ public class DefaultPlayerConfig : ScriptableObject
 
     [Header("Starting Inventory & Equipment")]
     public List<Item> startingInventory = new List<Item>();
+
     public Weapon leftHandWeapon;
     public Weapon rightHandWeapon;
+
     public List<PassiveItemData> startingPassives = new List<PassiveItemData>();
+
+    [Tooltip("Armor that the player will start with in their backpack (not equipped automatically).")]
+    public List<ArmorData> startingArmors = new List<ArmorData>(); // ✅ NEW FIELD
 }

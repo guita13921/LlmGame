@@ -45,25 +45,29 @@ public class StoreSystem : MonoBehaviour
         }
         else if (item is ArmorData armor)
         {
-            // Equip to first compatible body part without this armor
-            var part = player.bodyParts.FirstOrDefault(p => armor.compatibleBodyParts.Contains(p.type) && p.equippedArmor != armor);
-            if (part != null)
-            {
-                part.equippedArmor = armor;
-            }
+            if (!player.inventoryArmors.Contains(armor))
+                player.inventoryArmors.Add(armor);
         }
     }
+
 
     private List<ScriptableObject> BuildAvailablePool(Player player)
     {
         var pool = new List<ScriptableObject>();
+
         var ownedPassives = new HashSet<PassiveItemData>(player.equippedPassiveItems);
-        var ownedArmors = new HashSet<ArmorData>(player.bodyParts.Where(p => p.equippedArmor != null).Select(p => p.equippedArmor));
+
+        var ownedArmors = new HashSet<ArmorData>(
+            player.bodyParts.Where(p => p.equippedArmor != null).Select(p => p.equippedArmor)
+            .Concat(player.inventoryArmors)
+        );
 
         pool.AddRange(passiveItems.Where(p => !ownedPassives.Contains(p)));
         pool.AddRange(armors.Where(a => !ownedArmors.Contains(a)));
+
         return pool;
     }
+
 
     private ScriptableObject GetRandomItem(List<ScriptableObject> pool)
     {

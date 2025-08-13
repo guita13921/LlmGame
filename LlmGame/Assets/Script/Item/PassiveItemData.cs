@@ -33,12 +33,6 @@ public class PassiveItemData : ScriptableObject
             passiveComponent.ApplyEffect(character);
         }
 
-        // ✅ Track all attached MonoBehaviours
-        foreach (var component in instance.GetComponents<MonoBehaviour>())
-        {
-            character.runtimePassiveBehaviors.Add(component);
-        }
-
         Debug.Log($"✅ Equipped passive item: {itemName}, tracked {instance.GetComponents<MonoBehaviour>().Length} behaviors.");
     }
 

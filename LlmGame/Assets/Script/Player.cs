@@ -16,7 +16,7 @@ public class Player : Character
 
     void Start()
     {
-        EquipAllPassives();
+        //EquipAllPassives();
         Debug.Log(GetStatusChances());
         //this.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Stun, 2, 0));
         //this.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Bleed, 2, 1));

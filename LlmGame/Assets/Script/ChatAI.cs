@@ -5,6 +5,7 @@ using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine.UI;
 
 public class ChatAI : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class ChatAI : MonoBehaviour
     public TMP_InputField inputField;
     public TMP_Text responseText;
     public GameObject inputPanel;
+    public ScrollRect scrollRect;
 
     public float baseFeasibility = 0f;
     public float basePotential = 0f;
@@ -185,9 +187,13 @@ public class ChatAI : MonoBehaviour
         }
 
         // === FINAL OUTPUT (After Damage Calculation) ===
-        responseText.text = $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                            $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                            $"Effect: {baseEffect}";
+        responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
+                             $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                             $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                             $"Effect: {baseEffect}";
+
+        Canvas.ForceUpdateCanvases();
+        scrollRect.verticalNormalizedPosition = 0f;
 
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
 
@@ -285,10 +291,13 @@ public class ChatAI : MonoBehaviour
         );
 
         // === FINAL OUTPUT (After Damage Calculation) ===
-        responseText.text = $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                            $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                            $"Effect: {baseEffect}";
+        responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
+                             $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                             $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                             $"Effect: {baseEffect}";
 
+        Canvas.ForceUpdateCanvases();
+        scrollRect.verticalNormalizedPosition = 0f;
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
 
     }

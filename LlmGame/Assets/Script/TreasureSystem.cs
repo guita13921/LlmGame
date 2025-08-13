@@ -20,7 +20,7 @@ public class TreasureSystem : MonoBehaviour
         List<ScriptableObject> stock = storeReference.GenerateStock(player, 1);
         if (stock != null && stock.Count > 0)
         {
-            var item = stock[0];
+            var item = stock[Random.Range(0, stock.Count)];
             storeReference.BuyItem(player, item);
             return item;
         }

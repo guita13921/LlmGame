@@ -59,6 +59,10 @@ public class TreasureUIController : MonoBehaviour
         {
             ApplyUI(passiveItem.icon, passiveItem.itemName, passiveItem.description);
         }
+        else if (itemSo is ArmorData armorItem)
+        {
+            ApplyUI(armorItem.icon, armorItem.armorName, armorItem.description);
+        }
         else
         {
             ApplyUI(null, itemSo.name, "No description available.");

@@ -24,9 +24,13 @@ public class PlayerData : MonoBehaviour
 
     // Inventory and equipment
     public List<Item> inventoryItems = new List<Item>();
+    public List<ArmorData> inventoryArmors = new List<ArmorData>();
     public Weapon leftHandWeapon;
     public Weapon rightHandWeapon;
     public List<PassiveItemData> equippedPassiveItems = new List<PassiveItemData>();
+
+    // Equipped armor per body part
+    public List<EquippedArmorEntry> equippedArmors = new List<EquippedArmorEntry>();
 
     [SerializeField] private bool initialized = false;
     public bool Initialized => initialized;
@@ -69,9 +73,12 @@ public class PlayerData : MonoBehaviour
 
         // Inventory / equipment
         inventoryItems = config ? new List<Item>(config.startingInventory) : new List<Item>();
+        inventoryArmors = config ? new List<ArmorData>(config.startingArmors) : new List<ArmorData>(); // ✅ Properly load starting armor
         leftHandWeapon = config ? config.leftHandWeapon : null;
         rightHandWeapon = config ? config.rightHandWeapon : null;
         equippedPassiveItems = config ? new List<PassiveItemData>(config.startingPassives) : new List<PassiveItemData>();
+
+        equippedArmors = new List<EquippedArmorEntry>(); // remains empty unless equipped manually
 
         initialized = true;
     }
@@ -93,13 +100,28 @@ public class PlayerData : MonoBehaviour
 
         currentHP = player.currentHP;
         currentMP = player.currentMP;
-        currentShield = player.currentshield; // note: Player field name uses 'currentshield' per your example
+        currentShield = player.currentshield;
         money = player.money;
 
         inventoryItems = new List<Item>(player.inventoryItems);
+        inventoryArmors = new List<ArmorData>(player.inventoryArmors);
         leftHandWeapon = player.leftHandWeapon;
         rightHandWeapon = player.rightHandWeapon;
         equippedPassiveItems = new List<PassiveItemData>(player.equippedPassiveItems);
+
+        // Save equipped armors from body parts
+        equippedArmors = new List<EquippedArmorEntry>();
+        foreach (var part in player.bodyParts)
+        {
+            if (part != null && part.equippedArmor != null)
+            {
+                equippedArmors.Add(new EquippedArmorEntry
+                {
+                    bodyPartType = part.type,
+                    equippedArmor = part.equippedArmor
+                });
+            }
+        }
 
         initialized = true;
     }
@@ -132,10 +154,24 @@ public class PlayerData : MonoBehaviour
         player.money = money;
 
         player.inventoryItems = new List<Item>(inventoryItems);
+        player.inventoryArmors = new List<ArmorData>(inventoryArmors);
         player.leftHandWeapon = leftHandWeapon;
         player.rightHandWeapon = rightHandWeapon;
         player.equippedPassiveItems = new List<PassiveItemData>(equippedPassiveItems);
+
+        // Load equipped armor into body parts
+        foreach (var part in player.bodyParts)
+        {
+            if (part == null) continue;
+
+            var match = equippedArmors.Find(e => e.bodyPartType == part.type);
+            part.equippedArmor = match != null ? match.equippedArmor : null;
+        }
+
+        // ✅ Re-apply passive and armor effects after loading
+        player.EquipAllPassives();
     }
+
 
     /// <summary>
     /// Convenience method if you want Player to just "do the right thing".
@@ -158,5 +194,13 @@ public class PlayerData : MonoBehaviour
     {
         nextNodeType = type;
         nextEnemyDifficulty = difficulty;
+    }
+
+    // === Support Class for Equipped Armor Mapping ===
+    [System.Serializable]
+    public class EquippedArmorEntry
+    {
+        public BodyPartType bodyPartType;
+        public ArmorData equippedArmor;
     }
 }
