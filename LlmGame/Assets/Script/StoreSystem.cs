@@ -54,7 +54,7 @@ public class StoreSystem : MonoBehaviour
     {
         var pool = new List<ScriptableObject>();
 
-        var ownedPassives = new HashSet<PassiveItemData>(player.equippedPassiveItems);
+        var ownedPassives = new HashSet<PassiveItemData>(PlayerData.Instance.equippedPassiveItems);
 
         var ownedArmors = new HashSet<ArmorData>(
             player.bodyParts.Where(p => p.equippedArmor != null).Select(p => p.equippedArmor)
