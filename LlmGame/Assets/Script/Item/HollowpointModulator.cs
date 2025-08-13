@@ -10,6 +10,8 @@ public class HollowpointModulator : PassiveItemBase, IDamageReaction
         // Could add visuals/sfx here if desired
     }
 
+    public override void DeApplyEffect(Character character) { }
+
     public new void OnBeforeDamage(Character source, Character target, ref int damage)
     {
         if (source == null || !(source is Character attacker)) return;

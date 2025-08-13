@@ -8,6 +8,8 @@ public class ToxicVisor : MonoBehaviour, IPassiveItem
         // No immediate effect on equip
     }
 
+    public void DeApplyEffect(Character character) { }
+
     public void OnAfterDamage(Character source, Character target, int finalDamage) { }
 
     public void OnBeforeDamage(Character source, Character target, ref int damage) { }

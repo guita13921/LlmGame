@@ -12,6 +12,8 @@ public class BleedingIncreasingCoating : MonoBehaviour, IPassiveItem, IPossibili
         // Optional: for visual feedback or initial setup
     }
 
+    public void DeApplyEffect(Character character) { }
+
     public void ModifyChances(PossibilityPool pool)
     {
         pool.AddModifier(StatusChanceType.Bleed, bleedChanceBonus);

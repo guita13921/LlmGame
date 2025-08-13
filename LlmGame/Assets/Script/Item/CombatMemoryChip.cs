@@ -4,10 +4,17 @@ using UnityEngine;
 
 public class CombatMemoryChip : PassiveItemBase
 {
+    private int bonus = 0;
     public override void ApplyEffect(Character character)
     {
-        int bonus = (character.focus / 3) * 2;
+        bonus = (character.focus / 3) * 2;
         character.attack += bonus;
+    }
+
+    public override void DeApplyEffect(Character character)
+    {
+        character.attack -= bonus;
+        bonus = 0;
     }
 }
 

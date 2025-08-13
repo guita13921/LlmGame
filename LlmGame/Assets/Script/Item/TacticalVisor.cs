@@ -5,6 +5,7 @@ using UnityEngine;
 public class TacticalVisor : MonoBehaviour, IPassiveItem
 {
     private const int bonusRangedDamage = 10;
+    private bool applied = false;
 
     public void ApplyEffect(Character character)
     {
@@ -13,6 +14,16 @@ public class TacticalVisor : MonoBehaviour, IPassiveItem
         {
             character.attack += bonusRangedDamage;
             Debug.Log($"🔭 Tactical Visor equipped: +{bonusRangedDamage} Ranged Weapon Damage applied to {character.characterName}");
+            applied = true;
+        }
+    }
+
+    public void DeApplyEffect(Character character)
+    {
+        if (applied)
+        {
+            character.attack -= bonusRangedDamage;
+            applied = false;
         }
     }
 

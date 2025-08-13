@@ -6,6 +6,7 @@ using UnityEngine;
 public class CombatGrips : MonoBehaviour, IPassiveItem
 {
     private const float meleeDamageMultiplier = 0.10f;
+    private int bonusAttack = 0;
 
     public void ApplyEffect(Character character)
     {
@@ -13,14 +14,24 @@ public class CombatGrips : MonoBehaviour, IPassiveItem
 
         if (weapon != null && weapon.weaponType == WeaponType.Melee_Weapon)
         {
-            int bonusAttack = Mathf.RoundToInt(character.attack * meleeDamageMultiplier);
+            bonusAttack = Mathf.RoundToInt(character.attack * meleeDamageMultiplier);
             character.attack += bonusAttack;
 
             Debug.Log($"🥊 Combat Grips equipped: +{bonusAttack} Attack (+10%) for melee weapon.");
         }
         else
         {
+            bonusAttack = 0;
             Debug.Log("🥊 Combat Grips equipped, but no melee weapon detected.");
+        }
+    }
+
+    public void DeApplyEffect(Character character)
+    {
+        if (bonusAttack != 0)
+        {
+            character.attack -= bonusAttack;
+            bonusAttack = 0;
         }
     }
 
