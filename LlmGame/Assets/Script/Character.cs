@@ -725,7 +725,17 @@ public class Character : MonoBehaviour
         foreach (var comp in instance.GetComponents<MonoBehaviour>())
         {
             runtimePassiveBehaviors.Add(comp);
-            if (comp is IPassiveItem item) item.ApplyEffect(this);
+
+            if (comp is IPassiveItem item)
+            {
+                string typeName = comp.GetType().FullName;
+                var applied = PlayerData.Instance?.appliedPassiveItemTypes;
+                if (applied != null && !applied.Contains(typeName))
+                {
+                    item.ApplyEffect(this);
+                    applied.Add(typeName);
+                }
+            }
         }
     }
 
