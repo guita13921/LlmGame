@@ -61,13 +61,6 @@ public class CharacterCombatHandler : MonoBehaviour
                 reaction.OnBeforeDamage(player, target, ref finalDamage);
         }
 
-        foreach (var item in player.equippedPassiveItems)
-        {
-            if (item.itemPrefab == null) continue;
-            var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
-            if (reaction != null)
-                reaction.OnBeforeDamage(player, target, ref finalDamage);
-        }
 
         // Target passives, items, armor
         if (target is Player targetPlayer)
@@ -78,13 +71,6 @@ public class CharacterCombatHandler : MonoBehaviour
                     reaction.OnBeforeDamage(player, targetPlayer, ref finalDamage);
             }
 
-            foreach (var item in targetPlayer.equippedPassiveItems)
-            {
-                if (item.itemPrefab == null) continue;
-                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
-                if (reaction != null)
-                    reaction.OnBeforeDamage(player, targetPlayer, ref finalDamage);
-            }
 
             foreach (var bodyPart in targetPlayer.bodyParts)
             {
@@ -126,13 +112,6 @@ public class CharacterCombatHandler : MonoBehaviour
                     reaction.OnAfterDamage(player, targetAfter, finalDamage);
             }
 
-            foreach (var item in targetAfter.equippedPassiveItems)
-            {
-                if (item.itemPrefab == null) continue;
-                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
-                if (reaction != null)
-                    reaction.OnAfterDamage(player, targetAfter, finalDamage);
-            }
 
             foreach (var bodyPart in targetAfter.bodyParts)
             {
@@ -155,13 +134,6 @@ public class CharacterCombatHandler : MonoBehaviour
                 reaction.OnAfterDamage(player, target, finalDamage);
         }
 
-        foreach (var item in player.equippedPassiveItems)
-        {
-            if (item.itemPrefab == null) continue;
-            var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
-            if (reaction != null)
-                reaction.OnAfterDamage(player, target, finalDamage);
-        }
 
         // ✅ Log
         //string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
@@ -191,15 +163,9 @@ public class CharacterCombatHandler : MonoBehaviour
             }
 
             // 🔁 PassiveItemData prefabs (optional if stateless)
-            foreach (var itemData in player.equippedPassiveItems)
+            foreach (var listener in player.runtimePassiveBehaviors.OfType<ITurnListener>())
             {
-                if (itemData.itemPrefab == null) continue;
-
-                ITurnListener prefabListener = itemData.itemPrefab.GetComponent<ITurnListener>();
-                if (prefabListener != null)
-                {
-                    prefabListener.OnTurnEnd(player);
-                }
+                listener.OnTurnEnd(player);
             }
         }
 
@@ -263,13 +229,6 @@ public class CharacterCombatHandler : MonoBehaviour
             }
 
             // Equipped passive items
-            foreach (var item in playerTarget.equippedPassiveItems)
-            {
-                if (item.itemPrefab == null) continue;
-                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
-                if (reaction != null)
-                    reaction.OnBeforeDamage(enemy, playerTarget, ref finalDamage);
-            }
 
             // Armor on body parts
             foreach (var part in playerTarget.bodyParts)
@@ -309,13 +268,6 @@ public class CharacterCombatHandler : MonoBehaviour
                     reaction.OnAfterDamage(enemy, playerAfter, finalDamage);
             }
 
-            foreach (var item in playerAfter.equippedPassiveItems)
-            {
-                if (item.itemPrefab == null) continue;
-                var reaction = item.itemPrefab.GetComponent<IDamageReaction>();
-                if (reaction != null)
-                    reaction.OnAfterDamage(enemy, playerAfter, finalDamage);
-            }
 
             foreach (var part in playerAfter.bodyParts)
             {

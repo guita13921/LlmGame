@@ -136,8 +136,7 @@ public class ShopSceneController : MonoBehaviour
 
         if (obj is PassiveItemData passive)
         {
-            if (!player.equippedPassiveItems.Contains(passive))
-                player.equippedPassiveItems.Add(passive);
+            player.EquipPassiveItem(passive);
         }
         else if (obj is ArmorData armor)
         {

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ContagionCore : MonoBehaviour, IDeathListener, IPassiveItem
@@ -36,18 +37,7 @@ public class ContagionCore : MonoBehaviour, IDeathListener, IPassiveItem
             return;
 
         // Ensure player has this passive equipped
-        bool playerHasContagionCore = false;
-        foreach (var itemData in player.equippedPassiveItems)
-        {
-            if (itemData.itemPrefab == null) continue;
-
-            if (itemData.itemPrefab.GetComponent<ContagionCore>() != null)
-            {
-                playerHasContagionCore = true;
-                break;
-            }
-        }
-
+        bool playerHasContagionCore = player.runtimePassiveBehaviors.Any(b => b is ContagionCore);
         if (!playerHasContagionCore)
             return;
 
