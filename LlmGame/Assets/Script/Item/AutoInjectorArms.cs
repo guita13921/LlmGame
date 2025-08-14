@@ -5,7 +5,7 @@ using UnityEngine;
 public class AutoInjectorArms : MonoBehaviour, IPassiveItem, ITurnListener
 {
     private Character owner;
-    private int turnCounter = 0;
+    private int turnCounter = 1;
 
     public int turnsPerInjection = 2;       // every 2 turns
     public int buffAmount = 3;              // +3 stat

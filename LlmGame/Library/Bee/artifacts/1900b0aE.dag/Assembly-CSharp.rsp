@@ -526,6 +526,8 @@
 "Assets/Script/StoreSystem.cs"
 "Assets/Script/TreasureSystem.cs"
 "Assets/Script/TurnStatusEffect.cs"
+"Assets/Script/UI/ArmorSlotUI.cs"
+"Assets/Script/UI/InventoryItemDragHandler.cs"
 "Assets/Script/UI/ShopItemUI.cs"
 "Assets/Script/UI/TreasureUIController.cs"
 "Assets/Script/UltimateSkillButtonUI.cs"

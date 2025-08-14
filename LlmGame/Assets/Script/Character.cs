@@ -75,7 +75,7 @@ public class Character : MonoBehaviour
     [Header("Equipment")]
     public Weapon leftHandWeapon;
     public Weapon rightHandWeapon;
-    public Dictionary<BodyPartType, ArmorData> equippedArmorByPart = new();
+    [SerializeField] public Dictionary<BodyPartType, ArmorData> equippedArmorByPart = new();
 
     [Header("Active Items")]
     public List<Item> activeItem;
@@ -727,7 +727,7 @@ public class Character : MonoBehaviour
 
         foreach (var part in bodyParts)
         {
-            part.EquipArmorTo(this); // same idea
+            part.EquipArmorTo(this, part.equippedArmor);
         }
     }
 
