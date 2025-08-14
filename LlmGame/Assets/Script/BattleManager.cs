@@ -479,9 +479,13 @@ public class BattleManager : MonoBehaviour
     public void EndPlayerTurn()
     {
         isActionPhase = false;
-        currentActingCharacter = null;
-        selectedTarget = null;
-        selectedParts.Clear();
+       currentActingCharacter = null;
+       selectedTarget = null;
+       selectedParts.Clear();
+
+        // Refresh inventory visuals in case items were consumed or equipment changed
+        var inventoryUI = FindObjectOfType<BattleInventoryUI>();
+        inventoryUI?.RefreshUI();
 
         chatAI.ShowInputUI(); // Reset UI
         Debug.Log("Player turn ended.");
