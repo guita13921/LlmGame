@@ -12,6 +12,10 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
     private BattleManager battleManager;
     private BattleInventoryUI inventoryUI;
 
+    [Header("Empty Slot Icons")]
+    public Sprite emptyLeftHandIcon;
+    public Sprite emptyRightHandIcon;
+
     private void Awake()
     {
         if (slotImage == null)
@@ -24,6 +28,7 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
     public void SetWeapon(Weapon weapon)
     {
         if (slotImage == null) return;
+
         if (weapon != null && weapon.icon != null)
         {
             slotImage.sprite = weapon.icon;
@@ -31,10 +36,11 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
         }
         else
         {
-            slotImage.sprite = null;
-            slotImage.enabled = false;
+            slotImage.sprite = isRightHand ? emptyRightHandIcon : emptyLeftHandIcon;
+            slotImage.enabled = true;
         }
     }
+
 
     public void OnDrop(PointerEventData eventData)
     {
