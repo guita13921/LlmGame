@@ -59,13 +59,23 @@ public class BodyPartData : ScriptableObject
 
     public void EquipArmorTo(Character character)
     {
-        if (equippedArmor == null || equippedArmor.itemBehaviorPrefab == null)
+        ArmorData armorToEquip = equippedArmor;
+
+        if (character != null && character.equippedArmorByPart != null)
+        {
+            if (character.equippedArmorByPart.TryGetValue(type, out var storedArmor) && storedArmor != null)
+            {
+                armorToEquip = storedArmor;
+            }
+        }
+
+        if (armorToEquip == null || armorToEquip.itemBehaviorPrefab == null)
             return;
 
-        GameObject instance = Instantiate(equippedArmor.itemBehaviorPrefab, character.transform);
+        GameObject instance = Instantiate(armorToEquip.itemBehaviorPrefab, character.transform);
         character.RegisterRuntimePassive(instance);
 
-        Debug.Log($"✅ Equipped armor with behavior: {equippedArmor.armorName}");
+        Debug.Log($"✅ Equipped armor with behavior: {armorToEquip.armorName}");
     }
 
     public bool TryEquipArmor(ArmorData armor)
