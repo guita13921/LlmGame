@@ -174,13 +174,19 @@ public class PlayerData : MonoBehaviour
         player.leftHandWeapon = leftHandWeapon;
         player.rightHandWeapon = rightHandWeapon;
 
-        // Load equipped armor into body parts
+        // Load equipped armor into body parts and runtime map
+        player.equippedArmorByPart = new Dictionary<BodyPartType, ArmorData>();
         foreach (var part in player.bodyParts)
         {
             if (part == null) continue;
 
             var match = equippedArmors.Find(e => e.bodyPartType == part.type);
             part.equippedArmor = match != null ? match.equippedArmor : null;
+
+            if (part.equippedArmor != null)
+            {
+                player.equippedArmorByPart[part.type] = part.equippedArmor;
+            }
         }
 
         // ✅ Re-apply passive and armor effects after loading

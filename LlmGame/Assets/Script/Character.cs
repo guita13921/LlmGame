@@ -75,6 +75,7 @@ public class Character : MonoBehaviour
     [Header("Equipment")]
     public Weapon leftHandWeapon;
     public Weapon rightHandWeapon;
+    public Dictionary<BodyPartType, ArmorData> equippedArmorByPart = new();
 
     [Header("Active Items")]
     public List<Item> activeItem;

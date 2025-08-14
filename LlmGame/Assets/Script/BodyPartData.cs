@@ -60,32 +60,30 @@ public class BodyPartData : ScriptableObject
     public void EquipArmorTo(Character character)
     {
         if (equippedArmor == null || equippedArmor.itemBehaviorPrefab == null)
-        {
-            Debug.Log(equippedArmor);
             return;
-        }
-
-        GameObject instance = Instantiate(equippedArmor.itemBehaviorPrefab, character.transform);
-        character.RegisterRuntimePassive(instance);
-
-        Debug.Log($"✅ Equipped armor with behavior: {equippedArmor.armorName}");
     }
 
-    public bool TryEquipArmor(ArmorData armor)
+    GameObject instance = Instantiate(armorToEquip.itemBehaviorPrefab, character.transform);
+    character.RegisterRuntimePassive(instance);
+
+        Debug.Log($"✅ Equipped armor with behavior: {armorToEquip.armorName}");
+    }
+
+public bool TryEquipArmor(ArmorData armor)
+{
+    if (armor == null)
+        return false;
+
+    if (!armor.compatibleBodyParts.Contains(type))
     {
-        if (armor == null)
-            return false;
-
-        if (!armor.compatibleBodyParts.Contains(type))
-        {
-            Debug.LogWarning($"❌ Cannot equip {armor.armorName} to {type}: incompatible slot.");
-            return false;
-        }
-
-        equippedArmor = armor;
-        Debug.Log($"✅ {armor.armorName} equipped to {type}.");
-        return true;
+        Debug.LogWarning($"❌ Cannot equip {armor.armorName} to {type}: incompatible slot.");
+        return false;
     }
+
+    equippedArmor = armor;
+    Debug.Log($"✅ {armor.armorName} equipped to {type}.");
+    return true;
+}
 
 
 
