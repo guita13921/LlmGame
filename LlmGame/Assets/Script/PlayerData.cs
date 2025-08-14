@@ -94,6 +94,7 @@ public class PlayerData : MonoBehaviour
     /// </summary>
     public void SavePlayer(Player player)
     {
+        //Debug.Log("SavePlayer");
         if (player == null) return;
 
         attack = player.attack - player.bonusAttack;
@@ -145,6 +146,8 @@ public class PlayerData : MonoBehaviour
             return;
         }
 
+        //Debug.Log("LoadPlayer");
+
         player.attack = attack;
         player.defense = defense;
         player.focus = focus;
@@ -181,7 +184,6 @@ public class PlayerData : MonoBehaviour
         }
 
         // ✅ Re-apply passive and armor effects after loading
-        player.EquipAllPassives();
     }
 
 

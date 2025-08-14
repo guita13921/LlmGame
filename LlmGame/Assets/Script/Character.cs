@@ -114,6 +114,7 @@ public class Character : MonoBehaviour
 
         if (bodyPartConfig != null)
         {
+            Debug.Log("GenerateBodyParts");
             bodyParts = bodyPartConfig.GenerateBodyParts();
         }
     }

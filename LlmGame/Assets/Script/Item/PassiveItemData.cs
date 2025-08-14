@@ -27,14 +27,15 @@ public class PassiveItemData : ScriptableObject
         GameObject instance = Instantiate(itemPrefab, character.transform);
 
         character.RegisterRuntimePassive(instance);
-        /*
-            // ✅ Apply effect
-            var passiveComponent = instance.GetComponent<IPassiveItem>();
-            if (passiveComponent != null)
-            {
-                passiveComponent.ApplyEffect(character);
-            }
-        */
+
+        // ✅ Apply effect
+        var passiveComponent = instance.GetComponent<IPassiveItem>();
+        if (passiveComponent != null)
+        {
+            passiveComponent.ApplyEffect(character);
+            //Debug.Log("IPassiveItem : ApplyEffect");
+        }
+
 
         Debug.Log($"✅ Equipped passive item: {itemName}, tracked {instance.GetComponents<MonoBehaviour>().Length} behaviors.");
     }

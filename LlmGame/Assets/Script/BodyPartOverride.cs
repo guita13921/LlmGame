@@ -21,6 +21,7 @@ public class BodyPartOverride
 
 
     public ArmorData defaultArmor;
+    public ArmorData equippedArmor; // <- renamed from defaultArmor
     public WeakPointData weakPoint;
 
     [Tooltip("Optional descriptions for buffs/debuffs (e.g. 'Harder to hit', '-1 feasibility')")]

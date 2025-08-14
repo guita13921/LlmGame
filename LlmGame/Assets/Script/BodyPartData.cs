@@ -60,7 +60,10 @@ public class BodyPartData : ScriptableObject
     public void EquipArmorTo(Character character)
     {
         if (equippedArmor == null || equippedArmor.itemBehaviorPrefab == null)
+        {
+            Debug.Log(equippedArmor);
             return;
+        }
 
         GameObject instance = Instantiate(equippedArmor.itemBehaviorPrefab, character.transform);
         character.RegisterRuntimePassive(instance);

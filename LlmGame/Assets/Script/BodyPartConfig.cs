@@ -28,12 +28,9 @@ public class BodyPartConfig : ScriptableObject
             part.feasibilityModifier = overrideData.feasibilityModifier;
             part.potentialModifier = overrideData.potentialModifier;
             part.hideFlags = HideFlags.DontSave;
-
             result.Add(part);
         }
 
         return result;
     }
-
-
 }
