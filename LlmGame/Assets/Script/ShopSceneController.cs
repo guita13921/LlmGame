@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class ShopSceneController : MonoBehaviour
 {
@@ -22,17 +23,27 @@ public class ShopSceneController : MonoBehaviour
     public List<ArmorData> armorItems = new List<ArmorData>();
     public List<Weapon> weapons = new List<Weapon>();
     public List<Item> consumables = new List<Item>();
-    public List<CharacterActionData> skills = new List<CharacterActionData>();
+    public List<DamageModifierSkill> skills = new List<DamageModifierSkill>();
 
     private Player player;
     private ShopType currentShopType;
+
+    [Header("Scene Navigation")]
+    public Button nextSceneButton; // Assign in Inspector
+    public string nextSceneName; // Assign in Inspector
 
     private void Start()
     {
         player = FindObjectOfType<Player>();
         currentShopType = (ShopType)Random.Range(0, System.Enum.GetValues(typeof(ShopType)).Length);
+
         if (shopTitleText != null)
             shopTitleText.text = currentShopType.ToString();
+
+        // Hook up button click to method
+        if (nextSceneButton != null)
+            nextSceneButton.onClick.AddListener(GoToNextScene);
+
         PopulateShop();
     }
 
@@ -125,42 +136,81 @@ public class ShopSceneController : MonoBehaviour
 
     public void AttemptPurchase(ScriptableObject obj)
     {
-        if (player == null) return;
-        int price = GetItemValue(obj);
-        if (player.money < price)
+        var pdata = PlayerData.Instance;
+        if (pdata == null)
         {
-            Debug.Log("Not enough money to buy " + GetItemName(obj));
+            Debug.LogError("[Shop] PlayerData.Instance is null. Ensure a PlayerData object exists in the scene before opening the shop.");
             return;
         }
-        player.money -= price;
+        if (player == null)
+        {
+            Debug.LogError("[Shop] Player reference is null.");
+            return;
+        }
 
+        int price = GetItemValue(obj);
+        if (pdata.money < price)
+        {
+            Debug.Log($"[Shop] Not enough money to buy {GetItemName(obj)}. Need {price}, have {pdata.money}.");
+            return;
+        }
+
+        // Deduct from PlayerData (single source of truth)
+        pdata.money -= price;
+
+        // --- Route by type ---
         if (obj is PassiveItemData passive)
         {
-            player.EquipPassiveItem(passive);
+            if (pdata.equippedPassiveItems == null)
+                pdata.equippedPassiveItems = new List<PassiveItemData>();
+
+            if (!pdata.equippedPassiveItems.Contains(passive))
+                pdata.equippedPassiveItems.Add(passive);
+
+            Debug.Log($"[Shop] Bought passive: {GetItemName(passive)}");
         }
         else if (obj is ArmorData armor)
         {
-            foreach (var part in player.bodyParts)
-            {
-                if (armor.compatibleBodyParts.Contains(part.type))
-                {
-                    part.equippedArmor = armor;
-                    break;
-                }
-            }
+            if (pdata.inventoryArmors == null)
+                pdata.inventoryArmors = new List<ArmorData>();
+
+            if (!pdata.inventoryArmors.Contains(armor))
+                pdata.inventoryArmors.Add(armor);
+
+            Debug.Log($"[Shop] Bought armor: {GetItemName(armor)} (added to PlayerData.inventoryArmors)");
         }
         else if (obj is Weapon weapon)
         {
-            player.inventoryItems.Add(weapon);
+            if (pdata.inventoryItems == null)
+                pdata.inventoryItems = new List<Item>();
+
+            // If Weapon inherits Item, this cast is fine; otherwise, store separately as needed.
+            if (!pdata.inventoryItems.Contains(weapon))
+                pdata.inventoryItems.Add(weapon);
+
+            Debug.Log($"[Shop] Bought weapon: {GetItemName(weapon)}");
         }
         else if (obj is Item item)
         {
-            player.inventoryItems.Add(item);
+            if (pdata.inventoryItems == null)
+                pdata.inventoryItems = new List<Item>();
+
+            pdata.inventoryItems.Add(item);
+            Debug.Log($"[Shop] Bought item: {GetItemName(item)}");
         }
-        else if (obj is CharacterActionData skill)
+        else if (obj is DamageModifierSkill dmgSkill)
         {
-            player.availableActions.Add(skill);
+            if (player.damageModifierSkills == null)
+                player.damageModifierSkills = new List<DamageModifierSkill>();
+
+            if (!player.damageModifierSkills.Contains(dmgSkill))
+                player.damageModifierSkills.Add(dmgSkill);
+
+            Debug.Log($"[Shop] Bought skill: {GetItemName(dmgSkill)} (added to player.damageModifierSkills)");
         }
+
+        // Push PlayerData → Player so the in-scene Player mirrors the new state & money
+        pdata.LoadPlayer(player);
     }
 
     // === Data extraction helpers ===
@@ -233,4 +283,26 @@ public class ShopSceneController : MonoBehaviour
         }
         return Color.white;
     }
+
+    public bool PlayerHasEnoughMoney(int price)
+    {
+        return player != null && player.money >= price;
+    }
+
+    public void GoToNextScene()
+    {
+        if (string.IsNullOrEmpty(nextSceneName))
+        {
+            Debug.LogWarning("[Shop] No next scene name set.");
+            return;
+        }
+
+        // Save before leaving shop
+        if (PlayerData.Instance != null && player != null)
+            PlayerData.Instance.SavePlayer(player);
+
+        Debug.Log($"[Shop] Loading next scene: {nextSceneName}");
+        SceneManager.LoadScene(nextSceneName);
+    }
+
 }

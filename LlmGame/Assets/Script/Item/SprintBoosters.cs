@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class SprintBoosters : MonoBehaviour, IPassiveItem
 {
-    private const int speedBonus = 2;
+    private const int speedBonus = 5;
 
     public void ApplyEffect(Character character)
     {
