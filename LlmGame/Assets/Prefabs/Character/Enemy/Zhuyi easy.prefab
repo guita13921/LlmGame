@@ -175,10 +175,17 @@ MonoBehaviour:
   attack: 1
   defense: 0
   focus: 100
-  maxHP: 50
+  maxHP: 300
   maxMP: 20
-  speed: 0
+  speed: 10
   maxShield: 0
+  bonusAttack: 0
+  bonusDefense: 0
+  bonusFocus: 0
+  bonusMaxHP: 0
+  bonusMaxMP: 0
+  bonusSpeed: 0
+  bonusMaxShield: 0
   money: 0
   bodyPartConfig: {fileID: 11400000, guid: 143b35d64fe739e49a7669e451f692ae, type: 2}
   bodyParts:
@@ -192,7 +199,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   availableActions:
-  - {fileID: 11400000, guid: bacaa1c7b2d4c6b4a95770244dd0eecd, type: 2}
+  - {fileID: 11400000, guid: 02c769ed1a51ae440a87960fef6befe7, type: 2}
   selectedAction: {fileID: 0}
   pendingDamage: 0
   damagePortions: []
@@ -211,6 +218,7 @@ MonoBehaviour:
   turnGauge: 0
   inventoryItems:
   - {fileID: 11400000, guid: fb8463efd121cab4f93f12fbd78eb461, type: 2}
+  inventoryArmors: []
   leftHandWeapon: {fileID: 0}
   rightHandWeapon: {fileID: 11400000, guid: 5eb97eab966aeda4d8df1114c3fcc71e, type: 2}
   activeItem: []

@@ -530,6 +530,8 @@
 "Assets/Script/UI/ArmorSlotUI.cs"
 "Assets/Script/UI/BattleInventoryUI.cs"
 "Assets/Script/UI/InventoryItemDragHandler.cs"
+"Assets/Script/UI/PlayerStatsPanelScrollable.cs"
+"Assets/Script/UI/PlayerUI.cs"
 "Assets/Script/UI/ShopItemUI.cs"
 "Assets/Script/UI/TreasureUIController.cs"
 "Assets/Script/UI/WeaponDragHandler.cs"

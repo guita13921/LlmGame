@@ -189,7 +189,7 @@ public class MysteryEventUI : MonoBehaviour
                                  data.nextNodeType == NodeType.Boss))
             {
                 Debug.Log(data.nextNodeType);
-                sceneToLoad = "BattleScene";
+                sceneToLoad = "BattleScene02";
             }
 
             LoadScene(sceneToLoad);

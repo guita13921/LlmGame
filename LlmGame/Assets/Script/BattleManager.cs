@@ -324,7 +324,7 @@ public class BattleManager : MonoBehaviour
         ProcessWeaponForActivation(enemy.rightHandWeapon, lowerAction, enemy);
 
         // ✅ Optional: Activate items based on keywords
-        foreach (var item in enemy.inventoryItems)
+        foreach (var item in enemy.activeItem)
         {
             if (item == null || item.keyWords == null) continue;
 
@@ -479,9 +479,9 @@ public class BattleManager : MonoBehaviour
     public void EndPlayerTurn()
     {
         isActionPhase = false;
-       currentActingCharacter = null;
-       selectedTarget = null;
-       selectedParts.Clear();
+        currentActingCharacter = null;
+        selectedTarget = null;
+        selectedParts.Clear();
 
         // Refresh inventory visuals in case items were consumed or equipment changed
         var inventoryUI = FindObjectOfType<BattleInventoryUI>();

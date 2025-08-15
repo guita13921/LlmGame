@@ -3,9 +3,11 @@ using UnityEngine.UI;
 
 public class ItemButtonUI : MonoBehaviour
 {
-    public Item item;             // Reference to this item
-    public BattleManager battleManager; // Assign via inspector or find automatically
+    [Header("References")]
+    public Item item;                     // Reference to this item (set in inspector or dynamically)
+    public BattleManager battleManager;   // Assign via inspector or find automatically
     public Button button;
+    public Image iconImage;               // UI Image to display the item icon
 
     private void Start()
     {
@@ -13,6 +15,17 @@ public class ItemButtonUI : MonoBehaviour
             button = GetComponent<Button>();
 
         button.onClick.AddListener(OnItemClick);
+
+        // Show the icon if available
+        if (iconImage != null && item != null && item.icon != null)
+        {
+            iconImage.sprite = item.icon;
+            iconImage.enabled = true;
+        }
+        else if (iconImage != null)
+        {
+            iconImage.enabled = false; // Hide if no icon
+        }
     }
 
     private void OnItemClick()
@@ -51,7 +64,6 @@ public class ItemButtonUI : MonoBehaviour
             battleManager.player.isUsingConsumeTurnItem = true;
             battleManager.isUsingConsumableMode = true;
 
-
             if (battleManager.playerInputField != null)
             {
                 battleManager.playerInputField.text = string.Join(", ", item.keyWords);
@@ -77,6 +89,4 @@ public class ItemButtonUI : MonoBehaviour
             battleManager.chatAI.ShowInputUI();
         }
     }
-
-
 }

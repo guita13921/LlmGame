@@ -72,7 +72,7 @@ namespace Map
                 case NodeType.MinorEnemy:
                 case NodeType.EliteEnemy:
                 case NodeType.Boss:
-                    sceneToLoad = "BattleScene";
+                    sceneToLoad = "BattleScene02";
                     break;
                 case NodeType.RestSite:
                     sceneToLoad = "RestScene";
