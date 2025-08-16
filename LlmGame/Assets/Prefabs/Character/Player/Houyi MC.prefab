@@ -610,7 +610,10 @@ MonoBehaviour:
   currentHitIndex: 0
   activeStatusEffects: []
   isCritical: 0
-  damageModifierSkills: []
+  damageModifierSkills:
+  - {fileID: 11400000, guid: 3dd080609383d3e469d3c24d81b7dc2e, type: 2}
+  - {fileID: 11400000, guid: 012f047151ff6d44487766f22b867ef0, type: 2}
+  - {fileID: 11400000, guid: ec24d36d9726d6d4e9fa02ae149f9220, type: 2}
   currentSkill: {fileID: 0}
   isUsingUltimateSkill: 0
   currentHP: 0

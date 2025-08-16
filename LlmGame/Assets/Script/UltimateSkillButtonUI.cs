@@ -11,15 +11,40 @@ public class UltimateSkillButtonUI : MonoBehaviour, IPointerEnterHandler, IPoint
     [Header("Tooltip")]
     public UltimateSkillTooltip tooltip; // Assign in inspector
 
-    private void Start()
+    [Header("Visuals")]
+    [SerializeField] private Image iconImage;        // Optional: assign your button/icon image
+    [SerializeField] private CanvasGroup canvasGroup; // Optional: smoother dimming if available
+    [SerializeField] private float dimAlpha = 0.4f;  // Alpha when dimmed
+    [SerializeField] private bool disableWhenInsufficientMP = true;
+
+    private void Awake()
     {
         if (button == null)
             button = GetComponent<Button>();
 
+        if (canvasGroup == null)
+            canvasGroup = GetComponent<CanvasGroup>();
+
+    }
+    private void Start()
+    {
         button.onClick.AddListener(OnUltimateSkillClick);
 
         if (tooltip == null)
             tooltip = FindObjectOfType<UltimateSkillTooltip>();
+
+        UpdateVisualState();
+    }
+
+    private void OnEnable()
+    {
+        UpdateVisualState();
+    }
+
+    private void Update()
+    {
+        // If MP or turn changes during gameplay, keep visuals in sync
+        UpdateVisualState();
     }
 
     private void OnUltimateSkillClick()
@@ -37,6 +62,7 @@ public class UltimateSkillButtonUI : MonoBehaviour, IPointerEnterHandler, IPoint
         }
 
         ToggleUltimateSkill(ultimateSkill);
+        UpdateVisualState();
     }
 
     private void ToggleUltimateSkill(DamageModifierSkill skill)
@@ -47,7 +73,7 @@ public class UltimateSkillButtonUI : MonoBehaviour, IPointerEnterHandler, IPoint
             return;
         }
 
-        if (!battleManager.isActionPhase || battleManager.currentActingCharacter != battleManager.player)
+        if (!IsPlayersTurn())
         {
             Debug.LogWarning("Cannot use skills outside your turn!");
             return;
@@ -103,5 +129,45 @@ public class UltimateSkillButtonUI : MonoBehaviour, IPointerEnterHandler, IPoint
     public void OnPointerExit(PointerEventData eventData)
     {
         tooltip?.HideTooltip();
+    }
+
+    // === Visual State ===
+    private void UpdateVisualState()
+    {
+        if (battleManager == null || battleManager.player == null || ultimateSkill == null)
+            return;
+
+        bool playersTurn = IsPlayersTurn();
+        bool hasMP = battleManager.player.currentMP >= ultimateSkill.mpCost;
+
+        // Dim if it's the player's turn but they don't have enough MP.
+        bool shouldDim = playersTurn && !hasMP;
+
+        // Interactability (optional)
+        if (disableWhenInsufficientMP)
+        {
+            button.interactable = playersTurn && hasMP;
+        }
+        else
+        {
+            button.interactable = playersTurn; // still let them click even without MP, if you prefer
+        }
+
+        // Apply dim
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = shouldDim ? dimAlpha : 1f;
+        }
+        else if (iconImage != null)
+        {
+            var c = iconImage.color;
+            c.a = shouldDim ? dimAlpha : 1f;
+            iconImage.color = c;
+        }
+    }
+
+    private bool IsPlayersTurn()
+    {
+        return battleManager.isActionPhase && battleManager.currentActingCharacter == battleManager.player;
     }
 }

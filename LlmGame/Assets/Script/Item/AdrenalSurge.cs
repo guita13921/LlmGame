@@ -27,8 +27,8 @@ public class AdrenalSurge : MonoBehaviour, IPassiveItem, IDamageReaction, ITurnL
     // 🔥 Trigger when character takes damage
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
-        Debug.Log("AdrenalSurge : OnAfterDamage");
-        Debug.Log(buffActive);
+        //Debug.Log("AdrenalSurge : OnAfterDamage");
+        //Debug.Log(buffActive);
 
         if (!buffActive && target.currentHP <= target.maxHP * 0.5f)
         {

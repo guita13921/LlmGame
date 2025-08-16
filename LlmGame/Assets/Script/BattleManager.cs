@@ -271,29 +271,62 @@ public class BattleManager : MonoBehaviour
         return null;
     }
 
+    // Add this field to your BattleManager (or wherever PlayerSelectedTarget lives)
+    private bool isResolvingAction = false;
+
+    // Replace your method with this:
     public void PlayerSelectedTarget(Character selectedCharacter)
     {
         if (player == null || !player.IsAlive()) return;
         if (selectedCharacter == null || !selectedCharacter.IsAlive()) return;
 
-        Debug.Log($"Player selected {selectedCharacter.characterName} as target!");
+        // Prevent re-entry / double-activation while an action is running
+        if (isResolvingAction) return;
 
+        // If the same target is clicked again and nothing changed, ignore
+        if (selectedTarget == selectedCharacter)
+        {
+            // Optional: allow reselect only if mode changed; otherwise ignore
+            return;
+        }
+
+        Debug.Log($"Player selected {selectedCharacter.characterName} as target!");
         selectedTarget = selectedCharacter;
 
+        // Wrap actions in one coroutine so we can safely guard against duplicates
+        StartCoroutine(ExecuteSelectionOnTarget(selectedCharacter));
+    }
+
+    private System.Collections.IEnumerator ExecuteSelectionOnTarget(Character target)
+    {
+        isResolvingAction = true;
+
+        // Consumable action
         if (isUsingConsumableMode && player.activeItem.Count > 0)
         {
             Item active = player.activeItem[0];
-
             if (active is ConsumeTurnItem consumeItem)
             {
-                StartCoroutine(consumeItem.UseOnTarget(player, selectedCharacter, this));
+                yield return StartCoroutine(consumeItem.UseOnTarget(player, target, this));
             }
+            // If you want to auto-exit consumable mode after use:
+            // isUsingConsumableMode = false;
+            // player.activeItem.Clear();
         }
 
-        if (player.isUsingUltimateSkill == true)
+        // Ultimate skill action
+        if (player.isUsingUltimateSkill && player.currentSkill != null)
         {
-            StartCoroutine(player.currentSkill.UseOnTarget(player, selectedCharacter, this));
+            yield return StartCoroutine(player.currentSkill.UseOnTarget(player, target, this));
+            // Optionally turn off the skill after use:
+            // player.isUsingUltimateSkill = false;
+            // player.currentSkill = null;
         }
+
+        // Optionally clear selection so the same target can be picked again later
+        // selectedTarget = null;
+
+        isResolvingAction = false;
     }
 
     private string GetRandomEnemyAction(Enemy enemy)

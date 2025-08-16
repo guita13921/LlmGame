@@ -11,7 +11,7 @@ public abstract class PassiveItemBase : MonoBehaviour, IPassiveItem
 
     public void OnAfterDamage(Character source, Character target, int finalDamage)
     {
-        throw new System.NotImplementedException();
+        return;
     }
 
     public void OnBeforeDamage(Character source, Character target, ref int damage)
