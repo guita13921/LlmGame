@@ -1,11 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class UltimateSkillButtonUI : MonoBehaviour
+public class UltimateSkillButtonUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    public DamageModifierSkill ultimateSkill;         // Assign via inspector
-    public BattleManager battleManager;               // Reference to the BattleManager
-    public Button button;                             // UI Button
+    public DamageModifierSkill ultimateSkill;
+    public BattleManager battleManager;
+    public Button button;
+
+    [Header("Tooltip")]
+    public UltimateSkillTooltip tooltip; // Assign in inspector
 
     private void Start()
     {
@@ -13,6 +17,9 @@ public class UltimateSkillButtonUI : MonoBehaviour
             button = GetComponent<Button>();
 
         button.onClick.AddListener(OnUltimateSkillClick);
+
+        if (tooltip == null)
+            tooltip = FindObjectOfType<UltimateSkillTooltip>();
     }
 
     private void OnUltimateSkillClick()
@@ -23,7 +30,6 @@ public class UltimateSkillButtonUI : MonoBehaviour
             return;
         }
 
-        // ✅ MP Check
         if (battleManager.player.currentMP < ultimateSkill.mpCost)
         {
             Debug.Log($"{battleManager.player.characterName} does not have enough MP to use {ultimateSkill.mpCost}!");
@@ -41,14 +47,12 @@ public class UltimateSkillButtonUI : MonoBehaviour
             return;
         }
 
-        // ✅ Check action phase and turn
         if (!battleManager.isActionPhase || battleManager.currentActingCharacter != battleManager.player)
         {
             Debug.LogWarning("Cannot use skills outside your turn!");
             return;
         }
 
-        // ✅ Check if player has the skill
         if (!battleManager.player.damageModifierSkills.Contains(skill))
         {
             Debug.LogWarning("This skill is not available to the player!");
@@ -57,13 +61,11 @@ public class UltimateSkillButtonUI : MonoBehaviour
 
         battleManager.selectedTarget = null;
 
-        // Toggle off if already selected
         if (battleManager.player.isUsingUltimateSkill && battleManager.player.currentSkill == skill)
         {
             battleManager.player.currentSkill = null;
             battleManager.player.isUsingUltimateSkill = false;
 
-            // Restore input field
             if (battleManager.playerInputField != null)
             {
                 battleManager.playerInputField.text = "";
@@ -75,11 +77,9 @@ public class UltimateSkillButtonUI : MonoBehaviour
         }
         else
         {
-            // Activate the skill
             battleManager.player.currentSkill = skill;
             battleManager.player.isUsingUltimateSkill = true;
 
-            // Update input UI
             if (battleManager.playerInputField != null)
             {
                 battleManager.playerInputField.text = $"ULTIMATE: {skill.skillName}";
@@ -89,5 +89,19 @@ public class UltimateSkillButtonUI : MonoBehaviour
             battleManager.chatAI.HideInputUI();
             Debug.Log($"Ultimate skill '{skill.skillName}' activated.");
         }
+    }
+
+    // === Tooltip Logic ===
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (tooltip != null && ultimateSkill != null)
+        {
+            tooltip.ShowTooltip(ultimateSkill, transform as RectTransform);
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        tooltip?.HideTooltip();
     }
 }

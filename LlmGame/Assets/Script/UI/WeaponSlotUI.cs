@@ -1,12 +1,15 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class WeaponSlotUI : MonoBehaviour, IDropHandler
+public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Slot Settings")]
     public bool isRightHand;
     public Image slotImage;
+
+    [Header("Tooltip")]
+    public WeaponTooltip tooltip; // Assign this in the Inspector
 
     private Player player;
     private BattleManager battleManager;
@@ -20,9 +23,13 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
     {
         if (slotImage == null)
             slotImage = GetComponent<Image>();
+
         player = FindObjectOfType<Player>();
         battleManager = FindObjectOfType<BattleManager>();
         inventoryUI = FindObjectOfType<BattleInventoryUI>();
+
+        if (tooltip == null)
+            tooltip = FindObjectOfType<WeaponTooltip>();
     }
 
     public void SetWeapon(Weapon weapon)
@@ -41,7 +48,6 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
         }
     }
 
-
     public void OnDrop(PointerEventData eventData)
     {
         var drag = eventData.pointerDrag ? eventData.pointerDrag.GetComponent<WeaponDragHandler>() : null;
@@ -50,25 +56,22 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
         Weapon weapon = drag.weapon;
         if (weapon == null || player == null) return;
 
-        // Only allow equipping during the player's action phase
         if (battleManager != null && (!battleManager.isActionPhase || battleManager.currentActingCharacter != player))
             return;
 
-        // Store previous weapons to return to inventory
         Weapon oldLeft = player.leftHandWeapon;
         Weapon oldRight = player.rightHandWeapon;
 
         if (player.EquipWeapon(weapon, isRightHand))
         {
-            // Remove equipped weapon from inventory
             player.inventoryItems.Remove(weapon);
 
-            // Return previous weapons to inventory if they are no longer equipped
             if (oldLeft != null && oldLeft != player.leftHandWeapon && oldLeft != player.rightHandWeapon)
             {
                 if (!player.inventoryItems.Contains(oldLeft))
                     player.inventoryItems.Add(oldLeft);
             }
+
             if (oldRight != null && oldRight != player.leftHandWeapon && oldRight != player.rightHandWeapon && oldRight != oldLeft)
             {
                 if (!player.inventoryItems.Contains(oldRight))
@@ -79,5 +82,21 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
             inventoryUI?.RefreshUI();
             battleManager?.EndPlayerTurn();
         }
+    }
+
+    // === Tooltip logic ===
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        Weapon equippedWeapon = isRightHand ? player?.rightHandWeapon : player?.leftHandWeapon;
+
+        if (equippedWeapon != null && tooltip != null)
+        {
+            tooltip.ShowTooltip(equippedWeapon, transform as RectTransform);
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        tooltip?.HideTooltip();
     }
 }

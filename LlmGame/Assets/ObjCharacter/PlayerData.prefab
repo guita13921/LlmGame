@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nextNodeType: 0
+  nextEnemyDifficulty: 0
   attack: 0
   defense: 0
   focus: 0
@@ -57,7 +58,33 @@ MonoBehaviour:
   currentShield: 0
   money: 0
   inventoryItems: []
+  inventoryArmors: []
   leftHandWeapon: {fileID: 0}
   rightHandWeapon: {fileID: 0}
-  equippedPassiveItems: []
+  equippedPassiveItems:
+  - {fileID: 11400000, guid: 73640516f0c1c3141abd11bcce742a26, type: 2}
+  - {fileID: 11400000, guid: 04fc71bbf6c3a6e4aabaf39be483b8e5, type: 2}
+  - {fileID: 11400000, guid: eb0c262952a93664fbe8ce28a2696e3a, type: 2}
+  - {fileID: 11400000, guid: bf1a73d9577dd9a4492cb40e18671788, type: 2}
+  - {fileID: 11400000, guid: 7a5e30ef0c42c72459ed8d480d070200, type: 2}
+  - {fileID: 11400000, guid: d058ad67b0c7f4e48827258ea790ba34, type: 2}
+  - {fileID: 11400000, guid: 2fbbf7e3e51644c44afbd5cb7f6f3915, type: 2}
+  - {fileID: 11400000, guid: afe35f353ab8ab04db76e570fa1ac7bb, type: 2}
+  - {fileID: 11400000, guid: 0a10ef7841929ac43b76529338199fe1, type: 2}
+  - {fileID: 11400000, guid: 4145abb02c5e2f74fba03a3465d8c6ed, type: 2}
+  - {fileID: 11400000, guid: 00471fac56731334f9cebe3064da77d7, type: 2}
+  - {fileID: 11400000, guid: 9d5b968ee0f2b294bad1cc158d108e35, type: 2}
+  - {fileID: 11400000, guid: acb40b237b11e094b96f8a501b0f2f17, type: 2}
+  - {fileID: 11400000, guid: e4058c1cac0a8124d8a69e7319690bd3, type: 2}
+  - {fileID: 11400000, guid: 0bf765650e96b5e47b95cc0ccdf683b3, type: 2}
+  - {fileID: 11400000, guid: 09f4c7d9fbb4083448b4f043f0f070fe, type: 2}
+  - {fileID: 11400000, guid: 080b8a49a7441db43ac1b4fc606795de, type: 2}
+  - {fileID: 11400000, guid: f4aea134612392c4d9cc75d74867ee1c, type: 2}
+  - {fileID: 11400000, guid: a574e950cd134a1429654be2702da66d, type: 2}
+  - {fileID: 11400000, guid: 09f481e1705eecd49acfb7faf7d999d0, type: 2}
+  - {fileID: 11400000, guid: 324aa0ddc2269bb47bf99358ddf71b54, type: 2}
+  - {fileID: 11400000, guid: c189d37c2b773e54fb7b617550f09208, type: 2}
+  - {fileID: 11400000, guid: 6dd58f39fadbc3649837e85309b85791, type: 2}
+  - {fileID: 11400000, guid: ece1914cb5c96e44b982b64677d6fa2b, type: 2}
+  equippedArmors: []
   initialized: 0

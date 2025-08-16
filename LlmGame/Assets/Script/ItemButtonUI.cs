@@ -1,22 +1,26 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using TMPro;
 
 public class ItemButtonUI : MonoBehaviour
 {
     [Header("References")]
-    public Item item;                     // Reference to this item (set in inspector or dynamically)
-    public BattleManager battleManager;   // Assign via inspector or find automatically
+    public Item item;
+    public BattleManager battleManager;
     public Button button;
-    public Image iconImage;               // UI Image to display the item icon
+    public Image iconImage;
 
     private void Start()
     {
+
+        // Assign button
         if (button == null)
             button = GetComponent<Button>();
 
         button.onClick.AddListener(OnItemClick);
 
-        // Show the icon if available
+        // Setup icon
         if (iconImage != null && item != null && item.icon != null)
         {
             iconImage.sprite = item.icon;
@@ -24,7 +28,7 @@ public class ItemButtonUI : MonoBehaviour
         }
         else if (iconImage != null)
         {
-            iconImage.enabled = false; // Hide if no icon
+            iconImage.enabled = false;
         }
     }
 
@@ -41,7 +45,6 @@ public class ItemButtonUI : MonoBehaviour
 
     public void ActiveConsumeTurnItem(Item item)
     {
-        // ✅ Only allow activation during player's turn
         if (!battleManager.isActionPhase || battleManager.currentActingCharacter != battleManager.player)
         {
             Debug.LogWarning("Cannot use items outside your turn!");
@@ -52,7 +55,6 @@ public class ItemButtonUI : MonoBehaviour
 
         battleManager.selectedTarget = null;
 
-        // Deactivate all other items
         foreach (var invItem in battleManager.player.activeItem)
         {
             invItem.isActive = false;
@@ -66,11 +68,11 @@ public class ItemButtonUI : MonoBehaviour
 
             if (battleManager.playerInputField != null)
             {
-                battleManager.playerInputField.text = string.Join(", ", item.keyWords);
+                battleManager.playerInputField.text = string.Join(", ", item.name, " ", item.itemDescription);
                 battleManager.playerInputField.interactable = false;
             }
 
-            battleManager.chatAI.HideInputUI(); // Hide AI input panel
+            battleManager.chatAI.HideInputUI();
         }
         else
         {
