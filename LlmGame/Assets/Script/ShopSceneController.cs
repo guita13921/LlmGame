@@ -9,11 +9,25 @@ public class ShopSceneController : MonoBehaviour
     public enum ShopType { QuackDoctor, PassiveShop, ArmShop }
     private enum ItemCategory { Passive, Armor, Weapon, Consumable, Skill }
 
+    [System.Serializable]
+    public struct ShopBackground
+    {
+        public ShopType shopType;
+        public Sprite backgroundSprite;
+    }
+
     [Header("UI")]
     public TMP_Text shopTitleText;
     public TMP_Text descriptionText;
     public Transform itemsParent;
     public ShopItemUI itemPrefab;
+
+    [Header("Player UI")]
+    public TMP_Text playerMoneyText; // ← Shows current money
+
+    [Header("Visuals")]
+    public Image backgroundImage;
+    public List<ShopBackground> shopBackgrounds = new List<ShopBackground>();
 
     [Header("Config")]
     public int itemsPerShop = 5;
@@ -29,8 +43,8 @@ public class ShopSceneController : MonoBehaviour
     private ShopType currentShopType;
 
     [Header("Scene Navigation")]
-    public Button nextSceneButton; // Assign in Inspector
-    public string nextSceneName; // Assign in Inspector
+    public Button nextSceneButton;
+    public string nextSceneName;
 
     private void Start()
     {
@@ -40,11 +54,32 @@ public class ShopSceneController : MonoBehaviour
         if (shopTitleText != null)
             shopTitleText.text = currentShopType.ToString();
 
-        // Hook up button click to method
         if (nextSceneButton != null)
             nextSceneButton.onClick.AddListener(GoToNextScene);
 
+        SetBackgroundForShop(currentShopType);
         PopulateShop();
+        UpdatePlayerMoneyUI(); // ← Initialize money display
+    }
+
+    private void SetBackgroundForShop(ShopType type)
+    {
+        if (backgroundImage == null)
+        {
+            Debug.LogWarning("[Shop] No background image assigned.");
+            return;
+        }
+
+        foreach (var bg in shopBackgrounds)
+        {
+            if (bg.shopType == type)
+            {
+                backgroundImage.sprite = bg.backgroundSprite;
+                return;
+            }
+        }
+
+        Debug.LogWarning($"[Shop] No background sprite found for shop type: {type}");
     }
 
     private void PopulateShop()
@@ -54,6 +89,7 @@ public class ShopSceneController : MonoBehaviour
         {
             if (itemPrefab == null || itemsParent == null)
                 break;
+
             var ui = Instantiate(itemPrefab, itemsParent);
             ui.Setup(this, so);
         }
@@ -120,7 +156,6 @@ public class ShopSceneController : MonoBehaviour
         return null;
     }
 
-    // === UI helpers ===
     public void ShowDescription(ScriptableObject obj)
     {
         if (descriptionText == null)
@@ -134,142 +169,117 @@ public class ShopSceneController : MonoBehaviour
             descriptionText.text = string.Empty;
     }
 
-    public void AttemptPurchase(ScriptableObject obj)
+    public bool AttemptPurchase(ScriptableObject obj)
     {
         var pdata = PlayerData.Instance;
         if (pdata == null)
         {
-            Debug.LogError("[Shop] PlayerData.Instance is null. Ensure a PlayerData object exists in the scene before opening the shop.");
-            return;
+            Debug.LogError("[Shop] PlayerData.Instance is null.");
+            return false;
         }
+
         if (player == null)
         {
             Debug.LogError("[Shop] Player reference is null.");
-            return;
+            return false;
         }
 
         int price = GetItemValue(obj);
         if (pdata.money < price)
         {
-            Debug.Log($"[Shop] Not enough money to buy {GetItemName(obj)}. Need {price}, have {pdata.money}.");
-            return;
+            Debug.Log($"[Shop] Not enough money. Need {price}, have {pdata.money}.");
+            return false;
         }
 
-        // Deduct from PlayerData (single source of truth)
         pdata.money -= price;
 
-        // --- Route by type ---
         if (obj is PassiveItemData passive)
         {
             if (pdata.equippedPassiveItems == null)
                 pdata.equippedPassiveItems = new List<PassiveItemData>();
-
             if (!pdata.equippedPassiveItems.Contains(passive))
                 pdata.equippedPassiveItems.Add(passive);
-
-            Debug.Log($"[Shop] Bought passive: {GetItemName(passive)}");
         }
         else if (obj is ArmorData armor)
         {
             if (pdata.inventoryArmors == null)
                 pdata.inventoryArmors = new List<ArmorData>();
-
             if (!pdata.inventoryArmors.Contains(armor))
                 pdata.inventoryArmors.Add(armor);
-
-            Debug.Log($"[Shop] Bought armor: {GetItemName(armor)} (added to PlayerData.inventoryArmors)");
         }
         else if (obj is Weapon weapon)
         {
             if (pdata.inventoryItems == null)
                 pdata.inventoryItems = new List<Item>();
-
-            // If Weapon inherits Item, this cast is fine; otherwise, store separately as needed.
             if (!pdata.inventoryItems.Contains(weapon))
                 pdata.inventoryItems.Add(weapon);
-
-            Debug.Log($"[Shop] Bought weapon: {GetItemName(weapon)}");
         }
         else if (obj is Item item)
         {
             if (pdata.inventoryItems == null)
                 pdata.inventoryItems = new List<Item>();
-
             pdata.inventoryItems.Add(item);
-            Debug.Log($"[Shop] Bought item: {GetItemName(item)}");
         }
         else if (obj is DamageModifierSkill dmgSkill)
         {
             if (player.damageModifierSkills == null)
                 player.damageModifierSkills = new List<DamageModifierSkill>();
-
             if (!player.damageModifierSkills.Contains(dmgSkill))
                 player.damageModifierSkills.Add(dmgSkill);
-
-            Debug.Log($"[Shop] Bought skill: {GetItemName(dmgSkill)} (added to player.damageModifierSkills)");
         }
 
-        // Push PlayerData → Player so the in-scene Player mirrors the new state & money
-        pdata.LoadPlayer(player);
+        pdata.LoadPlayer(player); // Sync new state
+        UpdatePlayerMoneyUI(); // ← Refresh UI after purchase
+        return true;
     }
 
-    // === Data extraction helpers ===
+    public void UpdatePlayerMoneyUI()
+    {
+        if (playerMoneyText != null && PlayerData.Instance != null)
+        {
+            playerMoneyText.text = $"Credits: {PlayerData.Instance.money}";
+        }
+    }
+
     public Sprite GetIcon(ScriptableObject obj)
     {
-        if (obj is PassiveItemData p)
-            return p.icon;
-        if (obj is ArmorData a)
-            return a.icon;
-        if (obj is Item i)
-            return i.icon;
+        if (obj is PassiveItemData p) return p.icon;
+        if (obj is ArmorData a) return a.icon;
+        if (obj is Item i) return i.icon;
         return null;
     }
 
     public ItemRarity GetRarity(ScriptableObject obj)
     {
-        if (obj is PassiveItemData p)
-            return p.rarity;
-        if (obj is ArmorData a)
-            return a.rarity;
-        if (obj is Item i)
-            return i.rarity;
+        if (obj is PassiveItemData p) return p.rarity;
+        if (obj is ArmorData a) return a.rarity;
+        if (obj is Item i) return i.rarity;
         return ItemRarity.Common;
     }
 
     public int GetItemValue(ScriptableObject obj)
     {
-        if (obj is PassiveItemData p)
-            return p.value;
-        if (obj is ArmorData a)
-            return a.value;
-        if (obj is Item i)
-            return i.value;
+        if (obj is PassiveItemData p) return p.value;
+        if (obj is ArmorData a) return a.value;
+        if (obj is Item i) return i.value;
         return 0;
     }
 
     public string GetItemName(ScriptableObject obj)
     {
-        if (obj is PassiveItemData p)
-            return p.itemName;
-        if (obj is ArmorData a)
-            return a.armorName;
-        if (obj is Item i)
-            return i.itemName;
-        if (obj is CharacterActionData act)
-            return act.actionName;
+        if (obj is PassiveItemData p) return p.itemName;
+        if (obj is ArmorData a) return a.armorName;
+        if (obj is Item i) return i.itemName;
+        if (obj is CharacterActionData act) return act.actionName;
         return obj.name;
     }
 
     public string GetItemDescription(ScriptableObject obj)
     {
-        if (obj is PassiveItemData p)
-            return p.description;
-        if (obj is ArmorData a)
-            return a.description;
-        if (obj is Item i)
-            return i.itemDescription;
-        if (obj is CharacterActionData act)
-            return "Skill";
+        if (obj is PassiveItemData p) return p.description;
+        if (obj is ArmorData a) return a.description;
+        if (obj is Item i) return i.itemDescription;
+        if (obj is CharacterActionData act) return "Skill";
         return string.Empty;
     }
 
@@ -297,12 +307,10 @@ public class ShopSceneController : MonoBehaviour
             return;
         }
 
-        // Save before leaving shop
         if (PlayerData.Instance != null && player != null)
             PlayerData.Instance.SavePlayer(player);
 
         Debug.Log($"[Shop] Loading next scene: {nextSceneName}");
         SceneManager.LoadScene(nextSceneName);
     }
-
 }

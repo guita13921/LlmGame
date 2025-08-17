@@ -120,7 +120,7 @@ namespace Map
                     float yRnd = Random.Range(-0.5f, 0.5f);
 
                     float x = xRnd * layer.nodesApartDistance;
-                    float y = yRnd < 0 ? distToPreviousLayer * yRnd: distToNextLayer * yRnd;
+                    float y = yRnd < 0 ? distToPreviousLayer * yRnd : distToNextLayer * yRnd;
 
                     node.position += new Vector2(x, y) * layer.randomizePosition;
                 }

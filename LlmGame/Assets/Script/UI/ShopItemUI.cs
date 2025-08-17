@@ -93,8 +93,16 @@ public class ShopItemUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     /// </summary>
     private void AttemptPurchase()
     {
-        controller?.AttemptPurchase(itemData);
+        if (controller != null)
+        {
+            bool success = controller.AttemptPurchase(itemData);
+            if (success)
+            {
+                gameObject.SetActive(false); // Hide this item from UI
+            }
+        }
     }
+
 
     /// <summary>
     /// Optional: Call this method if you want to refresh color dynamically when player's money changes.
