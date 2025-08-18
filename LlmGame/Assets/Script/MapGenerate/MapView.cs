@@ -130,7 +130,7 @@ namespace Map
             scrollNonUi.freezeX = orientation == MapOrientation.BottomToTop || orientation == MapOrientation.TopToBottom;
             scrollNonUi.freezeY = orientation == MapOrientation.LeftToRight || orientation == MapOrientation.RightToLeft;
             BoxCollider boxCollider = mapParent.AddComponent<BoxCollider>();
-            boxCollider.size = new Vector3(100, 100, 1);
+            boxCollider.size = new Vector3(100, 300, 1);
         }
 
         protected void CreateNodes(IEnumerable<Node> nodes)

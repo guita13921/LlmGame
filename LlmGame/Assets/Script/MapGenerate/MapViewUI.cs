@@ -13,7 +13,7 @@ namespace Map
         [Tooltip("ScrollRect that will be used for orientations: Top To Bottom, Bottom To Top")]
         [SerializeField] private ScrollRect scrollRectVertical;
         [Tooltip("Multiplier to compensate for larger distances in UI pixels on the canvas compared to distances in world units")]
-        [SerializeField] private float unitsToPixelsMultiplier  = 10f;
+        [SerializeField] private float unitsToPixelsMultiplier = 10f;
         [Tooltip("Padding of the first and last rows of nodes from the sides of the scroll rect")]
         [SerializeField] private float padding;
         [Tooltip("Padding of the background from the sides of the scroll rect")]
@@ -28,10 +28,10 @@ namespace Map
             scrollRectHorizontal.gameObject.SetActive(false);
             scrollRectVertical.gameObject.SetActive(false);
 
-            foreach (ScrollRect scrollRect in new []{scrollRectHorizontal, scrollRectVertical})
-            foreach (Transform t in scrollRect.content)
-                Destroy(t.gameObject);
-            
+            foreach (ScrollRect scrollRect in new[] { scrollRectHorizontal, scrollRectVertical })
+                foreach (Transform t in scrollRect.content)
+                    Destroy(t.gameObject);
+
             MapNodes.Clear();
             lineConnections.Clear();
         }
@@ -47,19 +47,19 @@ namespace Map
         {
             ScrollRect scrollRect = GetScrollRectForMap();
             scrollRect.gameObject.SetActive(true);
-            
+
             firstParent = new GameObject("OuterMapParent");
             firstParent.transform.SetParent(scrollRect.content);
             firstParent.transform.localScale = Vector3.one;
             RectTransform fprt = firstParent.AddComponent<RectTransform>();
             Stretch(fprt);
-            
+
             mapParent = new GameObject("MapParentWithAScroll");
             mapParent.transform.SetParent(firstParent.transform);
             mapParent.transform.localScale = Vector3.one;
             RectTransform mprt = mapParent.AddComponent<RectTransform>();
             Stretch(mprt);
-            
+
             SetMapLength();
             ScrollToOrigin();
         }
@@ -119,7 +119,7 @@ namespace Map
         private Vector2 GetNodePosition(Node node)
         {
             float length = padding + Map.DistanceBetweenFirstAndLastLayers() * unitsToPixelsMultiplier;
-            
+
             switch (orientation)
             {
                 case MapOrientation.BottomToTop:
@@ -155,7 +155,7 @@ namespace Map
             Stretch(rt);
             rt.SetAsFirstSibling();
             rt.sizeDelta = backgroundPadding;
-            
+
             Image image = backgroundObject.AddComponent<Image>();
             image.color = backgroundColor;
             image.type = Image.Type.Sliced;
@@ -166,7 +166,7 @@ namespace Map
         protected override void AddLineConnection(MapNode from, MapNode to)
         {
             if (uiLinePrefab == null) return;
-            
+
             UILineRenderer lineRenderer = Instantiate(uiLinePrefab, mapParent.transform);
             lineRenderer.transform.SetAsFirstSibling();
             RectTransform fromRT = from.transform as RectTransform;
@@ -179,7 +179,7 @@ namespace Map
 
             // drawing lines in local space:
             lineRenderer.transform.position = from.transform.position +
-                                              (Vector3) (toRT.anchoredPosition - fromRT.anchoredPosition).normalized *
+                                              (Vector3)(toRT.anchoredPosition - fromRT.anchoredPosition).normalized *
                                               offsetFromNodes;
 
             // line renderer with 2 points only does not handle transparency properly:
@@ -188,9 +188,9 @@ namespace Map
             {
                 list.Add(Vector3.Lerp(Vector3.zero, toPoint - fromPoint +
                                                     2 * (fromRT.anchoredPosition - toRT.anchoredPosition).normalized *
-                                                    offsetFromNodes, (float) i / (linePointsCount - 1)));
+                                                    offsetFromNodes, (float)i / (linePointsCount - 1)));
             }
-            
+
             Debug.Log("From: " + fromPoint + " to: " + toPoint + " last point: " + list[list.Count - 1]);
 
             lineRenderer.Points = list.ToArray();

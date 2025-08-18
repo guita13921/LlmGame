@@ -418,6 +418,7 @@
 "Assets/OneLine/RectEx/MoveToExtensions.cs"
 "Assets/OneLine/RectEx/RowExtensions.cs"
 "Assets/Scenes/Battle Scenes/UIHorizontalDrag.cs"
+"Assets/Scenes/MainMenu/SettingsManager.cs"
 "Assets/Script/ArmorData.cs"
 "Assets/Script/BattleLog.cs"
 "Assets/Script/BattleManager.cs"

@@ -2,19 +2,30 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MainMenuController : MonoBehaviour
 {
-    [Header("Assign in Inspector")]
+    [Header("Scene Names")]
+    public string mapGenerateSceneName = "MapGenerate"; // Assign this in Inspector
+
+    [Header("UI Panels")]
+    public GameObject settingsPanel;
+
+    [Header("Audio Sliders")]
+    public Slider musicSlider;
+    public Slider vfxSlider;
+
+    [Header("Player Config")]
     public DefaultPlayerConfig defaultConfig;
-    public string gameplaySceneName;
 
     void Start()
     {
-        OnNewGameButton();
+        // Optional auto-start: comment out in production
+        // OnStartButton();
     }
 
-    public void OnNewGameButton()
+    public void OnStartButton()
     {
         if (PlayerData.Instance == null)
         {
@@ -23,20 +34,35 @@ public class MainMenuController : MonoBehaviour
         }
 
         PlayerData.Instance.NewGame(defaultConfig);
-        SceneManager.LoadScene(gameplaySceneName);
+        SceneManager.LoadScene(mapGenerateSceneName);
     }
 
-    public void OnContinueButton()
+    public void OnOptionsButton()
     {
-        // If you have disk persistence, load it here, then:
-        // PlayerData.Instance.LoadFromDisk();
-        // For now, just proceed if PlayerData was already initialized in the session.
-        if (!PlayerData.Instance.Initialized)
-        {
-            Debug.LogWarning("No save found in memory. Starting a New Game instead.");
-            PlayerData.Instance.NewGame(defaultConfig);
-        }
+        settingsPanel.SetActive(true);
+    }
 
-        SceneManager.LoadScene(gameplaySceneName);
+    public void OnExitButton()
+    {
+        Application.Quit();
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
+    }
+
+    public void OnCloseSettings()
+    {
+        settingsPanel.SetActive(false);
+    }
+
+    public void OnMusicVolumeChanged(float value)
+    {
+        SettingsManager.Instance.SetMusicVolume(value);
+    }
+
+    public void OnVFXVolumeChanged(float value)
+    {
+        SettingsManager.Instance.SetVFXVolume(value);
     }
 }
