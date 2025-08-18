@@ -25,8 +25,7 @@ public class PlayerData : MonoBehaviour
     // Inventory and equipment
     public List<Item> inventoryItems = new List<Item>();
     public List<ArmorData> inventoryArmors = new List<ArmorData>();
-    public Weapon leftHandWeapon;
-    public Weapon rightHandWeapon;
+    public Weapon equippedWeapon;
     public List<PassiveItemData> equippedPassiveItems = new List<PassiveItemData>();
 
     // Tracks which passive item effects have already been applied to avoid stacking
@@ -77,8 +76,7 @@ public class PlayerData : MonoBehaviour
         // Inventory / equipment
         inventoryItems = config ? new List<Item>(config.startingInventory) : new List<Item>();
         inventoryArmors = config ? new List<ArmorData>(config.startingArmors) : new List<ArmorData>(); // ✅ Properly load starting armor
-        leftHandWeapon = config ? config.leftHandWeapon : null;
-        rightHandWeapon = config ? config.rightHandWeapon : null;
+        equippedWeapon = config ? config.startingWeapon : null;
         equippedPassiveItems = config ? new List<PassiveItemData>(config.startingPassives) : new List<PassiveItemData>();
 
         equippedArmors = new List<EquippedArmorEntry>(); // remains empty unless equipped manually
@@ -112,8 +110,7 @@ public class PlayerData : MonoBehaviour
 
         inventoryItems = new List<Item>(player.inventoryItems);
         inventoryArmors = new List<ArmorData>(player.inventoryArmors);
-        leftHandWeapon = player.leftHandWeapon;
-        rightHandWeapon = player.rightHandWeapon;
+        equippedWeapon = player.equippedWeapon;
 
         // Save equipped armors from body parts
         equippedArmors = new List<EquippedArmorEntry>();
@@ -171,8 +168,7 @@ public class PlayerData : MonoBehaviour
 
         player.inventoryItems = new List<Item>(inventoryItems);
         player.inventoryArmors = new List<ArmorData>(inventoryArmors);
-        player.leftHandWeapon = leftHandWeapon;
-        player.rightHandWeapon = rightHandWeapon;
+        player.equippedWeapon = equippedWeapon;
 
         // Load equipped armor into body parts and runtime map
         player.equippedArmorByPart = new Dictionary<BodyPartType, ArmorData>();

@@ -10,7 +10,7 @@ public class TacticalVisor : MonoBehaviour, IPassiveItem
     public void ApplyEffect(Character character)
     {
         // Only apply if using a ranged weapon
-        if (character.rightHandWeapon != null && character.rightHandWeapon.weaponType == WeaponType.Ranged_Weapon)
+        if (character.equippedWeapon != null && character.equippedWeapon.weaponType == WeaponType.Ranged_Weapon)
         {
             character.attack += bonusRangedDamage;
             character.bonusAttack += bonusRangedDamage;

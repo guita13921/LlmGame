@@ -5,7 +5,6 @@ using UnityEngine.EventSystems;
 public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Slot Settings")]
-    public bool isRightHand;
     public Image slotImage;
 
     [Header("Tooltip")]
@@ -15,9 +14,8 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, I
     private BattleManager battleManager;
     private BattleInventoryUI inventoryUI;
 
-    [Header("Empty Slot Icons")]
-    public Sprite emptyLeftHandIcon;
-    public Sprite emptyRightHandIcon;
+    [Header("Empty Slot Icon")]
+    public Sprite emptySlotIcon;
 
     private void Awake()
     {
@@ -43,7 +41,7 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, I
         }
         else
         {
-            slotImage.sprite = isRightHand ? emptyRightHandIcon : emptyLeftHandIcon;
+            slotImage.sprite = emptySlotIcon;
             slotImage.enabled = true;
         }
     }
@@ -59,23 +57,16 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, I
         if (battleManager != null && (!battleManager.isActionPhase || battleManager.currentActingCharacter != player))
             return;
 
-        Weapon oldLeft = player.leftHandWeapon;
-        Weapon oldRight = player.rightHandWeapon;
+        Weapon oldWeapon = player.equippedWeapon;
 
-        if (player.EquipWeapon(weapon, isRightHand))
+        if (player.EquipWeapon(weapon))
         {
             player.inventoryItems.Remove(weapon);
 
-            if (oldLeft != null && oldLeft != player.leftHandWeapon && oldLeft != player.rightHandWeapon)
+            if (oldWeapon != null && oldWeapon != player.equippedWeapon)
             {
-                if (!player.inventoryItems.Contains(oldLeft))
-                    player.inventoryItems.Add(oldLeft);
-            }
-
-            if (oldRight != null && oldRight != player.leftHandWeapon && oldRight != player.rightHandWeapon && oldRight != oldLeft)
-            {
-                if (!player.inventoryItems.Contains(oldRight))
-                    player.inventoryItems.Add(oldRight);
+                if (!player.inventoryItems.Contains(oldWeapon))
+                    player.inventoryItems.Add(oldWeapon);
             }
 
             drag.MarkEquipped();
@@ -87,7 +78,7 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, I
     // === Tooltip logic ===
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Weapon equippedWeapon = isRightHand ? player?.rightHandWeapon : player?.leftHandWeapon;
+        Weapon equippedWeapon = player?.equippedWeapon;
 
         if (equippedWeapon != null && tooltip != null)
         {

@@ -34,7 +34,7 @@ public class CombatHUDProcessor : MonoBehaviour, IPassiveItem, ITurnListener, ID
         if (usedThisTurn || source != owner || target == null)
             return;
 
-        Weapon weapon = owner.rightHandWeapon ?? owner.leftHandWeapon;
+        Weapon weapon = owner.equippedWeapon;
         if (weapon != null && weapon.weaponType == WeaponType.Ranged_Weapon)
         {
             target.TakeDamage(bonusDamage);

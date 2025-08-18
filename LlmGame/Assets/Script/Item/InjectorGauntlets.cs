@@ -17,7 +17,7 @@ public class InjectorGauntlets : MonoBehaviour, IPassiveItem, IDamageReaction
     {
         if (source == null || target == null) return;
 
-        Weapon weapon = source.rightHandWeapon ?? source.leftHandWeapon;
+        Weapon weapon = source.equippedWeapon;
         if (weapon == null || weapon.weaponType != WeaponType.Melee_Weapon) return;
 
         if (Random.value <= STATUS_CHANCE)

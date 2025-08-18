@@ -23,7 +23,7 @@ public class RecoilStabilizerArmor : MonoBehaviour, IPassiveItem, IDamageReactio
     private Weapon GetWeapon()
     {
         if (owner is Player p)
-            return p.rightHandWeapon ?? p.leftHandWeapon;
+            return p.equippedWeapon;
         return null;
     }
 

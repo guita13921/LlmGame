@@ -157,7 +157,7 @@ public class DamageCalculator : MonoBehaviour
 
         // 🔍 Check for Ghostscope Overlay (ignore feasibility/potential reduction with ranged weapons)
         bool ignoreArmorPenalty = false;
-        Weapon activeWeapon = attacker is Player ap ? ap.rightHandWeapon ?? ap.leftHandWeapon : null;
+        Weapon activeWeapon = attacker is Player ap ? ap.equippedWeapon : null;
         if (activeWeapon != null && activeWeapon.weaponType == WeaponType.Ranged_Weapon)
         {
             foreach (var part in attacker.bodyParts)
@@ -239,7 +239,7 @@ public class DamageCalculator : MonoBehaviour
         if (target.currentshield <= 0)
         {
             float splitDamage = scaledFinalDamage / selectedTargetParts.Count;
-            Weapon usedWeapon = attacker is Player player ? player.rightHandWeapon : null;
+            Weapon usedWeapon = attacker is Player player ? player.equippedWeapon : null;
 
             foreach (var part in selectedTargetParts)
             {
@@ -362,7 +362,7 @@ public class DamageCalculator : MonoBehaviour
         float finalPotential = Mathf.Max(0f, potential + potentialModifierSum);
 
         bool ignoreArmorPenalty = false;
-        Weapon activeWeapon = attacker is Player ap ? ap.rightHandWeapon ?? ap.leftHandWeapon : null;
+        Weapon activeWeapon = attacker is Player ap ? ap.equippedWeapon : null;
         if (activeWeapon != null && activeWeapon.weaponType == WeaponType.Ranged_Weapon)
         {
             foreach (var part in attacker.bodyParts)
@@ -442,7 +442,7 @@ public class DamageCalculator : MonoBehaviour
         if (target.currentshield <= 0)
         {
             float damagePerPart = scaledFinalDamage / selectedTargetParts.Count;
-            Weapon weapon = attacker is Player player ? player.rightHandWeapon : null;
+            Weapon weapon = attacker is Player player ? player.equippedWeapon : null;
 
             if (attacker.currentSkill != null && attacker.currentSkill.isDamagePercentagePart)
             {

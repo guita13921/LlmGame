@@ -73,8 +73,8 @@ public class Character : MonoBehaviour
     [SerializeField] public List<ArmorData> inventoryArmors;
 
     [Header("Equipment")]
-    public Weapon leftHandWeapon;
-    public Weapon rightHandWeapon;
+    // Characters now use a single weapon slot instead of separate left/right hands
+    public Weapon equippedWeapon;
     [SerializeField] public Dictionary<BodyPartType, ArmorData> equippedArmorByPart = new();
 
     [Header("Active Items")]
@@ -660,54 +660,18 @@ public class Character : MonoBehaviour
 
     #region  Equipment
 
-    public bool EquipWeapon(Weapon weapon, bool isRightHand)
+    public bool EquipWeapon(Weapon weapon)
     {
         if (weapon == null) return false;
 
-        if (weapon.isTwoHandWeapon)
-        {
-            // Two-handed weapons occupy both hands
-            leftHandWeapon = weapon;
-            rightHandWeapon = weapon;
-        }
-        else
-        {
-            // Equip normally
-            if (isRightHand)
-                rightHandWeapon = weapon;
-            else
-                leftHandWeapon = weapon;
-
-            // Unequip two-hand if one-handed weapon is equipped
-            if (leftHandWeapon != rightHandWeapon)
-            {
-                if (leftHandWeapon?.isTwoHandWeapon == true)
-                    leftHandWeapon = null;
-
-                if (rightHandWeapon?.isTwoHandWeapon == true)
-                    rightHandWeapon = null;
-            }
-        }
-
+        // Single equipment slot – simply replace whatever was previously equipped
+        equippedWeapon = weapon;
         return true;
     }
 
-    public void UnequipRightHand()
+    public void UnequipWeapon()
     {
-        rightHandWeapon = null;
-
-        // If it's a two-handed weapon, remove both
-        if (leftHandWeapon?.isTwoHandWeapon == true)
-            leftHandWeapon = null;
-    }
-
-    public void UnequipLeftHand()
-    {
-        leftHandWeapon = null;
-
-        // If it's a two-handed weapon, remove both
-        if (rightHandWeapon?.isTwoHandWeapon == true)
-            rightHandWeapon = null;
+        equippedWeapon = null;
     }
 
     #endregion

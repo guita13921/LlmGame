@@ -19,7 +19,7 @@ public class StabilizerGloves : MonoBehaviour, IPassiveItem, IDamageReaction
     public void OnBeforeDamage(Character source, Character target, ref int damage)
     {
         if (source != owner) return;
-        Weapon weapon = owner.rightHandWeapon ?? owner.leftHandWeapon;
+        Weapon weapon = owner.equippedWeapon;
         if (weapon != null && weapon.weaponType == WeaponType.Ranged_Weapon)
         {
             damage += damageBonus;
