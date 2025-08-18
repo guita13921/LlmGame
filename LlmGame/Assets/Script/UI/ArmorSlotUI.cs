@@ -42,7 +42,7 @@ public class ArmorSlotUI : MonoBehaviour, IDropHandler
             var battleInv = FindObjectOfType<BattleInventoryUI>();
             battleInv?.RefreshUI();
             var mapInv = FindObjectOfType<MapInventoryUI>();
-            mapInv?.RefreshUI();
+            //mapInv?.RefreshUI();
         }
     }
 }
