@@ -8,7 +8,7 @@ public class HawkEyeLens : MonoBehaviour, IPassiveItem
     {
         if (character is Player player)
         {
-            Weapon weapon = player.rightHandWeapon ?? player.leftHandWeapon;
+            Weapon weapon = player.equippedWeapon;
             if (weapon != null && weapon.weaponType == WeaponType.Ranged_Weapon)
             {
                 player.possibilityPool.AddModifier(StatusChanceType.Critical, critBonus);

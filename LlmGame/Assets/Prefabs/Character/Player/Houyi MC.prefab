@@ -624,8 +624,7 @@ MonoBehaviour:
   turnGauge: 0
   inventoryItems: []
   inventoryArmors: []
-  leftHandWeapon: {fileID: 0}
-  rightHandWeapon: {fileID: 0}
+  equippedWeapon: {fileID: 0}
   activeItem: []
   isUsingConsumeTurnItem: 0
 --- !u!114 &7262446337314057770

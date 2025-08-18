@@ -22,8 +22,8 @@ public class DefaultPlayerConfig : ScriptableObject
     [Header("Starting Inventory & Equipment")]
     public List<Item> startingInventory = new List<Item>();
 
-    public Weapon leftHandWeapon;
-    public Weapon rightHandWeapon;
+    // Single starting weapon
+    public Weapon startingWeapon;
 
     public List<PassiveItemData> startingPassives = new List<PassiveItemData>();
 

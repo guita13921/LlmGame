@@ -10,7 +10,7 @@ public class CombatGrips : MonoBehaviour, IPassiveItem
 
     public void ApplyEffect(Character character)
     {
-        Weapon weapon = character.rightHandWeapon;
+        Weapon weapon = character.equippedWeapon;
 
         if (weapon != null && weapon.weaponType == WeaponType.Melee_Weapon)
         {

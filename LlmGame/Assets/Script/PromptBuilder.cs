@@ -239,11 +239,8 @@ public static class PromptBuilder
         // Prepare items to check: equipped weapons + Sub_Weapons in inventory
         List<Item> itemsToCheck = new List<Item>();
 
-        if (battleManager.player.leftHandWeapon != null)
-            itemsToCheck.Add(battleManager.player.leftHandWeapon);
-
-        if (battleManager.player.rightHandWeapon != null)
-            itemsToCheck.Add(battleManager.player.rightHandWeapon);
+        if (battleManager.player.equippedWeapon != null)
+            itemsToCheck.Add(battleManager.player.equippedWeapon);
 
         foreach (var item in battleManager.player.inventoryItems)
         {

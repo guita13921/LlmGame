@@ -353,8 +353,7 @@ public class BattleManager : MonoBehaviour
             item.isActive = false;
 
         // ✅ Weapon activation
-        ProcessWeaponForActivation(enemy.leftHandWeapon, lowerAction, enemy);
-        ProcessWeaponForActivation(enemy.rightHandWeapon, lowerAction, enemy);
+        ProcessWeaponForActivation(enemy.equippedWeapon, lowerAction, enemy);
 
         // ✅ Optional: Activate items based on keywords
         foreach (var item in enemy.activeItem)

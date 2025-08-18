@@ -16,8 +16,8 @@ public class BattleInventoryUI : MonoBehaviour
     public GameObject inventoryButtonPrefab;
 
     [Header("Equipment Slots")]
-    public WeaponSlotUI leftHandSlot;
-    public WeaponSlotUI rightHandSlot;
+    // UI now exposes a single weapon slot
+    public WeaponSlotUI weaponSlot;
 
     private void Awake()
     {
@@ -65,8 +65,7 @@ public class BattleInventoryUI : MonoBehaviour
         }
 
         // Update equipped weapon slots
-        leftHandSlot?.SetWeapon(player.leftHandWeapon);
-        rightHandSlot?.SetWeapon(player.rightHandWeapon);
+        weaponSlot?.SetWeapon(player.equippedWeapon);
     }
 
     private void CreateConsumableEntry(ConsumeTurnItem item)

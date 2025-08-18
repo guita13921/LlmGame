@@ -32,12 +32,8 @@ public class InputKeywordHighlighter : MonoBehaviour
             return;
         }
 
-        // ✅ Add Main_Weapon keywords from equipped weapons
-        AddWeaponKeywords(battleManager.player.leftHandWeapon, ItemType.Main_Weapon);
-        if (battleManager.player.rightHandWeapon != battleManager.player.leftHandWeapon)
-        {
-            AddWeaponKeywords(battleManager.player.rightHandWeapon, ItemType.Main_Weapon);
-        }
+        // ✅ Add Main_Weapon keywords from equipped weapon
+        AddWeaponKeywords(battleManager.player.equippedWeapon, ItemType.Main_Weapon);
 
         // ✅ Add Sub_Weapon keywords from inventory
         foreach (var item in battleManager.player.inventoryItems)
