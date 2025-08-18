@@ -37,6 +37,12 @@ public class ArmorSlotUI : MonoBehaviour, IDropHandler
             player.equippedArmorByPart[slotType] = armor;
 
             drag.MarkEquipped();
+
+            // Refresh any inventory UIs so visuals stay in sync
+            var battleInv = FindObjectOfType<BattleInventoryUI>();
+            battleInv?.RefreshUI();
+            var mapInv = FindObjectOfType<MapInventoryUI>();
+            mapInv?.RefreshUI();
         }
     }
 }
