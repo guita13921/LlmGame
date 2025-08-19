@@ -28,7 +28,7 @@ public class EquippedPassiveItemsPanel : MonoBehaviour
     {
         // Initial state: panel closed
         gameObject.SetActive(false);
-        if (openButton != null) openButton.gameObject.SetActive(true);
+        //if (openButton != null) openButton.gameObject.SetActive(true);
         if (closeButton != null) closeButton.gameObject.SetActive(false);
     }
 

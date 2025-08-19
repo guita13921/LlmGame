@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [System.Serializable]
@@ -63,10 +64,15 @@ public class BodyPartData : ScriptableObject
             return;
 
         GameObject instance = Instantiate(armorToEquip.itemBehaviorPrefab, character.transform);
-        character.RegisterRuntimePassive(instance);
+
+        // Add the root component (or a specific script) to runtime list
+        var behavior = instance.GetComponent<MonoBehaviour>();
+        if (behavior != null)
+            character.runtimePassiveBehaviors.Add(behavior);
 
         Debug.Log($"✅ Equipped armor with behavior: {armorToEquip.armorName}");
     }
+
 
     public bool TryEquipArmor(ArmorData armor)
     {
@@ -84,6 +90,31 @@ public class BodyPartData : ScriptableObject
         return true;
     }
 
+    public void ClearArmor(Character character)
+    {
+        if (equippedArmor == null)
+            return;
+
+        // Attempt to find and remove the runtime passive behavior if it exists
+        if (equippedArmor.itemBehaviorPrefab != null)
+        {
+            string prefabName = equippedArmor.itemBehaviorPrefab.name;
+
+            // Find the attached MonoBehaviour in the runtimePassiveBehaviors list
+            var behaviorToRemove = character.runtimePassiveBehaviors
+                .FirstOrDefault(b => b != null && b.name.Contains(prefabName));
+
+            if (behaviorToRemove != null)
+            {
+                character.runtimePassiveBehaviors.Remove(behaviorToRemove);
+                GameObject.Destroy(behaviorToRemove.gameObject);
+            }
+        }
+
+        Debug.Log($"❎ Unequipped armor from {type}: {equippedArmor.armorName}");
+
+        equippedArmor = null;
+    }
 
 
 }

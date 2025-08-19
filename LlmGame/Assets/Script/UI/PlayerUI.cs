@@ -5,21 +5,23 @@ using TMPro;
 public class PlayerUI : MonoBehaviour
 {
     [Header("References")]
-    public Player player; // Drag your Player object here in the inspector
+    public Player player;
+
     [Header("HP UI")]
-    public Image hpFill; // Image with Fill Method set to Horizontal
+    public Image hpFill;
     public TMP_Text hpCountText;
 
     [Header("MP UI")]
-    public Image mpFill; // Image with Fill Method set to Horizontal
+    public Image mpFill;
     public TMP_Text mpCountText;
+
+    [Header("Money UI")]
+    public TMP_Text moneyText;
 
     private void Start()
     {
         if (player == null)
-        {
             player = FindObjectOfType<Player>();
-        }
 
         UpdateUI();
     }
@@ -48,5 +50,9 @@ public class PlayerUI : MonoBehaviour
 
         if (mpCountText != null)
             mpCountText.text = $"{player.currentMP} / {player.maxMP} ({Mathf.RoundToInt(mpPercent * 100f)}%)";
+
+        // === MONEY ===
+        if (moneyText != null)
+            moneyText.text = $"Money: {player.money:N0}";
     }
 }

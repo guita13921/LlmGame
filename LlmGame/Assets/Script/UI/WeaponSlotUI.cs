@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler
+public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [Header("Slot Settings")]
     public Image slotImage;
@@ -12,7 +12,7 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, I
 
     private Player player;
     private BattleManager battleManager;
-    private BattleInventoryUI inventoryUI;
+    private MapInventoryUI inventoryUI;
 
     [Header("Empty Slot Icon")]
     public Sprite emptySlotIcon;
@@ -24,7 +24,7 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, I
 
         player = FindObjectOfType<Player>();
         battleManager = FindObjectOfType<BattleManager>();
-        inventoryUI = FindObjectOfType<BattleInventoryUI>();
+        inventoryUI = FindObjectOfType<MapInventoryUI>();
 
         if (tooltip == null)
             tooltip = FindObjectOfType<WeaponTooltip>();
@@ -90,4 +90,29 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, I
     {
         tooltip?.HideTooltip();
     }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        // Right-click to unequip
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            if (player != null && player.equippedWeapon != null)
+            {
+                // Add equipped weapon back to inventory
+                if (!player.inventoryItems.Contains(player.equippedWeapon))
+                    player.inventoryItems.Add(player.equippedWeapon);
+
+                // Unequip
+                player.equippedWeapon = null;
+
+                // Update UI
+                SetWeapon(null);
+
+                // Optional: Refresh inventory UI if needed
+                inventoryUI?.RefreshUI();
+            }
+        }
+        inventoryUI?.RefreshUI();
+    }
+
 }

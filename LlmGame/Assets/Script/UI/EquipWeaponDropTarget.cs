@@ -9,6 +9,12 @@ public class EquipWeaponDropTarget : MonoBehaviour, IDropHandler
     [SerializeField] private Text equippedLabel;
     [SerializeField] private Image equippedIcon;
     [SerializeField] private Sprite defaultIcon;
+    private MapInventoryUI mapInventoryUI;
+
+    private void Awake()
+    {
+        mapInventoryUI = FindObjectOfType<MapInventoryUI>();
+    }
 
     public void OnDrop(PointerEventData eventData)
     {
@@ -18,25 +24,40 @@ public class EquipWeaponDropTarget : MonoBehaviour, IDropHandler
         if (character == null) character = FindObjectOfType<Character>();
         if (character == null) return;
 
-        character.equippedWeapon = drag.weaponData;   // equip
-        drag.MarkEquipped();                          // remove the dragged UI entry
+        Weapon newWeapon = drag.weaponData;
+        Weapon oldWeapon = character.equippedWeapon;
 
-        // Update simple UI (name + icon)
+        // 🔄 Equip new weapon first
+        character.equippedWeapon = newWeapon;
+
+        // ✅ Remove new weapon from inventory if present
+        character.inventoryItems.Remove(newWeapon);
+
+        // ✅ Return old weapon to inventory (if it's not null and not the same as new)
+        if (oldWeapon != null && oldWeapon != newWeapon)
+        {
+            if (!character.inventoryItems.Contains(oldWeapon))
+                character.inventoryItems.Add(oldWeapon);
+        }
+
+        drag.MarkEquipped();
+
+        // ✅ Update UI (already present in your version)
         if (equippedLabel != null)
         {
-            string displayName = drag.weaponData.name;
-            var nameField = drag.weaponData.GetType().GetField("weaponName", BindingFlags.Public | BindingFlags.Instance);
+            string displayName = newWeapon.name;
+            var nameField = newWeapon.GetType().GetField("weaponName", BindingFlags.Public | BindingFlags.Instance);
             if (nameField != null && nameField.FieldType == typeof(string))
             {
-                var val = nameField.GetValue(drag.weaponData) as string;
+                var val = nameField.GetValue(newWeapon) as string;
                 if (!string.IsNullOrEmpty(val)) displayName = val;
             }
             else
             {
-                var itemNameField = drag.weaponData.GetType().GetField("itemName", BindingFlags.Public | BindingFlags.Instance);
+                var itemNameField = newWeapon.GetType().GetField("itemName", BindingFlags.Public | BindingFlags.Instance);
                 if (itemNameField != null && itemNameField.FieldType == typeof(string))
                 {
-                    var val = itemNameField.GetValue(drag.weaponData) as string;
+                    var val = itemNameField.GetValue(newWeapon) as string;
                     if (!string.IsNullOrEmpty(val)) displayName = val;
                 }
             }
@@ -46,12 +67,18 @@ public class EquipWeaponDropTarget : MonoBehaviour, IDropHandler
         if (equippedIcon != null)
         {
             Sprite icon = null;
-            var iconField = drag.weaponData.GetType().GetField("icon", BindingFlags.Public | BindingFlags.Instance);
+            var iconField = newWeapon.GetType().GetField("icon", BindingFlags.Public | BindingFlags.Instance);
             if (iconField != null && iconField.FieldType == typeof(Sprite))
-                icon = iconField.GetValue(drag.weaponData) as Sprite;
+                icon = iconField.GetValue(newWeapon) as Sprite;
 
             equippedIcon.sprite = icon != null ? icon : defaultIcon;
             equippedIcon.enabled = (equippedIcon.sprite != null);
         }
+
+        // ✅ Refresh UI (so list updates too)
+        FindObjectOfType<MapInventoryUI>()?.RefreshUI();
+        FindObjectOfType<BattleInventoryUI>()?.RefreshUI();
     }
+
+
 }

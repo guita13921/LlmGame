@@ -220,6 +220,11 @@ public class MapInventoryUI : MonoBehaviour
 
             var entry = Instantiate(weaponItemPrefab, weaponListContainer);
 
+            // 🔹 Assign weaponData to InventoryWeaponDragHandler
+            var dragHandler = entry.GetComponent<InventoryWeaponDragHandler>();
+            if (dragHandler != null)
+                dragHandler.weaponData = weapon;
+
             // Set label (try common fields: weaponName, itemName; fallback to Unity name)
             var label = entry.GetComponentInChildren<Text>();
             if (label != null)
@@ -256,6 +261,7 @@ public class MapInventoryUI : MonoBehaviour
                 img.enabled = (img.sprite != null);
             }
         }
+
     }
 
     // === Equipped Weapon Panel ===
@@ -307,5 +313,13 @@ public class MapInventoryUI : MonoBehaviour
             equippedWeaponIcon.sprite = iconToUse != null ? iconToUse : defaultWeaponIcon;
             equippedWeaponIcon.enabled = (equippedWeaponIcon.sprite != null);
         }
+    }
+
+    public void RefreshUI()
+    {
+        PopulateEquippedWeaponUI();
+        PopulateWeaponList();
+        // Optionally:
+        PopulateArmorList(); // if your armor can change during battle
     }
 }
