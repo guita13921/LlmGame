@@ -51,6 +51,7 @@ public class Character : MonoBehaviour
 
     [Header("Status Effects")]
     [SerializeField] public List<TurnStatusEffect> activeStatusEffects = new List<TurnStatusEffect>();
+    public event Action StatusEffectsChanged;
 
     [Header("Critical")]
     public bool isCritical;
@@ -351,6 +352,8 @@ public class Character : MonoBehaviour
             activeStatusEffects.Add(contam);
             Debug.Log($"{characterName} becomes CONTAMINATED.");
         }
+
+        StatusEffectsChanged?.Invoke();
     }
 
 
@@ -582,6 +585,8 @@ public class Character : MonoBehaviour
         {
             activeStatusEffects.Remove(contam);
         }
+
+        StatusEffectsChanged?.Invoke();
     }
 
     private void TryApplyNerveRotVialDebuff(Character source)
