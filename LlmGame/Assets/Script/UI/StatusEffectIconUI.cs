@@ -18,7 +18,7 @@ public class StatusEffectIconUI : MonoBehaviour, IPointerEnterHandler, IPointerE
         effect = status;
         tooltip = tooltipUI;
         UpdateVisual();
-        animator?.SetTrigger("Activate");
+        //animator?.SetTrigger("Activate");
     }
 
     /// <summary>Update the underlying effect (e.g., remaining turns).</summary>

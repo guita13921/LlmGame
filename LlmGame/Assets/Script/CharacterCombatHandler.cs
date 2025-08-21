@@ -25,6 +25,8 @@ public class CharacterCombatHandler : MonoBehaviour
 
     public IEnumerator PlayerAttack(CharacterActionData chosenAction, float feasibility, float potential, string effectValue, string effectDesc, Character target)
     {
+        Debug.Log("PlayerAttack");
+
         var player = battleManager.currentActingCharacter as Player;
         if (player == null || target == null || !target.IsAlive())
         {
@@ -196,6 +198,9 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         if (enemy == null || target == null || !target.IsAlive())
         {
+            Debug.Log(enemy);
+            Debug.Log(target);
+            Debug.Log(target.IsAlive());
             Debug.LogWarning("Invalid enemy or target.");
             yield break;
         }

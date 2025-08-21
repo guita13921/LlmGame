@@ -85,6 +85,7 @@ public class Character : MonoBehaviour
     public PossibilityPool possibilityPool { get; private set; }
     private Dictionary<string, int> customIntData = new();
 
+
     public void EquipPassiveItem(PassiveItemData itemData)
     {
         if (itemData == null) return;

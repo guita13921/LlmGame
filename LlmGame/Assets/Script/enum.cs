@@ -90,7 +90,7 @@ public enum StatusEffectType
     SpeedUp,
     CritChanceUp,
     CritDamageUp,
-    HealReduction // ✅ Let compiler assign next value
+    HealReduction
 }
 
 public enum StatusChanceType

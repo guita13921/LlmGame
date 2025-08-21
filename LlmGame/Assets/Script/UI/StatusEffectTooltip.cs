@@ -29,7 +29,6 @@ public class StatusEffectTooltip : MonoBehaviour
             iconImage.sprite = icon;
 
         gameObject.SetActive(true);
-        PositionTooltip(target);
     }
 
     public void HideTooltip()
@@ -37,12 +36,8 @@ public class StatusEffectTooltip : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void PositionTooltip(RectTransform target)
-    {
-        if (target == null) return;
-        RectTransform rect = transform as RectTransform;
-        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(null, target.position);
-        rect.position = screenPoint;
-    }
+    public Canvas canvas; // Assign this in the inspector
+
+
 }
 

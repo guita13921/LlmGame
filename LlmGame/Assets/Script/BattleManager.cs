@@ -216,7 +216,7 @@ public class BattleManager : MonoBehaviour
             }
 
             // 🎯 Perform normal attack
-            Character target = GetRandomOpponent(enemy);
+            Character target = player;
             if (target != null)
             {
                 Debug.Log($"Enemy {enemy.characterName} chosen action: {enemy.selectedAction.actionName}");
