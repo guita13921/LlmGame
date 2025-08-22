@@ -491,7 +491,16 @@ public class BattleManager : MonoBehaviour
         }
 
         character.animationFinished = false;
-        character.animator.SetTrigger(animationTriggerName);
+
+        var weaponAnim = character.GetComponent<PlayerWeaponAnimation>();
+        if (weaponAnim != null && animationTriggerName == "Attack")
+        {
+            weaponAnim.PlayAttack();
+        }
+        else
+        {
+            character.animator.SetTrigger(animationTriggerName);
+        }
 
         float timeout = 3f;
         float timer = 0f;

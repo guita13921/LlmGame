@@ -672,12 +672,16 @@ public class Character : MonoBehaviour
 
         // Single equipment slot – simply replace whatever was previously equipped
         equippedWeapon = weapon;
+
+        // Notify any weapon animation handler
+        GetComponent<PlayerWeaponAnimation>()?.OnWeaponEquipped(weapon);
         return true;
     }
 
     public void UnequipWeapon()
     {
         equippedWeapon = null;
+        GetComponent<PlayerWeaponAnimation>()?.OnWeaponEquipped(null);
     }
 
     #endregion
