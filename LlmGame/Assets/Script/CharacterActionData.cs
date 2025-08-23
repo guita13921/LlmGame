@@ -10,6 +10,9 @@ public class CharacterActionData : ScriptableObject
     [Tooltip("Number of turns before this action resolves. 0 means immediate.")]
     public int delayTurns = 0;
 
+    [Tooltip("If this is a charging move, the action that will be executed after the delay.")]
+    public CharacterActionData delayedAction;
+
     [Header("Multi-Hit Setup")]
     [Tooltip("List of effects and damage split for each hit.")]
     public List<HitEffectData> hitEffects = new List<HitEffectData> { new HitEffectData() };

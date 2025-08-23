@@ -44,6 +44,7 @@ public class Character : MonoBehaviour
     [Header("Actions")]
     public List<CharacterActionData> availableActions = new List<CharacterActionData>();
     public CharacterActionData selectedAction;
+    public CharacterActionData pendingDelayedAction;
     public int pendingDamage;
     public List<float> damagePortions = new List<float>();
     public Character damageTarget;
