@@ -199,10 +199,10 @@ public class ChatAI : MonoBehaviour
 
     }
 
-    public IEnumerator SendEnemyMessage(Character enemy, Character target, string proposedAction)
+    public IEnumerator SendEnemyMessage(Character enemy, Character target, CharacterActionData action)
     {
         // === STEP 1: Initial AI Prompt (Enemy Intent) ===
-        string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, proposedAction);
+        string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, action);
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
         Debug.Log("<color=yellow>[SendEnemyMessage] Initial Prompt:</color>\n" + prompt);
 
@@ -275,6 +275,28 @@ public class ChatAI : MonoBehaviour
             Debug.LogError("[SendEnemyMessage] Failed to get valid response after max attempts.");
             baseFeasibility = 5;
             basePotential = 5;
+        }
+
+        if (action.delayTurns > 0)
+        {
+            baseFeasibility = 10f;
+            basePotential = 0f;
+
+            string log = $"Turn {battleManager.turnCount}: {enemy.characterName} prepares {action.actionName}, warning {target.characterName}.";
+            battleManager.battleLog.Add(log);
+            Debug.Log(log);
+
+            responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
+                                 $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                                 $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                                 $"Effect: {baseEffect}";
+
+            Canvas.ForceUpdateCanvases();
+            scrollRect.verticalNormalizedPosition = 0f;
+            Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
+
+            yield return battleManager.StartCoroutine(battleManager.combatHandler.EndEnemyTurn());
+            yield break;
         }
 
         // === STEP 2: Apply Enemy Attack Using Initial Response ===

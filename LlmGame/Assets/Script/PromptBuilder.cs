@@ -88,8 +88,9 @@ public static class PromptBuilder
     }
 
 
-    public static string BuildEnemyPrompt(BattleManager battleManager, Character enemy, Character target, string proposedAction)
+    public static string BuildEnemyPrompt(BattleManager battleManager, Character enemy, Character target, CharacterActionData action)
     {
+        string proposedAction = action.actionName;
         string history = GetBattleHistory(battleManager);
 
         string effect = battleManager.combatHandler.TryApplyStatusEffects(enemy, target);
@@ -125,6 +126,7 @@ public static class PromptBuilder
 
         Proposed action by {enemy.characterName}:
         {proposedAction}
+        {(action.delayTurns > 0 ? $"This action is delayed by {action.delayTurns} turn(s), giving the player a warning to react." : string.Empty)}
 
         The effect that occurs: {effect}
 

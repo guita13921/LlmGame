@@ -4,7 +4,6 @@ using UnityEngine;
 using System.Text;
 using System.Linq;
 using TMPro;
-using System.Text.RegularExpressions; // Make sure this is at the top
 using Map;
 using UnityEngine.SceneManagement;
 
@@ -208,11 +207,12 @@ public class BattleManager : MonoBehaviour
                 yield break;
             }
 
-            // ✅ Check if enemy should use a consumable instead of attack
-            if (CheckAndActivateEnemyItems(enemy, enemy.selectedAction.actionName, out IEnumerator consumeRoutine))
+            // ✅ Automatically activate the enemy's equipped weapon
+            enemy.activeItem.Clear();
+            if (enemy.equippedWeapon != null)
             {
-                yield return StartCoroutine(consumeRoutine); // ✅ Use consumable
-                yield break; // ✅ End turn, skip attack
+                enemy.equippedWeapon.isActive = true;
+                enemy.activeItem.Add(enemy.equippedWeapon);
             }
 
             // 🎯 Perform normal attack
@@ -339,91 +339,6 @@ public class BattleManager : MonoBehaviour
 
         int randomIndex = Random.Range(0, enemy.actions.Count);
         return enemy.actions[randomIndex];
-    }
-
-    private bool CheckAndActivateEnemyItems(Enemy enemy, string enemyAction, out IEnumerator consumeRoutine)
-    {
-        string lowerAction = enemyAction.ToLower();
-
-        enemy.activeItem.Clear();
-        consumeRoutine = null;
-
-        // 🔁 Reset activation states
-        foreach (var item in enemy.inventoryItems)
-            item.isActive = false;
-
-        // ✅ Weapon activation
-        ProcessWeaponForActivation(enemy.equippedWeapon, lowerAction, enemy);
-
-        // ✅ Optional: Activate items based on keywords
-        foreach (var item in enemy.activeItem)
-        {
-            if (item == null || item.keyWords == null) continue;
-
-            if (item is ConsumeTurnItem consumeItem)
-            {
-                foreach (string keyword in item.keyWords)
-                {
-                    string lowerKeyword = keyword.ToLower();
-
-                    Character healTarget = enemy;
-                    item.isActive = true;
-                    enemy.activeItem.Add(item);
-
-                    enemy.isUsingConsumeTurnItem = true;
-
-                    if (healTarget != null)
-                    {
-                        Debug.Log($"Enemy {enemy.characterName} will use {consumeItem.itemName} on {healTarget.characterName}");
-                        consumeRoutine = consumeItem.UseOnTarget(enemy, healTarget, this);
-                        return true;
-                    }
-                    else
-                    {
-                        Debug.LogWarning("No valid heal target found.");
-                    }
-
-                    return true;
-                }
-            }
-        }
-
-
-        return false; // No matching item to consume
-    }
-
-    private void ProcessWeaponForActivation(Weapon weapon, string lowerAction, Enemy enemy)
-    {
-        if (weapon == null || enemy == null)
-            return;
-
-        // Extract words from the action string
-        var actionWords = Regex.Matches(lowerAction, @"\b\w+\b")
-                               .Cast<Match>()
-                               .Select(m => m.Value.ToLower())
-                               .ToHashSet(); // For fast keyword lookup
-
-        bool keywordFound = false;
-
-        foreach (string keyword in weapon.keyWords)
-        {
-            if (!string.IsNullOrWhiteSpace(keyword) && actionWords.Contains(keyword.ToLower()))
-            {
-                if (!keywordFound)
-                {
-                    weapon.isActive = true;
-                    enemy.activeItem.Add(weapon);
-                    keywordFound = true;
-                }
-
-                Debug.Log($"Sub_Weapon '{weapon.itemName}' activated by keyword: '{keyword}' from action: '{lowerAction}'");
-            }
-        }
-
-        if (!keywordFound)
-        {
-            Debug.Log($"Sub_Weapon '{weapon.itemName}' remains inactive - no keywords matched");
-        }
     }
 
     public void SetUserMessage(string message)
