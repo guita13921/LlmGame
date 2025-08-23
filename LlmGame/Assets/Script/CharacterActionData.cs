@@ -13,4 +13,10 @@ public class CharacterActionData : ScriptableObject
     [Header("Multi-Hit Setup")]
     [Tooltip("List of effects and damage split for each hit.")]
     public List<HitEffectData> hitEffects = new List<HitEffectData> { new HitEffectData() };
+
+    [Header("Status Effect Chances")]
+    [Range(0f, 1f)] public float bleedChance = 0f;
+    [Range(0f, 1f)] public float poisonChance = 0f;
+    [Range(0f, 1f)] public float stunChance = 0f;
+    [Range(0f, 1f)] public float criticalChance = 0f;
 }
