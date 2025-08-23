@@ -191,7 +191,7 @@ public class CharacterCombatHandler : MonoBehaviour
     // เริ่มต้นการโจมตีของศัตรู
     public void EnemyAttack(Character enemy, Character target, CharacterActionData chosenAction)
     {
-        battleManager.StartCoroutine(battleManager.chatAI.SendEnemyMessage(enemy, target, chosenAction.actionName));
+        battleManager.StartCoroutine(battleManager.chatAI.SendEnemyMessage(enemy, target, chosenAction));
     }
 
     public IEnumerator ResolveEnemyAttack(Character enemy, Character target, CharacterActionData chosenAction, float feasibility, float potential, string effectValue, string effectDesc)
@@ -305,7 +305,7 @@ public class CharacterCombatHandler : MonoBehaviour
         yield return battleManager.StartCoroutine(EndEnemyTurn());
     }
 
-    private IEnumerator EndEnemyTurn()
+    public IEnumerator EndEnemyTurn()
     {
         yield return new WaitForSeconds(2.0f);
 
