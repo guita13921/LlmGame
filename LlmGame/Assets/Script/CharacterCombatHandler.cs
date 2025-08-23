@@ -327,8 +327,17 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         List<string> appliedEffects = new();
 
-        // 🔄 Refresh base chances from the attacker's active weapon(s)
+        // 🔄 Refresh base chances from weapons and action
         ApplyWeaponStatusChances(attacker);
+
+        // 🔧 Passive items may further modify chances
+        foreach (var behavior in attacker.runtimePassiveBehaviors)
+        {
+            if (behavior is IPossibilityModifier mod)
+            {
+                mod.ModifyChances(attacker.possibilityPool);
+            }
+        }
 
         // 🧠 Check if any passive guarantees crit (like BloodRushCore)
         bool forceCrit = false;
@@ -414,6 +423,7 @@ public class CharacterCombatHandler : MonoBehaviour
         float stun = 0f;
         float crit = 0f;
 
+        // ✅ Base chances from active weapons
         foreach (var item in attacker.activeItem)
         {
             if (item is Weapon w)
@@ -422,6 +432,30 @@ public class CharacterCombatHandler : MonoBehaviour
                 poison += w.poisonChance;
                 stun += w.stunChance;
                 crit += w.criticalChance;
+            }
+        }
+
+        // ✅ Action-specific bonuses
+        if (attacker.selectedAction != null)
+        {
+            bleed += attacker.selectedAction.bleedChance;
+            poison += attacker.selectedAction.poisonChance;
+            stun += attacker.selectedAction.stunChance;
+            crit += attacker.selectedAction.criticalChance;
+        }
+
+        // ✅ Enemy baseline critical chance based on encounter type
+        if (attacker is Enemy)
+        {
+            var nodeType = PlayerData.Instance != null ? PlayerData.Instance.nextNodeType : Map.NodeType.MinorEnemy;
+            switch (nodeType)
+            {
+                case Map.NodeType.MinorEnemy:
+                    crit += 0.05f;
+                    break;
+                case Map.NodeType.EliteEnemy:
+                    crit += 0.10f;
+                    break;
             }
         }
 
