@@ -200,7 +200,23 @@ public class BattleManager : MonoBehaviour
                 yield break;
             }
 
-            enemy.selectedAction = enemy.availableActions[0];
+            // Use any previously charged attack if present, otherwise pick a random action
+            if (enemy.pendingDelayedAction != null)
+            {
+                enemy.selectedAction = enemy.pendingDelayedAction;
+                enemy.pendingDelayedAction = null;
+            }
+            else
+            {
+                int index = Random.Range(0, enemy.availableActions.Count);
+                enemy.selectedAction = enemy.availableActions[index];
+
+                if (enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
+                {
+                    enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
+                }
+            }
+
             if (enemy.selectedAction == null)
             {
                 Debug.LogError($"{enemy.characterName} has a null selectedAction.");
