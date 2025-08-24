@@ -94,6 +94,24 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    public Enemy SpawnExtraEnemy(GameObject prefab)
+    {
+        if (prefab == null || enemySpawnPoints == null || enemySpawnPoints.Length == 0)
+            return null;
+
+        Transform spawnPoint = enemySpawnPoints[Random.Range(0, enemySpawnPoints.Length)];
+        GameObject enemyObj = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
+        Enemy enemy = enemyObj.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.turnGauge = 0f;
+            enemies.Add(enemy);
+            allCharacters.Add(enemy);
+        }
+
+        return enemy;
+    }
+
     private EnemyGroup GetRandomEnemyGroup(NodeType type, EnemyDifficulty difficulty)
     {
         List<EnemyGroup> pool = null;
@@ -200,20 +218,42 @@ public class BattleManager : MonoBehaviour
                 yield break;
             }
 
-            // Use any previously charged attack if present, otherwise pick a random action
-            if (enemy.pendingDelayedAction != null)
+            BossSkillBehavior bossAI = enemy.GetComponent<BossSkillBehavior>();
+
+            if (enemy.archetype == EnemyArchetype.Boss && bossAI != null)
             {
-                enemy.selectedAction = enemy.pendingDelayedAction;
-                enemy.pendingDelayedAction = null;
+                CharacterActionData action = bossAI.DecideAction();
+
+                if (bossAI.HandleSpecialAction(action))
+                {
+                    yield return StartCoroutine(combatHandler.EndEnemyTurn());
+                    yield break;
+                }
+
+                enemy.selectedAction = action;
+
+                if (enemy.selectedAction != null && enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
+                {
+                    enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
+                }
             }
             else
             {
-                int index = Random.Range(0, enemy.availableActions.Count);
-                enemy.selectedAction = enemy.availableActions[index];
-
-                if (enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
+                // Use any previously charged attack if present, otherwise pick a random action
+                if (enemy.pendingDelayedAction != null)
                 {
-                    enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
+                    enemy.selectedAction = enemy.pendingDelayedAction;
+                    enemy.pendingDelayedAction = null;
+                }
+                else
+                {
+                    int index = Random.Range(0, enemy.availableActions.Count);
+                    enemy.selectedAction = enemy.availableActions[index];
+
+                    if (enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
+                    {
+                        enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
+                    }
                 }
             }
 
