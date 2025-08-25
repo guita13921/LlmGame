@@ -166,7 +166,13 @@ public class BattleManager : MonoBehaviour
                 foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
                     listener.OnTurnStart(character);
 
-                character.ProcessStatusEffects();
+                string statusLog = character.ProcessStatusEffects();
+                if (!string.IsNullOrEmpty(statusLog))
+                {
+                    chatAI.responseText.text += $"Turn {turnCount} Start: {statusLog}\n";
+                    Canvas.ForceUpdateCanvases();
+                    chatAI.scrollRect.verticalNormalizedPosition = 0f;
+                }
 
                 foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
                     listener.OnTurnEnd(character);

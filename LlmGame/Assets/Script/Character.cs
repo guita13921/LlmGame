@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 public class Character : MonoBehaviour
@@ -358,15 +359,20 @@ public class Character : MonoBehaviour
     }
 
 
-    public virtual void ProcessStatusEffects()
+    public virtual string ProcessStatusEffects()
     {
+        var sb = new StringBuilder();
+
         if (mpRegenPerTurn > 0)
         {
             int before = currentMP;
             currentMP = Mathf.Min(maxMP, currentMP + mpRegenPerTurn);
             int gained = currentMP - before;
             if (gained > 0)
+            {
                 Debug.Log($"{characterName} regenerates {gained} MP.");
+                sb.AppendLine($"{characterName} regenerates {gained} MP.");
+            }
         }
 
         for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
@@ -377,6 +383,7 @@ public class Character : MonoBehaviour
             {
                 case StatusEffectType.Stun:
                     Debug.Log($"{characterName} is stunned and will skip this turn.");
+                    sb.AppendLine($"{characterName} is stunned and will skip this turn.");
                     break;
 
                 // 🔻 Debuffs
@@ -461,6 +468,7 @@ public class Character : MonoBehaviour
                         if (characterType == CharacterType.Android)
                             radDamage *= 2;
                         Debug.Log($"{characterName} suffers RADIATION for {radDamage} damage.");
+                        sb.AppendLine($"{characterName} suffers RADIATION for {radDamage} damage.");
                         TakeDamage(radDamage);
                         TryApplyHealReductionDebuff(effect.source);
                         break;
@@ -490,6 +498,7 @@ public class Character : MonoBehaviour
                         if (spreadToAllParts)
                         {
                             Debug.Log($"{characterName} suffers BLEED on ALL parts for {bleedDamage} damage.");
+                            sb.AppendLine($"{characterName} suffers BLEED on ALL parts for {bleedDamage} damage.");
                             if (currentshield <= 0)
                             {
                                 foreach (var part in bodyParts)
@@ -502,6 +511,7 @@ public class Character : MonoBehaviour
                         else
                         {
                             Debug.Log($"{characterName} suffers BLEED for {bleedDamage} damage.");
+                            sb.AppendLine($"{characterName} suffers BLEED for {bleedDamage} damage.");
                             TakeDamage(bleedDamage);
 
                             // 🔔 Notify observers (e.g., Blood Rush Core)
@@ -523,6 +533,7 @@ public class Character : MonoBehaviour
                         else if (effect.magnitude >= 3) poisonPercent = 0.15f;
                         int poisonDamage = Mathf.RoundToInt(maxHP * poisonPercent);
                         Debug.Log($"{characterName} suffers POISON for {poisonDamage} damage.");
+                        sb.AppendLine($"{characterName} suffers POISON for {poisonDamage} damage.");
                         TakeDamage(poisonDamage);
                         TryApplyNerveRotVialDebuff(effect.source);
                         break;
@@ -568,6 +579,7 @@ public class Character : MonoBehaviour
                 }
 
                 Debug.Log($"{characterName} is no longer affected by {effect.effectType}.");
+                sb.AppendLine($"{characterName} is no longer affected by {effect.effectType}.");
                 activeStatusEffects.RemoveAt(i);
             }
         }
@@ -588,6 +600,8 @@ public class Character : MonoBehaviour
         }
 
         StatusEffectsChanged?.Invoke();
+
+        return sb.ToString();
     }
 
     private void TryApplyNerveRotVialDebuff(Character source)

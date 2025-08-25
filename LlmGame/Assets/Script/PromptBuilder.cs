@@ -6,11 +6,9 @@ using Unity.VisualScripting;
 
 public static class PromptBuilder
 {
-    public static string BuildPlayerPrompt(BattleManager battleManager, Character targetEnemy, string userMessage)
+    public static string BuildPlayerPrompt(BattleManager battleManager, Character targetEnemy, string userMessage, string effect)
     {
         string history = GetBattleHistory(battleManager);
-
-        string effect = battleManager.combatHandler.TryApplyStatusEffects(battleManager.player, targetEnemy);
 
         // Detect selected parts in enemy based on user's action
         if (battleManager.player.isUsingUltimateSkill == false) PromptBuilder.DetectSelectedBodyParts(userMessage, targetEnemy, battleManager);
@@ -88,12 +86,10 @@ public static class PromptBuilder
     }
 
 
-    public static string BuildEnemyPrompt(BattleManager battleManager, Character enemy, Character target, CharacterActionData action)
+    public static string BuildEnemyPrompt(BattleManager battleManager, Character enemy, Character target, CharacterActionData action, string effect)
     {
         string proposedAction = action.actionName;
         string history = GetBattleHistory(battleManager);
-
-        string effect = battleManager.combatHandler.TryApplyStatusEffects(enemy, target);
 
         // Detect selected parts in player based on enemy's action
         PromptBuilder.DetectSelectedBodyParts(proposedAction, target, battleManager);

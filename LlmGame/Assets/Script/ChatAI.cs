@@ -22,6 +22,8 @@ public class ChatAI : MonoBehaviour
     public string baseEffect = "";
     public string baseEffectDesc = "";
 
+    public string turnEffectText = "";
+
     private string apiUrl = "https://diphtxovye.execute-api.ap-northeast-1.amazonaws.com/chatWithAI";
 
     private void Awake()
@@ -62,20 +64,22 @@ public class ChatAI : MonoBehaviour
         battleManager.SetUserMessage(safeMessage);
         PromptBuilder.CheckAndActivateItems(battleManager, userMessage, targetEnemy);
 
+        turnEffectText = battleManager.combatHandler.TryApplyStatusEffects(battleManager.player, targetEnemy);
+
         List<DamageType> enemyDamageTypes = new List<DamageType>();
         foreach (var weapon in targetEnemy.activeItem.OfType<Weapon>())
         {
             enemyDamageTypes.AddRange(weapon.damageType);
         }
 
-        string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage);
+        string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage, turnEffectText);
         StartCoroutine(SendMessageToAI(finalPrompt));
     }
 
     public IEnumerator SendMessageToAI(string userMessage)
     {
         // ✅ Optional: Simulate "thinking" delay before sending the prompt
-        responseText.text = "<i>AI is thinking...</i>";
+        responseText.text = $"Turn {battleManager.turnCount}: {battleManager.player.characterName} attacks to inflict a Critical or Status Effect. {turnEffectText}\n<i>AI is thinking...</i>";
         yield return new WaitForSeconds(1.5f); // Adjust this value as needed
 
         Character targetEnemy = battleManager.selectedTarget;
@@ -200,10 +204,11 @@ public class ChatAI : MonoBehaviour
     public IEnumerator SendEnemyMessage(Character enemy, Character target, CharacterActionData action)
     {
         // ✅ Optional: Simulate "thinking" delay for enemy AI
-        responseText.text = "<i>Enemy is planning...</i>";
+        turnEffectText = battleManager.combatHandler.TryApplyStatusEffects(enemy, target);
+        responseText.text = $"Turn {battleManager.turnCount}: {enemy.characterName} attacks to inflict a Critical or Status Effect. {turnEffectText}\n<i>Enemy is planning...</i>";
         yield return new WaitForSeconds(1f); // You can increase for more drama
 
-        string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, action);
+        string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, action, turnEffectText);
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
         Debug.Log("<color=yellow>[SendEnemyMessage] Initial Prompt:</color>\n" + prompt);
 
