@@ -335,13 +335,17 @@ public class ChatAI : MonoBehaviour
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
     }
 
-    private void AppendResponse(string message)
+    public void AppendResponse(string message)
     {
         if (responseText == null) return;
+
+        if (!string.IsNullOrEmpty(responseText.text))
+            responseText.text += "\n";
+
         responseText.text += message + "\n";
         Canvas.ForceUpdateCanvases();
         if (scrollRect != null)
-            scrollRect.verticalNormalizedPosition = 0f;
+            scrollRect.verticalNormalizedPosition = 1f;
     }
 
     public string EscapeJsonString(string str)
