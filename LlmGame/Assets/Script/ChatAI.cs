@@ -205,6 +205,23 @@ public class ChatAI : MonoBehaviour
         AppendResponse($"Turn {battleManager.turnCount}: {enemy.characterName} attacks to inflict a Critical or Status Effect. {turnEffectText}\n<i>Enemy is planning...</i>");
         yield return new WaitForSeconds(1f); // You can increase for more drama
 
+        var bossBehavior = enemy != null ? enemy.GetComponent<BossSkillBehavior>() : null;
+        if (bossBehavior != null && bossBehavior.TryGetBossSkillOutcome(action, out float skillFeas, out float skillPot))
+        {
+            baseFeasibility = skillFeas;
+            basePotential = skillPot;
+            baseFeasibilityDesc = "Boss skill";
+            basePotentialDesc = "No damage";
+            baseEffect = action != null ? action.actionName : "";
+            baseEffectDesc = "";
+
+            AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
+                           $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                           $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                           $"Effect: {baseEffect}");
+            yield break;
+        }
+
         string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, action, turnEffectText);
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
         Debug.Log("<color=yellow>[SendEnemyMessage] Initial Prompt:</color>\n" + prompt);

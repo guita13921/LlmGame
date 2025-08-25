@@ -149,4 +149,22 @@ public class BossSkillBehavior : MonoBehaviour
 
         return false;
     }
+
+    public bool TryGetBossSkillOutcome(CharacterActionData action, out float feasibility, out float potential)
+    {
+        feasibility = 0f;
+        potential = 0f;
+
+        if (action == null)
+            return false;
+
+        if (action == summonThugs || action == smokeVeil || action == kingsFury)
+        {
+            feasibility = 10f;
+            potential = 0f;
+            return true;
+        }
+
+        return false;
+    }
 }
