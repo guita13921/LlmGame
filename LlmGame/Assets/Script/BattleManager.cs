@@ -198,9 +198,7 @@ public class BattleManager : MonoBehaviour
                 string statusLog = character.ProcessStatusEffects();
                 if (!string.IsNullOrEmpty(statusLog))
                 {
-                    chatAI.responseText.text += $"Turn {turnCount} Start: {statusLog}\n";
-                    Canvas.ForceUpdateCanvases();
-                    chatAI.scrollRect.verticalNormalizedPosition = 0f;
+                    chatAI.AppendResponse($"Turn {turnCount} Start: {statusLog}");
                 }
 
                 foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
@@ -252,20 +250,39 @@ public class BattleManager : MonoBehaviour
 
             if (enemy.archetype == EnemyArchetype.Boss && bossAI != null)
             {
-                CharacterActionData action = bossAI.DecideAction();
-
-                // Special case: handle summon or other unique behavior
-                if (bossAI.HandleSpecialAction(action))
+                if (Random.value < 0.25f)
                 {
-                    battleLog.Add($"Turn {turnCount}: {enemy.characterName} used {action.actionName}.");
-                    yield return StartCoroutine(combatHandler.EndEnemyTurn());
-                    yield break;
+                    CharacterActionData action = bossAI.DecideAction();
+
+                    if (bossAI.HandleSpecialAction(action))
+                    {
+                        battleLog.Add($"Turn {turnCount}: {enemy.characterName} used {action.actionName}.");
+                        chatAI?.AppendResponse($"Turn {turnCount}: {enemy.characterName} used {action.actionName}");
+                        yield return StartCoroutine(combatHandler.EndEnemyTurn());
+                        yield break;
+                    }
+
+                    enemy.selectedAction = action;
+
+                    if (action != null && action.delayTurns > 0 && action.delayedAction != null)
+                        enemy.pendingDelayedAction = action.delayedAction;
                 }
+                else
+                {
+                    if (enemy.pendingDelayedAction != null)
+                    {
+                        enemy.selectedAction = enemy.pendingDelayedAction;
+                        enemy.pendingDelayedAction = null;
+                    }
+                    else
+                    {
+                        int index = Random.Range(0, enemy.availableActions.Count);
+                        enemy.selectedAction = enemy.availableActions[index];
 
-                enemy.selectedAction = action;
-
-                if (action != null && action.delayTurns > 0 && action.delayedAction != null)
-                    enemy.pendingDelayedAction = action.delayedAction;
+                        if (enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
+                            enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
+                    }
+                }
             }
             else
             {
