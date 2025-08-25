@@ -329,7 +329,9 @@ public class BattleManager : MonoBehaviour
     {
         if (self is Player)
         {
-            List<Enemy> aliveEnemies = enemies.FindAll(e => e.IsAlive());
+            List<Enemy> aliveEnemies = enemies
+                .Where(e => e.IsAlive() && !(e.GetComponent<BossSkillBehavior>()?.IsUntargetable() ?? false))
+                .ToList();
             if (aliveEnemies.Count > 0)
                 return aliveEnemies[Random.Range(0, aliveEnemies.Count)];
         }
@@ -347,6 +349,16 @@ public class BattleManager : MonoBehaviour
         if (selectedCharacter == null || !selectedCharacter.IsAlive()) return;
         if (isResolvingAction) return;
         if (selectedTarget == selectedCharacter) return;
+
+        if (selectedCharacter is Enemy enemy)
+        {
+            var bossAI = enemy.GetComponent<BossSkillBehavior>();
+            if (bossAI != null && bossAI.IsUntargetable())
+            {
+                Debug.Log("Cannot target this enemy while allies are alive.");
+                return;
+            }
+        }
 
         Debug.Log($"Player selected {selectedCharacter.characterName} as target!");
         selectedTarget = selectedCharacter;

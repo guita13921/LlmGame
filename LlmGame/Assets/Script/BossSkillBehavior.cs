@@ -23,6 +23,9 @@ public class BossSkillBehavior : MonoBehaviour
     private bool smokeVeilUsed = false;
     private bool kingsFuryUsed = false;
 
+    // Tracks whether Smoke Veil is currently active.
+    private bool smokeVeilActive = false;
+
     private void Awake()
     {
         enemy = GetComponent<Enemy>();
@@ -30,9 +33,28 @@ public class BossSkillBehavior : MonoBehaviour
             battleManager = FindObjectOfType<BattleManager>();
     }
 
+    public bool IsUntargetable()
+    {
+        return smokeVeilActive && battleManager != null && battleManager.enemies.Any(e => e != enemy && e.IsAlive());
+    }
+
     public CharacterActionData DecideAction()
     {
         if (enemy == null) return null;
+
+        if (enemy.pendingDelayedAction != null)
+        {
+            var pending = enemy.pendingDelayedAction;
+            enemy.pendingDelayedAction = null;
+            return pending;
+        }
+
+        enemy.possibilityPool.SetBaseChance(StatusChanceType.Bleed, 0f);
+        enemy.possibilityPool.SetBaseChance(StatusChanceType.Critical, 0f);
+
+        if (smokeVeilActive && battleManager != null && !battleManager.enemies.Any(e => e != enemy && e.IsAlive()))
+            smokeVeilActive = false;
+
         float hpPercent = (float)enemy.currentHP / enemy.maxHP;
 
         if (hpPercent <= 0.5f)
@@ -79,18 +101,49 @@ public class BossSkillBehavior : MonoBehaviour
         {
             summonUseCount++;
 
-            // Positions 0 and 1
             int[] spawnIndexes = new int[] { 0, 1 };
-            int count = Mathf.Min(spawnIndexes.Length, Random.Range(1, 3)); // 1 or 2 minions
+            int count = Mathf.Min(spawnIndexes.Length, Random.Range(1, 3));
 
             for (int i = 0; i < count; i++)
             {
                 GameObject prefab = Random.value < 0.5f ? pipeManPrefab : robotPrefab;
                 int index = spawnIndexes[i];
-
                 battleManager?.SpawnExtraEnemy(prefab, index);
             }
 
+            return true;
+        }
+
+        if (action == smokeVeil)
+        {
+            smokeVeilActive = true;
+            return true;
+        }
+
+        if (action == rallyOrders)
+        {
+            StatusEffectType buffType = Random.value < 0.5f ? StatusEffectType.AttackUp : StatusEffectType.DefenseUp;
+            foreach (var ally in battleManager.enemies.Where(e => e.IsAlive()))
+            {
+                TurnStatusEffect buff = new(buffType, 2, 1, enemy);
+                ally.ApplyStatusEffect(buff);
+            }
+            return true;
+        }
+
+        if (action == executionBullet)
+        {
+            enemy.possibilityPool.SetBaseChance(StatusChanceType.Bleed, 0.25f);
+            enemy.possibilityPool.SetBaseChance(StatusChanceType.Critical, 1f);
+            return false;
+        }
+
+        if (action == kingsFury)
+        {
+            TurnStatusEffect atk = new(StatusEffectType.AttackUp, 2, 1, enemy);
+            TurnStatusEffect spd = new(StatusEffectType.SpeedUp, 2, 1, enemy);
+            enemy.ApplyStatusEffect(atk);
+            enemy.ApplyStatusEffect(spd);
             return true;
         }
 
