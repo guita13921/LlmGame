@@ -257,8 +257,9 @@ public class BattleManager : MonoBehaviour
                 // Special case: handle summon or other unique behavior
                 if (bossAI.HandleSpecialAction(action))
                 {
+                    battleLog.Add($"Turn {turnCount}: {enemy.characterName} used {action.actionName}.");
                     yield return StartCoroutine(combatHandler.EndEnemyTurn());
-                    //yield break;
+                    yield break;
                 }
 
                 enemy.selectedAction = action;

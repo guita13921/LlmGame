@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class BossSkillBehavior : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class BossSkillBehavior : MonoBehaviour
     [Header("Summon Prefabs")]
     public GameObject pipeManPrefab;
     public GameObject robotPrefab;
+    public BossActionEffect actionEffect;
 
     private int summonUseCount = 0;
     private bool smokeVeilUsed = false;
@@ -41,6 +43,11 @@ public class BossSkillBehavior : MonoBehaviour
     public CharacterActionData DecideAction()
     {
         if (enemy == null) return null;
+
+        if (summonUseCount == 0 && battleManager != null && battleManager.turnCount == 1 && summonThugs != null)
+        {
+            return summonThugs;
+        }
 
         if (enemy.pendingDelayedAction != null)
         {
@@ -78,12 +85,19 @@ public class BossSkillBehavior : MonoBehaviour
             return rallyOrders;
         }
 
-        return enemy.availableActions.FirstOrDefault(a =>
-            a != null &&
-            a != smokeVeil &&
-            a != rallyOrders &&
-            a != executionBullet &&
-            a != kingsFury) ?? enemy.availableActions.FirstOrDefault();
+        List<CharacterActionData> candidates = enemy.availableActions
+            .Where(a => a != null &&
+                        a != summonThugs &&
+                        a != smokeVeil &&
+                        a != rallyOrders &&
+                        a != executionBullet &&
+                        a != kingsFury)
+            .ToList();
+
+        if (candidates.Count > 0)
+            return candidates[Random.Range(0, candidates.Count)];
+
+        return enemy.availableActions[Random.Range(0, enemy.availableActions.Count)];
     }
 
     public bool HandleSpecialAction(CharacterActionData action)
@@ -102,12 +116,14 @@ public class BossSkillBehavior : MonoBehaviour
                 battleManager?.SpawnExtraEnemy(prefab, index);
             }
 
+            actionEffect?.PlayEffect();
             return true;
         }
 
         if (action == smokeVeil)
         {
             smokeVeilActive = true;
+            actionEffect?.PlayEffect();
             return true;
         }
 
@@ -119,6 +135,7 @@ public class BossSkillBehavior : MonoBehaviour
                 TurnStatusEffect buff = new(buffType, 2, 1, enemy);
                 ally.ApplyStatusEffect(buff);
             }
+            actionEffect?.PlayEffect();
             return true;
         }
 
@@ -135,6 +152,7 @@ public class BossSkillBehavior : MonoBehaviour
             TurnStatusEffect spd = new(StatusEffectType.SpeedUp, 2, 1, enemy);
             enemy.ApplyStatusEffect(atk);
             enemy.ApplyStatusEffect(spd);
+            actionEffect?.PlayEffect();
             return true;
         }
 

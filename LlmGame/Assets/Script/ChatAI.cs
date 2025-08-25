@@ -14,6 +14,7 @@ public class ChatAI : MonoBehaviour
     public TMP_Text responseText;
     public GameObject inputPanel;
     public ScrollRect scrollRect;
+    public Button sendButton;
 
     public float baseFeasibility = 0f;
     public float basePotential = 0f;
@@ -71,6 +72,9 @@ public class ChatAI : MonoBehaviour
         {
             enemyDamageTypes.AddRange(weapon.damageType);
         }
+
+        if (sendButton != null)
+            sendButton.gameObject.SetActive(false);
 
         string finalPrompt = PromptBuilder.BuildPlayerPrompt(battleManager, targetEnemy, safeMessage, turnEffectText);
         StartCoroutine(SendMessageToAI(finalPrompt));
@@ -334,10 +338,7 @@ public class ChatAI : MonoBehaviour
     private void AppendResponse(string message)
     {
         if (responseText == null) return;
-        if (!string.IsNullOrEmpty(responseText.text))
-            responseText.text += "\n";
-
-        responseText.text += message;
+        responseText.text += message + "\n";
         Canvas.ForceUpdateCanvases();
         if (scrollRect != null)
             scrollRect.verticalNormalizedPosition = 0f;
@@ -403,11 +404,15 @@ public class ChatAI : MonoBehaviour
     {
         if (inputPanel != null)
             inputPanel.SetActive(true);
+        if (sendButton != null)
+            sendButton.gameObject.SetActive(true);
     }
 
     public void HideInputUI()
     {
         if (inputPanel != null)
             inputPanel.SetActive(false);
+        if (sendButton != null)
+            sendButton.gameObject.SetActive(false);
     }
 }

@@ -62,11 +62,11 @@ public class DamageModifierSkill : ScriptableObject
         }
         else if (skillName == "Multi-Target Scan")
         {
-            Debug.Log("buff user: next 3 attacks have +100% crit chance and +100% crit damage");
+            Debug.Log("buff user: next 3 attacks gain +100 attack and +100% crit chance");
+            var atkUp = new TurnStatusEffect(StatusEffectType.AttackUp, 3, 100, user);
+            user.ApplyStatusEffect(atkUp);
             var critChance = new TurnStatusEffect(StatusEffectType.CritChanceUp, 3, 100, user);
             user.ApplyStatusEffect(critChance);
-            var critDamage = new TurnStatusEffect(StatusEffectType.CritDamageUp, 3, 100, user);
-            user.ApplyStatusEffect(critDamage);
         }
 
         /*
