@@ -166,6 +166,8 @@ public class Character : MonoBehaviour
         }
 
         currentHP -= finalDamage;
+        if (battleManager != null && finalDamage > 0)
+            battleManager.SpawnDamagePopup(finalDamage, transform.position);
         if (currentHP < 0) currentHP = 0;
 
         if (currentHP <= 0)

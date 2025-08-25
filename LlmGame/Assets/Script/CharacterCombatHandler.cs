@@ -151,7 +151,11 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.turnCount++;
         battleManager.isActionPhase = false;
         battleManager.currentActingCharacter = null;
+        battleManager.selectedTarget = null;
+        battleManager.selectedParts.Clear();
+        battleManager.UpdateTargetIndicator();
         battleManager.chatAI.HideInputUI();
+        battleManager.turnIndicatorUI?.Hide();
     }
 
     #endregion
@@ -260,6 +264,7 @@ public class CharacterCombatHandler : MonoBehaviour
         battleManager.turnCount++;
         battleManager.isActionPhase = false;
         battleManager.currentActingCharacter = null;
+        battleManager.turnIndicatorUI?.Hide();
     }
 
     #endregion
