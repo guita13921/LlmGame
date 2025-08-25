@@ -79,7 +79,7 @@ public class ChatAI : MonoBehaviour
     public IEnumerator SendMessageToAI(string userMessage)
     {
         // ✅ Optional: Simulate "thinking" delay before sending the prompt
-        responseText.text = $"Turn {battleManager.turnCount}: {battleManager.player.characterName} attacks to inflict a Critical or Status Effect. {turnEffectText}\n<i>AI is thinking...</i>";
+        AppendResponse($"Turn {battleManager.turnCount}: {battleManager.player.characterName} attacks to inflict a Critical or Status Effect. {turnEffectText}\n<i>AI is thinking...</i>");
         yield return new WaitForSeconds(1.5f); // Adjust this value as needed
 
         Character targetEnemy = battleManager.selectedTarget;
@@ -114,7 +114,7 @@ public class ChatAI : MonoBehaviour
             {
                 Debug.LogError($"HTTP Error: {request.responseCode} - {request.error}");
                 Debug.LogError("Response: " + request.downloadHandler.text);
-                responseText.text = $"HTTP Error: {request.responseCode} - {request.error}";
+                AppendResponse($"HTTP Error: {request.responseCode} - {request.error}");
                 yield break;
             }
 
@@ -154,7 +154,7 @@ public class ChatAI : MonoBehaviour
             catch (System.Exception e)
             {
                 Debug.LogError("Error parsing response: " + e.Message);
-                responseText.text = "Error parsing response: " + e.Message;
+                AppendResponse("Error parsing response: " + e.Message);
                 yield break;
             }
         }
@@ -162,7 +162,7 @@ public class ChatAI : MonoBehaviour
         if (!validResponseReceived)
         {
             Debug.LogError("[SendMessageToAI] Failed to receive valid response after multiple attempts.");
-            responseText.text = "AI did not respond with a valid action. Try again.";
+            AppendResponse("AI did not respond with a valid action. Try again.");
             baseFeasibility = 5;
             basePotential = 5;
         }
@@ -190,13 +190,10 @@ public class ChatAI : MonoBehaviour
         }
 
         // === FINAL OUTPUT (After Damage Calculation) ===
-        responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
-                             $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                             $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                             $"Effect: {baseEffect}";
-
-        Canvas.ForceUpdateCanvases();
-        scrollRect.verticalNormalizedPosition = 0f;
+        AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
+                       $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                       $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                       $"Effect: {baseEffect}");
 
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
     }
@@ -205,7 +202,7 @@ public class ChatAI : MonoBehaviour
     {
         // ✅ Optional: Simulate "thinking" delay for enemy AI
         turnEffectText = battleManager.combatHandler.TryApplyStatusEffects(enemy, target);
-        responseText.text = $"Turn {battleManager.turnCount}: {enemy.characterName} attacks to inflict a Critical or Status Effect. {turnEffectText}\n<i>Enemy is planning...</i>";
+        AppendResponse($"Turn {battleManager.turnCount}: {enemy.characterName} attacks to inflict a Critical or Status Effect. {turnEffectText}\n<i>Enemy is planning...</i>");
         yield return new WaitForSeconds(1f); // You can increase for more drama
 
         string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, action, turnEffectText);
@@ -288,13 +285,10 @@ public class ChatAI : MonoBehaviour
             baseFeasibility = 10f;
             basePotential = 0f;
 
-            responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
-                                 $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                                 $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                                 $"Effect: {baseEffect}";
-
-            Canvas.ForceUpdateCanvases();
-            scrollRect.verticalNormalizedPosition = 0f;
+            AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
+                           $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                           $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                           $"Effect: {baseEffect}");
 
             yield break;
         }
@@ -312,15 +306,24 @@ public class ChatAI : MonoBehaviour
             )
         );
 
-        responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
-                             $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                             $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                             $"Effect: {baseEffect}";
-
-        Canvas.ForceUpdateCanvases();
-        scrollRect.verticalNormalizedPosition = 0f;
+        AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
+                       $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
+                       $"Potential: {basePotential} ({basePotentialDesc})\n" +
+                       $"Effect: {baseEffect}");
 
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
+    }
+
+    private void AppendResponse(string message)
+    {
+        if (responseText == null) return;
+        if (!string.IsNullOrEmpty(responseText.text))
+            responseText.text += "\n";
+
+        responseText.text += message;
+        Canvas.ForceUpdateCanvases();
+        if (scrollRect != null)
+            scrollRect.verticalNormalizedPosition = 0f;
     }
 
     public string EscapeJsonString(string str)
