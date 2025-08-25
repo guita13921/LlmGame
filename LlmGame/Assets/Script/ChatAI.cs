@@ -95,7 +95,7 @@ public class ChatAI : MonoBehaviour
         }
 
         string json = "{\"message\":\"" + EscapeJsonString(userMessage) + "\"}";
-        if (battleManager.showDebug)Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + userMessage);
+        if (battleManager.showDebug) Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + userMessage);
 
         int maxAttempts = 3;
         int attempts = 0;
@@ -123,7 +123,7 @@ public class ChatAI : MonoBehaviour
             }
 
             string resText = request.downloadHandler.text;
-            if (battleManager.showDebug)Debug.Log($"<color=green>[SendMessageToAI - Attempt {attempts}] Raw Response:</color>\n{resText}");
+            if (battleManager.showDebug) Debug.Log($"<color=green>[SendMessageToAI - Attempt {attempts}] Raw Response:</color>\n{resText}");
 
             try
             {
@@ -255,7 +255,7 @@ public class ChatAI : MonoBehaviour
             }
 
             string resText = request.downloadHandler.text;
-            if (battleManager.showDebug)Debug.Log($"<color=cyan>[SendEnemyMessage - Attempt {attempts}] Raw Response:</color>\n{resText}");
+            if (battleManager.showDebug) Debug.Log($"<color=cyan>[SendEnemyMessage - Attempt {attempts}] Raw Response:</color>\n{resText}");
 
             try
             {
@@ -344,8 +344,8 @@ public class ChatAI : MonoBehaviour
 
         responseText.text += message + "\n";
         Canvas.ForceUpdateCanvases();
-        if (scrollRect != null)
-            scrollRect.verticalNormalizedPosition = 1f;
+        //if (scrollRect != null)
+        //    scrollRect.verticalNormalizedPosition = 0f;
     }
 
     public string EscapeJsonString(string str)

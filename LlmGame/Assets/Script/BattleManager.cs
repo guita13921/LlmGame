@@ -191,6 +191,7 @@ public class BattleManager : MonoBehaviour
                 currentActingCharacter = character;
                 isActionPhase = true;
                 character.turnGauge = 0f;
+                currentActingCharacter.activeItem.Clear();
 
                 foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
                     listener.OnTurnStart(character);

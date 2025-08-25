@@ -40,6 +40,7 @@ public class ItemButtonUI : MonoBehaviour
             return;
         }
 
+        Debug.Log("OnItemClick");
         ActiveConsumeTurnItem(item);
     }
 
@@ -55,12 +56,7 @@ public class ItemButtonUI : MonoBehaviour
 
         battleManager.selectedTarget = null;
 
-        foreach (var invItem in battleManager.player.activeItem)
-        {
-            invItem.isActive = false;
-        }
-
-        if (!battleManager.player.activeItem.Contains(item))
+        if (battleManager.player.inventoryItems.Contains(item) && battleManager.player.isUsingConsumeTurnItem == false)
         {
             battleManager.player.activeItem.Add(item);
             battleManager.player.isUsingConsumeTurnItem = true;

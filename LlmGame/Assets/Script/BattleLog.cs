@@ -11,12 +11,18 @@ public class BattleLog : MonoBehaviour
     {
         responseText.text += message + "\n";
         Canvas.ForceUpdateCanvases(); // Force layout rebuild
-        ScrollToBottom();
+        //ScrollToTop();
     }
 
     private void ScrollToBottom()
     {
         // Move the scrollbar to bottom
         scrollRect.verticalNormalizedPosition = 0f;
+    }
+
+    private void ScrollToTop()
+    {
+        // Move the scrollbar to top
+        scrollRect.verticalNormalizedPosition = 1f;
     }
 }

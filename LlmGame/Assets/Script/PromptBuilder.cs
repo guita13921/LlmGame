@@ -57,7 +57,7 @@ public static class PromptBuilder
             - Characters can only utilize resources that are currently active and available to them
             - Actions using unavailable or inactive resources should be marked as not feasible
             - Focus on narrative outcomes rather than specific numerical damage values
-            - Maintain appropriate adventure tone throughout
+            - The character will fight until his health runs out.
 
             Please respond using this exact JSON structure:
             {{
@@ -133,10 +133,10 @@ public static class PromptBuilder
 
         Important guidelines:
         - Characters can only utilize resources that are currently active and available to them
-         - If the action is a delayed warning that resolves on a later turn, respond with feasibility 10 and potential_damage 0
+        - If the action is a delayed warning that resolves on a later turn, respond with feasibility 10 and potential_damage 0
         - Actions using unavailable or inactive resources should be marked as not feasible
         - Focus on narrative outcomes rather than specific numerical damage values
-        - Maintain appropriate adventure tone throughout
+        - The character will fight until his health runs out.
 
         Please respond using this exact JSON structure:
         {{
@@ -287,7 +287,7 @@ public static class PromptBuilder
             }
         }
 
-        if (battleManager.showDebug)Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
+        if (battleManager.showDebug) Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
     }
 
 
@@ -359,7 +359,7 @@ public static class PromptBuilder
             if (defaultPart != null)
             {
                 battleManager.selectedParts.Add(defaultPart);
-                if (battleManager.showDebug)Debug.Log($"🎯 [Fallback] No part matched — defaulted to: {defaultPart.type}");
+                if (battleManager.showDebug) Debug.Log($"🎯 [Fallback] No part matched — defaulted to: {defaultPart.type}");
             }
             else
             {
@@ -377,7 +377,7 @@ public static class PromptBuilder
             }
         }
 
-        if (battleManager.showDebug)Debug.Log($"✅ Total Selected Body Parts: {battleManager.selectedParts.Count}");
+        if (battleManager.showDebug) Debug.Log($"✅ Total Selected Body Parts: {battleManager.selectedParts.Count}");
     }
 
     [System.Serializable]
