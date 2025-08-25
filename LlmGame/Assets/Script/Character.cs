@@ -195,11 +195,19 @@ public class Character : MonoBehaviour
                 if (behavior is IDeathListener deathListener)
                 {
                     deathListener.OnDeath(this);
-                    Destroy(gameObject, 1f);
                 }
             }
         }
 
+        if (battleManager != null)
+        {
+            if (this is Enemy enemy)
+                battleManager.enemies.Remove(enemy);
+            battleManager.allCharacters.Remove(this);
+        }
+
+        if (this is Enemy)
+            Destroy(gameObject);
     }
 
     private void OnMouseDown()
