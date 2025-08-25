@@ -58,11 +58,26 @@ public class BattleManager : MonoBehaviour
     private List<Character> pendingCharacters = new List<Character>();
     private bool isResolvingAction = false;
 
+    [Header("UI")]
+    public TurnIndicatorUI turnIndicatorUI;
+    public GameObject targetIndicatorPrefab;
+    public GameObject enemyHpBarPrefab;
+    public GameObject damagePopupPrefab;
+    public LevelRewardsUI levelRewardsUI;
+
+    private GameObject activeTargetIndicator;
+    private int startMoney;
+    private int startItemCount;
+    private bool rewardShown = false;
+
     private void Start()
     {
         player.turnGauge = 0f;
         allCharacters.Clear();
         allCharacters.Add(player);
+
+        startMoney = player.money;
+        startItemCount = player.inventoryItems != null ? player.inventoryItems.Count : 0;
 
         SpawnEnemyForCurrentNode();
     }
@@ -101,6 +116,13 @@ public class BattleManager : MonoBehaviour
                 enemy.turnGauge = 0f;
                 enemies.Add(enemy);
                 allCharacters.Add(enemy);
+
+                if (enemyHpBarPrefab != null)
+                {
+                    GameObject ui = Instantiate(enemyHpBarPrefab, enemy.transform);
+                    var bar = ui.GetComponent<EnemyHealthBar>();
+                    if (bar != null) bar.enemy = enemy;
+                }
             }
         }
     }
@@ -139,6 +161,13 @@ public class BattleManager : MonoBehaviour
             // ✅ Add immediately instead of queuing
             enemies.Add(enemy);
             allCharacters.Add(enemy);
+
+            if (enemyHpBarPrefab != null)
+            {
+                GameObject ui = Instantiate(enemyHpBarPrefab, enemy.transform);
+                var bar = ui.GetComponent<EnemyHealthBar>();
+                if (bar != null) bar.enemy = enemy;
+            }
 
             Debug.Log($"[Immediate Spawn] {enemy.characterName} added to battle.");
         }
@@ -198,6 +227,8 @@ public class BattleManager : MonoBehaviour
     private IEnumerator DoAction(Character character)
     {
         Debug.Log($"=== {character.characterName}'s Turn ===");
+
+        turnIndicatorUI?.ShowTurn(character);
 
         isActionPhase = true;
         currentActingCharacter = character;
@@ -285,12 +316,14 @@ public class BattleManager : MonoBehaviour
         currentActingCharacter = null;
         selectedTarget = null;
         selectedParts.Clear();
+        UpdateTargetIndicator();
 
         //AddPendingCharacters(); // ✅ Process newly spawned characters
 
         var inventoryUI = FindObjectOfType<BattleInventoryUI>();
         inventoryUI?.RefreshUI();
 
+        turnIndicatorUI?.Hide();
         chatAI.ShowInputUI();
         Debug.Log("Player turn ended.");
     }
@@ -302,6 +335,8 @@ public class BattleManager : MonoBehaviour
         isActionPhase = false;
         currentActingCharacter = null;
         //AddPendingCharacters(); // ✅ Still add new characters even on skipped turn
+        turnIndicatorUI?.Hide();
+        UpdateTargetIndicator();
     }
 
     private EnemyGroup GetRandomEnemyGroup(NodeType type, EnemyDifficulty difficulty)
@@ -368,6 +403,7 @@ public class BattleManager : MonoBehaviour
 
         Debug.Log($"Player selected {selectedCharacter.characterName} as target!");
         selectedTarget = selectedCharacter;
+        UpdateTargetIndicator();
         StartCoroutine(ExecuteSelectionOnTarget(selectedCharacter));
     }
 
@@ -476,7 +512,14 @@ public class BattleManager : MonoBehaviour
         if (!anyEnemyAlive)
         {
             Debug.Log("All Enemies Defeated!");
-            SceneManager.LoadScene("MapGenerate");
+            if (!rewardShown)
+            {
+                int moneyGain = player.money - startMoney;
+                int itemGain = (player.inventoryItems != null ? player.inventoryItems.Count : 0) - startItemCount;
+                levelRewardsUI?.Show(moneyGain, itemGain);
+                rewardShown = true;
+                StartCoroutine(ReturnToMapAfterDelay());
+            }
         }
 
         return !anyEnemyAlive;
@@ -509,5 +552,30 @@ public class BattleManager : MonoBehaviour
         }
 
         pendingCharacters.Clear();
+    }
+
+    public void UpdateTargetIndicator()
+    {
+        if (activeTargetIndicator != null)
+            Destroy(activeTargetIndicator);
+        if (selectedTarget != null && targetIndicatorPrefab != null)
+        {
+            activeTargetIndicator = Instantiate(targetIndicatorPrefab, selectedTarget.transform);
+            activeTargetIndicator.transform.localPosition = Vector3.up * 2f;
+        }
+    }
+
+    public void SpawnDamagePopup(int amount, Vector3 position)
+    {
+        if (damagePopupPrefab == null) return;
+        GameObject obj = Instantiate(damagePopupPrefab, position, Quaternion.identity);
+        var popup = obj.GetComponent<DamagePopupUI>();
+        if (popup != null) popup.Setup(amount);
+    }
+
+    private IEnumerator ReturnToMapAfterDelay()
+    {
+        yield return new WaitForSeconds(2f);
+        SceneManager.LoadScene("MapGenerate");
     }
 }
