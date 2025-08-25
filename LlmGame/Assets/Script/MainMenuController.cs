@@ -16,6 +16,10 @@ public class MainMenuController : MonoBehaviour
     public Slider musicSlider;
     public Slider vfxSlider;
 
+    [Header("Display Toggles")]
+    public Toggle showFeasibilityDescToggle;
+    public Toggle showPotentialDescToggle;
+
     [Header("Player Config")]
     public DefaultPlayerConfig defaultConfig;
 
@@ -23,6 +27,11 @@ public class MainMenuController : MonoBehaviour
     {
         // Optional auto-start: comment out in production
         // OnStartButton();
+
+        if (showFeasibilityDescToggle != null)
+            showFeasibilityDescToggle.isOn = SettingsManager.Instance.showFeasibilityDesc;
+        if (showPotentialDescToggle != null)
+            showPotentialDescToggle.isOn = SettingsManager.Instance.showPotentialDesc;
     }
 
     public void OnStartButton()
@@ -40,6 +49,11 @@ public class MainMenuController : MonoBehaviour
     public void OnOptionsButton()
     {
         settingsPanel.SetActive(true);
+
+        if (showFeasibilityDescToggle != null)
+            showFeasibilityDescToggle.isOn = SettingsManager.Instance.showFeasibilityDesc;
+        if (showPotentialDescToggle != null)
+            showPotentialDescToggle.isOn = SettingsManager.Instance.showPotentialDesc;
     }
 
     public void OnExitButton()
@@ -64,5 +78,15 @@ public class MainMenuController : MonoBehaviour
     public void OnVFXVolumeChanged(float value)
     {
         SettingsManager.Instance.SetVFXVolume(value);
+    }
+
+    public void OnShowFeasibilityDescChanged(bool value)
+    {
+        SettingsManager.Instance.SetShowFeasibilityDesc(value);
+    }
+
+    public void OnShowPotentialDescChanged(bool value)
+    {
+        SettingsManager.Instance.SetShowPotentialDesc(value);
     }
 }

@@ -194,10 +194,7 @@ public class ChatAI : MonoBehaviour
         }
 
         // === FINAL OUTPUT (After Damage Calculation) ===
-        AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
-                       $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                       $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                       $"Effect: {baseEffect}");
+        AppendResponse(FormatResult());
 
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
     }
@@ -219,10 +216,7 @@ public class ChatAI : MonoBehaviour
             baseEffect = action != null ? action.actionName : "";
             baseEffectDesc = "";
 
-            AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
-                           $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                           $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                           $"Effect: {baseEffect}");
+            AppendResponse(FormatResult());
             yield break;
         }
 
@@ -306,10 +300,7 @@ public class ChatAI : MonoBehaviour
             baseFeasibility = 10f;
             basePotential = 0f;
 
-            AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
-                           $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                           $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                           $"Effect: {baseEffect}");
+            AppendResponse(FormatResult());
 
             yield break;
         }
@@ -327,10 +318,7 @@ public class ChatAI : MonoBehaviour
             )
         );
 
-        AppendResponse($"\n<color=#00ffcc><b>Result:</b></color>\n" +
-                       $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
-                       $"Potential: {basePotential} ({basePotentialDesc})\n" +
-                       $"Effect: {baseEffect}");
+        AppendResponse(FormatResult());
 
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
     }
@@ -346,6 +334,23 @@ public class ChatAI : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         if (scrollRect != null)
             scrollRect.verticalNormalizedPosition = 1f;
+    }
+
+    private string FormatResult()
+    {
+        string feasLine = $"Feasibility: {baseFeasibility}";
+        if (SettingsManager.Instance == null || SettingsManager.Instance.showFeasibilityDesc)
+            feasLine += $" ({baseFeasibilityDesc})";
+        feasLine += "\\n";
+
+        string potLine = $"Potential: {basePotential}";
+        if (SettingsManager.Instance == null || SettingsManager.Instance.showPotentialDesc)
+            potLine += $" ({basePotentialDesc})";
+        potLine += "\\n";
+
+        string effectLine = $"Effect: {baseEffect}";
+
+        return $"\\n<color=#00ffcc><b>Result:</b></color>\\n" + feasLine + potLine + effectLine;
     }
 
     public string EscapeJsonString(string str)
