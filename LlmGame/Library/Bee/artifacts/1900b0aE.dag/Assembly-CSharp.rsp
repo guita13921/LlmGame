@@ -426,6 +426,7 @@
 "Assets/Script/BodyPartConfig.cs"
 "Assets/Script/BodyPartData.cs"
 "Assets/Script/BodyPartOverride.cs"
+"Assets/Script/BossActionEffect.cs"
 "Assets/Script/BossSkillBehavior.cs"
 "Assets/Script/CameraOrbit.cs"
 "Assets/Script/Character.cs"

@@ -44,7 +44,7 @@ public class BossSkillBehavior : MonoBehaviour
     {
         if (enemy == null) return null;
 
-        if (summonUseCount == 0 && battleManager != null && battleManager.turnCount == 1 && summonThugs != null)
+        if (summonUseCount == 0 && battleManager != null && battleManager.turnCount <= 2 && summonThugs != null)
         {
             return summonThugs;
         }
@@ -87,7 +87,6 @@ public class BossSkillBehavior : MonoBehaviour
 
         List<CharacterActionData> candidates = enemy.availableActions
             .Where(a => a != null &&
-                        a != summonThugs &&
                         a != smokeVeil &&
                         a != rallyOrders &&
                         a != executionBullet &&
