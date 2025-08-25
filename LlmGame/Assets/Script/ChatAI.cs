@@ -91,7 +91,7 @@ public class ChatAI : MonoBehaviour
         }
 
         string json = "{\"message\":\"" + EscapeJsonString(userMessage) + "\"}";
-        Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + userMessage);
+        if (battleManager.showDebug)Debug.Log("<color=yellow>[SendMessageToAI] Initial JSON Prompt:</color>\n" + userMessage);
 
         int maxAttempts = 3;
         int attempts = 0;
@@ -119,7 +119,7 @@ public class ChatAI : MonoBehaviour
             }
 
             string resText = request.downloadHandler.text;
-            Debug.Log($"<color=green>[SendMessageToAI - Attempt {attempts}] Raw Response:</color>\n{resText}");
+            if (battleManager.showDebug)Debug.Log($"<color=green>[SendMessageToAI - Attempt {attempts}] Raw Response:</color>\n{resText}");
 
             try
             {
@@ -251,7 +251,7 @@ public class ChatAI : MonoBehaviour
             }
 
             string resText = request.downloadHandler.text;
-            Debug.Log($"<color=cyan>[SendEnemyMessage - Attempt {attempts}] Raw Response:</color>\n{resText}");
+            if (battleManager.showDebug)Debug.Log($"<color=cyan>[SendEnemyMessage - Attempt {attempts}] Raw Response:</color>\n{resText}");
 
             try
             {

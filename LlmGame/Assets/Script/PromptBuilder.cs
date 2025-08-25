@@ -263,7 +263,7 @@ public static class PromptBuilder
                     keywordFound = true;
 
                     battleManager.player.activeItem.Add(item);
-                    Debug.Log($"Item '{item.itemName}' activated by keyword: '{keyword}'");
+                    if (battleManager.showDebug) Debug.Log($"Item '{item.itemName}' activated by keyword: '{keyword}'");
 
                     // Handle OneTime items
                     if (item.usageType == UsageType.OneTime)
@@ -287,7 +287,7 @@ public static class PromptBuilder
             }
         }
 
-        Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
+        if (battleManager.showDebug)Debug.Log($"Total active items: {battleManager.player.activeItem.Count}");
     }
 
 
@@ -359,7 +359,7 @@ public static class PromptBuilder
             if (defaultPart != null)
             {
                 battleManager.selectedParts.Add(defaultPart);
-                Debug.Log($"🎯 [Fallback] No part matched — defaulted to: {defaultPart.type}");
+                if (battleManager.showDebug)Debug.Log($"🎯 [Fallback] No part matched — defaulted to: {defaultPart.type}");
             }
             else
             {
@@ -377,7 +377,7 @@ public static class PromptBuilder
             }
         }
 
-        Debug.Log($"✅ Total Selected Body Parts: {battleManager.selectedParts.Count}");
+        if (battleManager.showDebug)Debug.Log($"✅ Total Selected Body Parts: {battleManager.selectedParts.Count}");
     }
 
     [System.Serializable]

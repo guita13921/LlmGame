@@ -257,7 +257,7 @@ public class BattleManager : MonoBehaviour
                 // Special case: handle summon or other unique behavior
                 if (bossAI.HandleSpecialAction(action))
                 {
-                    //yield return StartCoroutine(combatHandler.EndEnemyTurn());
+                    yield return StartCoroutine(combatHandler.EndEnemyTurn());
                     //yield break;
                 }
 
@@ -479,7 +479,7 @@ public class BattleManager : MonoBehaviour
             character.animator.SetTrigger(animationTriggerName);
         }
 
-        float timeout = 3f;
+        float timeout = 10f;
         float timer = 0f;
 
         while (!character.animationFinished && timer < timeout)

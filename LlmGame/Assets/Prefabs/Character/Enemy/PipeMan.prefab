@@ -244,7 +244,7 @@ GameObject:
   - component: {fileID: 3146930504110307593}
   - component: {fileID: 3764962314232465714}
   m_Layer: 0
-  m_Name: Zhuyi minor
+  m_Name: PipeMan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -399,18 +399,17 @@ MonoBehaviour:
   animator: {fileID: 2158585719640761237}
   animationFinished: 0
   battleManager: {fileID: 0}
-  characterName: Zhuyi
+  characterName: Pipeman
   characterType: 1
   sprite: {fileID: 0}
-  description: "The feared head of the slum\u2019s black market. Wears an expensive
-    but tattered coat over body armor, and a polished hazard mask with gold accents.
-    His pistol is custom-made, engraved with symbols of power."
+  description: A ragged slum dweller wielding a rusty metal pipe. His face is dirty,
+    and his eyes are filled with desperation.
   attack: 10
   defense: 0
   focus: 100
-  maxHP: 300
+  maxHP: 100
   maxMP: 20
-  speed: 9.5
+  speed: 0
   maxShield: 0
   bonusAttack: 0
   bonusDefense: 0
@@ -432,10 +431,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   availableActions:
-  - {fileID: 11400000, guid: 29a7a5aabaea8794aa7d8ae6960826a0, type: 2}
-  - {fileID: 11400000, guid: 5ec2d254dc2b95043bfbeaa005f988c0, type: 2}
-  - {fileID: 11400000, guid: b94267af686a93d4a9effc6f2bc89758, type: 2}
-  - {fileID: 11400000, guid: ec9c32fa09468fd438e5ddb24a9316e9, type: 2}
+  - {fileID: 11400000, guid: 262caa434d9f6514eb94bdd024b3cc28, type: 2}
+  - {fileID: 11400000, guid: d5555bc18c7d5f4418a31595abae0725, type: 2}
   selectedAction: {fileID: 0}
   pendingDelayedAction: {fileID: 0}
   pendingDamage: 0

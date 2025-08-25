@@ -23,7 +23,7 @@ public class CharacterCombatHandler : MonoBehaviour
 
     public IEnumerator PlayerAttack(CharacterActionData chosenAction, float feasibility, float potential, string effectValue, string effectDesc, Character target)
     {
-        Debug.Log("PlayerAttack");
+        if (battleManager.showDebug) Debug.Log("PlayerAttack");
 
         var player = battleManager.currentActingCharacter as Player;
         if (player == null || target == null || !target.IsAlive())

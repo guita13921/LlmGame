@@ -119,7 +119,7 @@ public class Character : MonoBehaviour
 
         if (bodyPartConfig != null)
         {
-            Debug.Log("GenerateBodyParts");
+            //Debug.Log("GenerateBodyParts");
             bodyParts = bodyPartConfig.GenerateBodyParts();
         }
     }
@@ -195,6 +195,7 @@ public class Character : MonoBehaviour
                 if (behavior is IDeathListener deathListener)
                 {
                     deathListener.OnDeath(this);
+                    Destroy(gameObject, 1f);
                 }
             }
         }
@@ -229,7 +230,7 @@ public class Character : MonoBehaviour
 
     public void OnAnimationComplete()
     {
-        Debug.Log($"{characterName} animation complete (via Event)");
+        if (battleManager.showDebug)Debug.Log($"{characterName} animation complete (via Event)");
         animationFinished = true;
         // 🔥 Log the attack outcome here
         //LogAttackOutcome();

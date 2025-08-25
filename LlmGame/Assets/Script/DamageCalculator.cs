@@ -42,7 +42,7 @@ public class DamageCalculator : MonoBehaviour
 
         float creativityBonus = uniqueWordBonus - repetitionPenalty;
 
-        Debug.Log($"CreativityBonus: {creativityBonus} (Unique: {nUniqueWords}, Repeats: {nWordsUsedAtLeast2Times})");
+        if (battleManager.showDebug)Debug.Log($"CreativityBonus: {creativityBonus} (Unique: {nUniqueWords}, Repeats: {nWordsUsedAtLeast2Times})");
 
         return creativityBonus;
     }
@@ -190,10 +190,10 @@ public class DamageCalculator : MonoBehaviour
         float creativityBonus = CalculateCreativityBonus(userMessage, attacker);
         float llmScaledBaseDamage = totalBaseDamage * (1 + creativityBonus) * llmDamageModifier;
 
-        Debug.Log($"[Damage] finalFeasibility: {finalFeasibility}");
-        Debug.Log($"[Damage] finalPotential: {finalPotential}");
-        Debug.Log($"[Damage] llmModifier: {llmDamageModifier}");
-        Debug.Log($"[Damage] llmScaledBaseDamage: {llmScaledBaseDamage}");
+        if (battleManager.showDebug)Debug.Log($"[Damage] finalFeasibility: {finalFeasibility}");
+        if (battleManager.showDebug)Debug.Log($"[Damage] finalPotential: {finalPotential}");
+        if (battleManager.showDebug)Debug.Log($"[Damage] llmModifier: {llmDamageModifier}");
+        if (battleManager.showDebug)Debug.Log($"[Damage] llmScaledBaseDamage: {llmScaledBaseDamage}");
 
         // 🧪 6. Type-based armor reduction (on selected target parts)
         // 🧪 6. Type-based armor reduction (on selected target parts)

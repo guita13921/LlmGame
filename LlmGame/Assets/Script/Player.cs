@@ -19,7 +19,7 @@ public class Player : Character
         EquipAllPassives();
         Debug.Log(GetStatusChances());
         //this.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Stun, 2, 0));
-        this.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Bleed, 2, 1));
+        //this.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Bleed, 2, 1));
         //this.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.Poison, 2, 1));
     }
 

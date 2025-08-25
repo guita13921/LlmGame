@@ -67,14 +67,6 @@ public class BossSkillBehavior : MonoBehaviour
             return executionBullet;
         }
 
-        if (summonUseCount < 2)
-        {
-            bool first = hpPercent <= 0.8f && summonUseCount == 0;
-            bool second = hpPercent <= 0.6f && summonUseCount == 1;
-            if (first || second)
-                return summonThugs;
-        }
-
         if (!smokeVeilUsed && battleManager != null && battleManager.enemies.Any(e => e != enemy && e.IsAlive()))
         {
             smokeVeilUsed = true;
@@ -88,7 +80,6 @@ public class BossSkillBehavior : MonoBehaviour
 
         return enemy.availableActions.FirstOrDefault(a =>
             a != null &&
-            a != summonThugs &&
             a != smokeVeil &&
             a != rallyOrders &&
             a != executionBullet &&
