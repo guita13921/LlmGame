@@ -26,7 +26,6 @@ public class ChatAI : MonoBehaviour
 
     private void Awake()
     {
-
         if (inputPanel != null)
         {
             inputPanel.SetActive(false);
@@ -39,7 +38,7 @@ public class ChatAI : MonoBehaviour
         string safeMessage = PromptBuilder.SanitizeUserMessage(userMessage);
 
         Character targetEnemy = battleManager.selectedTarget;
-        Character player = battleManager.player; // You need this reference
+        Character player = battleManager.player;
 
         if (targetEnemy == null || !targetEnemy.IsAlive())
         {
@@ -54,7 +53,6 @@ public class ChatAI : MonoBehaviour
         }
 
         int messageCost = userMessage.Length;
-
         if (messageCost > player.focus)
         {
             Debug.LogWarning($"Message too complex! Cost ({messageCost}) exceeds your Focus ({player.focus}).");
@@ -62,11 +60,9 @@ public class ChatAI : MonoBehaviour
         }
 
         battleManager.SetUserMessage(safeMessage);
-
         PromptBuilder.CheckAndActivateItems(battleManager, userMessage, targetEnemy);
 
         List<DamageType> enemyDamageTypes = new List<DamageType>();
-
         foreach (var weapon in targetEnemy.activeItem.OfType<Weapon>())
         {
             enemyDamageTypes.AddRange(weapon.damageType);
@@ -76,9 +72,12 @@ public class ChatAI : MonoBehaviour
         StartCoroutine(SendMessageToAI(finalPrompt));
     }
 
-
     public IEnumerator SendMessageToAI(string userMessage)
     {
+        // ✅ Optional: Simulate "thinking" delay before sending the prompt
+        responseText.text = "<i>AI is thinking...</i>";
+        yield return new WaitForSeconds(1.5f); // Adjust this value as needed
+
         Character targetEnemy = battleManager.selectedTarget;
 
         if (targetEnemy == null || !targetEnemy.IsAlive())
@@ -147,7 +146,6 @@ public class ChatAI : MonoBehaviour
                 baseEffectDesc = baseRoot.properties.effect_description?.description ?? "No description";
 
                 validResponseReceived = true;
-
             }
             catch (System.Exception e)
             {
@@ -172,7 +170,8 @@ public class ChatAI : MonoBehaviour
         }
         else
         {
-            battleManager.player.selectedAction = battleManager.player.availableActions[0];
+            int randomIndex = Random.Range(0, battleManager.player.availableActions.Count);
+            battleManager.player.selectedAction = battleManager.player.availableActions[randomIndex];
 
             battleManager.StartCoroutine(
                 battleManager.combatHandler.PlayerAttack(
@@ -196,12 +195,14 @@ public class ChatAI : MonoBehaviour
         scrollRect.verticalNormalizedPosition = 0f;
 
         Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
-
     }
 
     public IEnumerator SendEnemyMessage(Character enemy, Character target, CharacterActionData action)
     {
-        // === STEP 1: Initial AI Prompt (Enemy Intent) ===
+        // ✅ Optional: Simulate "thinking" delay for enemy AI
+        responseText.text = "<i>Enemy is planning...</i>";
+        yield return new WaitForSeconds(1f); // You can increase for more drama
+
         string prompt = PromptBuilder.BuildEnemyPrompt(battleManager, enemy, target, action);
         string json = "{\"message\":\"" + EscapeJsonString(prompt) + "\"}";
         Debug.Log("<color=yellow>[SendEnemyMessage] Initial Prompt:</color>\n" + prompt);
@@ -282,10 +283,6 @@ public class ChatAI : MonoBehaviour
             baseFeasibility = 10f;
             basePotential = 0f;
 
-            string log = $"Turn {battleManager.turnCount}: {enemy.characterName} prepares {action.actionName}, warning {target.characterName}.";
-            battleManager.battleLog.Add(log);
-            Debug.Log(log);
-
             responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
                                  $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
                                  $"Potential: {basePotential} ({basePotentialDesc})\n" +
@@ -293,13 +290,11 @@ public class ChatAI : MonoBehaviour
 
             Canvas.ForceUpdateCanvases();
             scrollRect.verticalNormalizedPosition = 0f;
-            Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
 
-            yield return battleManager.StartCoroutine(battleManager.combatHandler.EndEnemyTurn());
             yield break;
         }
 
-        // === STEP 2: Apply Enemy Attack Using Initial Response ===
+        // === STEP 2: Apply Enemy Attack Using AI's Response
         battleManager.StartCoroutine(
             battleManager.combatHandler.ResolveEnemyAttack(
                 enemy,
@@ -312,7 +307,6 @@ public class ChatAI : MonoBehaviour
             )
         );
 
-        // === FINAL OUTPUT (After Damage Calculation) ===
         responseText.text += $"\n\n<color=#00ffcc><b>Result:</b></color>\n" +
                              $"Feasibility: {baseFeasibility} ({baseFeasibilityDesc})\n" +
                              $"Potential: {basePotential} ({basePotentialDesc})\n" +
@@ -320,8 +314,8 @@ public class ChatAI : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         scrollRect.verticalNormalizedPosition = 0f;
-        Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
 
+        Debug.Log("<color=white>[Final AI Result]</color>:\n" + responseText.text);
     }
 
     public string EscapeJsonString(string str)
@@ -335,7 +329,7 @@ public class ChatAI : MonoBehaviour
                   .Replace("\t", "\\t");
     }
 
-    # region Class
+    #region Response Classes
 
     [System.Serializable]
     public class ResponseWrapper
@@ -378,6 +372,8 @@ public class ChatAI : MonoBehaviour
         public string value;
     }
 
+    #endregion
+
     public void ShowInputUI()
     {
         if (inputPanel != null)
@@ -389,5 +385,4 @@ public class ChatAI : MonoBehaviour
         if (inputPanel != null)
             inputPanel.SetActive(false);
     }
-    #endregion
 }

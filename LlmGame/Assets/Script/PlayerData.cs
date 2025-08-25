@@ -15,7 +15,7 @@ public class PlayerData : MonoBehaviour
     public int focus;
     public int maxHP;
     public int maxMP;
-    public int speed;
+    public float speed;
     public int maxShield;
     public int currentHP;
     public int currentMP;

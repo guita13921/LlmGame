@@ -97,7 +97,7 @@ public class PlayerStatsPanelScrollable : MonoBehaviour
         int effFoc = player.focus + player.bonusFocus;
         int effHPMax = player.maxHP + player.bonusMaxHP;
         int effMPMax = player.maxMP + player.bonusMaxMP;
-        int effSpd = player.speed + player.bonusSpeed;
+        float effSpd = player.speed + player.bonusSpeed;
         int effShMax = player.maxShield + player.bonusMaxShield;
 
         float hpPct = effHPMax > 0 ? (player.currentHP / (float)effHPMax) * 100f : 0f;

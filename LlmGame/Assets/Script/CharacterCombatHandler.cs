@@ -4,13 +4,11 @@ using System.Linq;
 using UnityEngine;
 using TMPro;
 using Unity.VisualScripting;
-using System;
 
 public class CharacterCombatHandler : MonoBehaviour
 {
     private BattleManager battleManager;
     private Dictionary<Character, Dictionary<DamageType, float>> lastDamageBreakdown = new();
-
 
     private void Awake()
     {
@@ -37,7 +35,6 @@ public class CharacterCombatHandler : MonoBehaviour
         float baseDamage = player.attack;
         int calculatedDamage;
 
-        // ✅ Damage Calculation
         DamageResult result;
         if (battleManager.player.isUsingUltimateSkill)
         {
@@ -49,22 +46,14 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         calculatedDamage = Mathf.RoundToInt(result.damage);
-
-        // ================================
-        // ✅ BEFORE DAMAGE MODIFIERS
-        // ================================
-
         int finalDamage = calculatedDamage;
 
-        // Attacker passives & items
         foreach (var behavior in player.runtimePassiveBehaviors)
         {
             if (behavior is IDamageReaction reaction)
                 reaction.OnBeforeDamage(player, target, ref finalDamage);
         }
 
-
-        // Target passives, items, armor
         if (target is Player targetPlayer)
         {
             foreach (var behavior in targetPlayer.runtimePassiveBehaviors)
@@ -72,7 +61,6 @@ public class CharacterCombatHandler : MonoBehaviour
                 if (behavior is IDamageReaction reaction)
                     reaction.OnBeforeDamage(player, targetPlayer, ref finalDamage);
             }
-
 
             foreach (var bodyPart in targetPlayer.bodyParts)
             {
@@ -85,16 +73,13 @@ public class CharacterCombatHandler : MonoBehaviour
                     reaction.OnBeforeDamage(player, targetPlayer, ref finalDamage);
                 }
             }
-
         }
 
-        // ✅ Assign for use in animation event
         player.pendingDamage = finalDamage;
         player.damageTarget = target;
         player.currentHitIndex = 0;
         player.selectedAction = chosenAction;
 
-        // ✅ Play animation (calls ApplyDamageAtHit which now just applies `pendingDamage`)
         if (player.isUsingUltimateSkill)
         {
             yield return battleManager.WaitForAnimation(player, battleManager.player.currentSkill.aniamtionTrigger);
@@ -104,20 +89,18 @@ public class CharacterCombatHandler : MonoBehaviour
             yield return battleManager.WaitForAnimation(player, chosenAction.animationTrigger);
         }
 
-        // ✅ AFTER DAMAGE REACTIONS
+        yield return new WaitForSeconds(0.75f); // 🔸 Delay after animation
+
         if (target is Player targetAfter)
         {
-            // Defender reactions
             foreach (var behavior in targetAfter.runtimePassiveBehaviors)
             {
                 if (behavior is IDamageReaction reaction)
                     reaction.OnAfterDamage(player, targetAfter, finalDamage);
             }
 
-
             foreach (var bodyPart in targetAfter.bodyParts)
             {
-
                 var armor = bodyPart.equippedArmor;
                 if (armor == null || armor.itemBehaviorPrefab == null) continue;
 
@@ -129,55 +112,42 @@ public class CharacterCombatHandler : MonoBehaviour
             }
         }
 
-        // Attacker reactions
         foreach (var behavior in player.runtimePassiveBehaviors)
         {
             if (behavior is IDamageReaction reaction)
                 reaction.OnAfterDamage(player, target, finalDamage);
         }
 
+        yield return new WaitForSeconds(0.25f); // 🔸 Short pause before logging
 
-        // ✅ Log
-        //string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
-        //battleManager.battleLog.Add(log);
-        //Debug.Log(log);
-        //Debug.Log(target.GetBodyPartStatus());
+        string log = $"Turn {battleManager.turnCount}: {player.characterName} {battleManager.playerInputField.text}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
+        battleManager.battleLog.Add(log);
+
+        yield return new WaitForSeconds(0.75f); // 🔸 Let player read log
 
         yield return battleManager.StartCoroutine(battleManager.combatHandler.EndPlayerTurn());
     }
 
-    public void UseItem(List<Item> item, string outcomeType)
-    {
-        Debug.Log($"Use Item :{item} -> {outcomeType}");
-    }
-
     public IEnumerator EndPlayerTurn()
     {
-        yield return new WaitForSeconds(2.0f);
+        yield return new WaitForSeconds(0.5f); // 🔸 Small delay before cleanup
 
-        // ✅ Trigger turn-end logic for player
         if (battleManager.currentActingCharacter is Player player)
         {
-            // 🔁 Runtime-attached MonoBehaviours (instantiated)
             foreach (var listener in player.GetComponents<ITurnListener>())
-            {
                 listener.OnTurnEnd(player);
-            }
 
-            // 🔁 PassiveItemData prefabs (optional if stateless)
             foreach (var listener in player.runtimePassiveBehaviors.OfType<ITurnListener>())
-            {
                 listener.OnTurnEnd(player);
-            }
         }
 
-        // ✅ End battle check
         if (battleManager.CheckBattleEnd())
         {
             battleManager.battleActive = false;
             Debug.Log("Battle Finished!");
         }
 
+        Debug.Log("EndPlayerTurn");
         battleManager.turnCount++;
         battleManager.isActionPhase = false;
         battleManager.currentActingCharacter = null;
@@ -188,7 +158,6 @@ public class CharacterCombatHandler : MonoBehaviour
 
     #region Enemy
 
-    // เริ่มต้นการโจมตีของศัตรู
     public void EnemyAttack(Character enemy, Character target, CharacterActionData chosenAction)
     {
         battleManager.StartCoroutine(battleManager.chatAI.SendEnemyMessage(enemy, target, chosenAction));
@@ -198,33 +167,21 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         if (enemy == null || target == null || !target.IsAlive())
         {
-            Debug.Log(enemy);
-            Debug.Log(target);
-            Debug.Log(target.IsAlive());
             Debug.LogWarning("Invalid enemy or target.");
             yield break;
         }
 
-        // ======================================
-        // 🔸 Step 1: Calculate Base Damage
-        // ======================================
         float baseDamage = enemy.attack;
         DamageResult result = battleManager.damageCalculator.CalculateDamageNoCreativity(feasibility, potential, baseDamage, enemy, target);
         int calculatedDamage = Mathf.RoundToInt(result.damage);
         int finalDamage = calculatedDamage;
 
-        // ======================================
-        // 🔸 Step 2: Apply OnBeforeDamage
-        // ======================================
-
-        // Attacker passives
         foreach (var behavior in enemy.runtimePassiveBehaviors)
         {
             if (behavior is IDamageReaction reaction)
                 reaction.OnBeforeDamage(enemy, target, ref finalDamage);
         }
 
-        // Target passives
         if (target is Player playerTarget)
         {
             foreach (var behavior in playerTarget.runtimePassiveBehaviors)
@@ -233,9 +190,6 @@ public class CharacterCombatHandler : MonoBehaviour
                     reaction.OnBeforeDamage(enemy, playerTarget, ref finalDamage);
             }
 
-            // Equipped passive items
-
-            // Armor on body parts
             foreach (var part in playerTarget.bodyParts)
             {
                 var armor = part.equippedArmor;
@@ -247,24 +201,15 @@ public class CharacterCombatHandler : MonoBehaviour
             }
         }
 
-        // ======================================
-        // 🔸 Step 3: Assign Final Damage for Animation
-        // ======================================
         enemy.pendingDamage = finalDamage;
         enemy.damageTarget = target;
         enemy.currentHitIndex = 0;
         enemy.selectedAction = chosenAction;
 
-        // ======================================
-        // 🔸 Step 4: Play Animation → Triggers ApplyDamageAtHit()
-        // ======================================
         yield return battleManager.WaitForAnimation(enemy, chosenAction.animationTrigger);
 
-        // ======================================
-        // 🔸 Step 5: Apply OnAfterDamage
-        // ======================================
+        yield return new WaitForSeconds(0.75f); // 🔸 Delay after animation
 
-        // Target reactions (Player)
         if (target is Player playerAfter)
         {
             foreach (var behavior in playerAfter.runtimePassiveBehaviors)
@@ -272,7 +217,6 @@ public class CharacterCombatHandler : MonoBehaviour
                 if (behavior is IDamageReaction reaction)
                     reaction.OnAfterDamage(enemy, playerAfter, finalDamage);
             }
-
 
             foreach (var part in playerAfter.bodyParts)
             {
@@ -285,37 +229,34 @@ public class CharacterCombatHandler : MonoBehaviour
             }
         }
 
-        // Attacker post-attack reactions
         foreach (var behavior in enemy.runtimePassiveBehaviors)
         {
             if (behavior is IDamageReaction reaction)
                 reaction.OnAfterDamage(enemy, target, finalDamage);
         }
 
-        // ======================================
-        // 🔸 Step 6: Log
-        // ======================================
+        yield return new WaitForSeconds(0.25f); // 🔸 Short pause before log
+
         string log = $"Turn {battleManager.turnCount}: {enemy.characterName} used {chosenAction.actionName}  → Target: {target.characterName} Result: {target.currentHP} / {target.maxHP} ({battleManager.chatAI.baseEffect})";
         battleManager.battleLog.Add(log);
         Debug.Log(log);
 
-        // ======================================
-        // 🔸 Step 7: End Turn
-        // ======================================
+        yield return new WaitForSeconds(0.75f); // 🔸 Let log register
+
         yield return battleManager.StartCoroutine(EndEnemyTurn());
     }
 
     public IEnumerator EndEnemyTurn()
     {
-        yield return new WaitForSeconds(2.0f);
+        yield return new WaitForSeconds(0.5f); // 🔸 Optional cooldown
 
-        // ✅ End battle check
         if (battleManager.CheckBattleEnd())
         {
             battleManager.battleActive = false;
             Debug.Log("Battle Finished!");
         }
 
+        Debug.Log("EndEnemyTurn");
         battleManager.turnCount++;
         battleManager.isActionPhase = false;
         battleManager.currentActingCharacter = null;
@@ -327,10 +268,8 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         List<string> appliedEffects = new();
 
-        // 🔄 Refresh base chances from weapons and action
         ApplyWeaponStatusChances(attacker);
 
-        // 🔧 Passive items may further modify chances
         foreach (var behavior in attacker.runtimePassiveBehaviors)
         {
             if (behavior is IPossibilityModifier mod)
@@ -339,91 +278,44 @@ public class CharacterCombatHandler : MonoBehaviour
             }
         }
 
-        // 🧠 Check if any passive guarantees crit (like BloodRushCore)
-        bool forceCrit = false;
-
-        foreach (var behavior in attacker.runtimePassiveBehaviors)
-        {
-            if (behavior == null) continue;
-
-            if (behavior is BloodRushCore brc && brc.IsReady())
-            {
-                forceCrit = true;
-                break;
-            }
-        }
+        bool forceCrit = attacker.runtimePassiveBehaviors.OfType<BloodRushCore>().Any(brc => brc.IsReady());
 
         attacker.isCritical = forceCrit || attacker.possibilityPool.Roll(StatusChanceType.Critical);
-        bool isCriticalHit = forceCrit || attacker.possibilityPool.Roll(StatusChanceType.Critical);
 
-        if (isCriticalHit)
-        {
+        if (attacker.isCritical)
             appliedEffects.Add($"landed a CRITICAL HIT on {target.characterName}");
-            attacker.isCritical = true;  // 🔥 Mark attacker for damage calculation
-        }
-        else
-        {
-            attacker.isCritical = false;
-        }
 
-        // ⚡ Stun chance roll
         if (attacker.possibilityPool.Roll(StatusChanceType.Stun))
         {
-            TurnStatusEffect stun = new TurnStatusEffect(StatusEffectType.Stun, 1, 0, attacker);
+            TurnStatusEffect stun = new(StatusEffectType.Stun, 1, 0, attacker);
             target.ApplyStatusEffect(stun);
             appliedEffects.Add($"stunned {target.characterName}");
         }
 
-        // 🩸 Bleed chance roll
         if (target.characterType != CharacterType.Android && attacker.possibilityPool.Roll(StatusChanceType.Bleed))
         {
             int duration = target.characterType == CharacterType.Human ? 2 : 1;
-
-            TurnStatusEffect bleed = new TurnStatusEffect(
-                StatusEffectType.Bleed,
-                duration,
-                1,
-                attacker
-            );
-
+            TurnStatusEffect bleed = new(StatusEffectType.Bleed, duration, 1, attacker);
             target.ApplyStatusEffect(bleed);
             appliedEffects.Add($"inflicted Bleed on {target.characterName} for {duration} turn(s)");
         }
 
-        // ☠️ Poison chance roll
         if (target.characterType != CharacterType.Android && attacker.possibilityPool.Roll(StatusChanceType.Poison))
         {
-            TurnStatusEffect poison = new TurnStatusEffect(StatusEffectType.Poison, 3, 1, attacker);
+            TurnStatusEffect poison = new(StatusEffectType.Poison, 3, 1, attacker);
             target.ApplyStatusEffect(poison);
-
             appliedEffects.Add($"inflicted Poison on {target.characterName}");
         }
 
-        // 💬 Return effects in narration-style format
-        if (appliedEffects.Count > 0)
-        {
-            return " Effects: " + string.Join(". ", appliedEffects) + ".";
-        }
-        else
-        {
-            return " No special effects.";
-        }
+        return appliedEffects.Count > 0
+            ? " Effects: " + string.Join(". ", appliedEffects) + "."
+            : " No special effects.";
     }
 
-    /// <summary>
-    /// Updates the attacker's possibility pool using status effect chances
-    /// provided by any active weapons. Multiple weapons stack additively and
-    /// values are clamped between 0 and 1 by the pool itself.
-    /// </summary>
-    /// <param name="attacker">Character performing the attack.</param>
     private void ApplyWeaponStatusChances(Character attacker)
     {
-        float bleed = 0f;
-        float poison = 0f;
-        float stun = 0f;
-        float crit = 0f;
+        float bleed = 0f, poison = 0f, stun = 0f, crit = 0f;
 
-        // ✅ Base chances from active weapons
         foreach (var item in attacker.activeItem)
         {
             if (item is Weapon w)
@@ -435,7 +327,6 @@ public class CharacterCombatHandler : MonoBehaviour
             }
         }
 
-        // ✅ Action-specific bonuses
         if (attacker.selectedAction != null)
         {
             bleed += attacker.selectedAction.bleedChance;
@@ -444,19 +335,11 @@ public class CharacterCombatHandler : MonoBehaviour
             crit += attacker.selectedAction.criticalChance;
         }
 
-        // ✅ Enemy baseline critical chance based on encounter type
         if (attacker is Enemy)
         {
             var nodeType = PlayerData.Instance != null ? PlayerData.Instance.nextNodeType : Map.NodeType.MinorEnemy;
-            switch (nodeType)
-            {
-                case Map.NodeType.MinorEnemy:
-                    crit += 0.05f;
-                    break;
-                case Map.NodeType.EliteEnemy:
-                    crit += 0.10f;
-                    break;
-            }
+            if (nodeType == Map.NodeType.MinorEnemy) crit += 0.05f;
+            else if (nodeType == Map.NodeType.EliteEnemy) crit += 0.1f;
         }
 
         attacker.possibilityPool.SetBaseChance(StatusChanceType.Bleed, bleed);
@@ -474,5 +357,4 @@ public class CharacterCombatHandler : MonoBehaviour
     {
         return lastDamageBreakdown.TryGetValue(attacker, out var val) ? val : new();
     }
-
 }

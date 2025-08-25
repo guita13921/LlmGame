@@ -43,7 +43,6 @@ public class BattleManager : MonoBehaviour
     [SerializeField] public Character selectedTarget = null;
     [SerializeField] public List<BodyPartData> selectedParts = new List<BodyPartData>();
 
-
     [Header("Battle State")]
     [SerializeField] public int turnCount = 1;
     public float gaugeThreshold = 1000f;
@@ -55,6 +54,9 @@ public class BattleManager : MonoBehaviour
 
     [HideInInspector] public string lastUserMessage = "";
 
+    // ✅ NEW: Queue for safe character addition
+    private List<Character> pendingCharacters = new List<Character>();
+    private bool isResolvingAction = false;
 
     private void Start()
     {
@@ -79,10 +81,19 @@ public class BattleManager : MonoBehaviour
             GameObject prefab = group.enemies[i];
             if (prefab == null) continue;
 
-            Transform spawnPoint = enemySpawnPoints != null && i < enemySpawnPoints.Length ? enemySpawnPoints[i] : null;
-            GameObject enemyObj = spawnPoint != null
-                ? Instantiate(prefab, spawnPoint.position, spawnPoint.rotation)
-                : Instantiate(prefab);
+            Transform spawnPoint = null;
+
+            // If this is the boss, spawn at position 2 (index 2)
+            if (group.enemies[i].GetComponent<Enemy>()?.archetype == EnemyArchetype.Boss && enemySpawnPoints.Length > 2)
+            {
+                spawnPoint = enemySpawnPoints[2]; // position 3 (index 2)
+            }
+            else
+            {
+                spawnPoint = enemySpawnPoints[i];
+            }
+
+            GameObject enemyObj = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
 
             Enemy enemy = enemyObj.GetComponent<Enemy>();
             if (enemy != null)
@@ -94,22 +105,197 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public Enemy SpawnExtraEnemy(GameObject prefab)
+    public Enemy SpawnExtraEnemy(GameObject prefab, int spawnIndex = -1)
     {
         if (prefab == null || enemySpawnPoints == null || enemySpawnPoints.Length == 0)
             return null;
 
-        Transform spawnPoint = enemySpawnPoints[Random.Range(0, enemySpawnPoints.Length)];
+        Transform spawnPoint = null;
+
+        if (spawnIndex >= 0 && spawnIndex < enemySpawnPoints.Length)
+        {
+            spawnPoint = enemySpawnPoints[spawnIndex];
+
+            bool occupied = enemies.Any(e => Vector3.Distance(e.transform.position, spawnPoint.position) < 0.5f);
+            if (occupied)
+            {
+                Debug.LogWarning($"Spawn position {spawnIndex} is occupied. Skipping spawn.");
+                return null;
+            }
+        }
+        else
+        {
+            // Fallback to random point
+            spawnPoint = enemySpawnPoints[Random.Range(0, enemySpawnPoints.Length)];
+        }
+
         GameObject enemyObj = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
         Enemy enemy = enemyObj.GetComponent<Enemy>();
+
         if (enemy != null)
         {
             enemy.turnGauge = 0f;
+
+            // ✅ Add immediately instead of queuing
             enemies.Add(enemy);
             allCharacters.Add(enemy);
+
+            Debug.Log($"[Immediate Spawn] {enemy.characterName} added to battle.");
         }
 
         return enemy;
+    }
+
+    private void Update()
+    {
+        if (isActionPhase || !battleActive) return;
+
+        foreach (var character in allCharacters)
+        {
+            if (!character.IsAlive()) continue;
+
+            if (currentActingCharacter == null)
+                character.turnGauge += character.speed * Time.deltaTime * 10;
+
+            if (character.turnGauge >= gaugeThreshold)
+            {
+                currentActingCharacter = character;
+                isActionPhase = true;
+                character.turnGauge = 0f;
+
+                foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
+                    listener.OnTurnStart(character);
+
+                character.ProcessStatusEffects();
+
+                foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
+                    listener.OnTurnEnd(character);
+
+                if (character.HasStatusEffect(StatusEffectType.Stun))
+                {
+                    Debug.Log($"{character.characterName} is stunned and skips their turn.");
+                    StartCoroutine(SkipTurn(character));
+                    break;
+                }
+
+                if (character is Player)
+                    chatAI.ShowInputUI();
+                else
+                    chatAI.HideInputUI();
+
+                StartCoroutine(DoAction(character));
+                break;
+            }
+        }
+    }
+
+    private IEnumerator DoAction(Character character)
+    {
+        Debug.Log($"=== {character.characterName}'s Turn ===");
+
+        isActionPhase = true;
+        currentActingCharacter = character;
+
+        if (character is Player)
+        {
+            chatAI.ShowInputUI();
+            yield break; // Wait for player input
+        }
+
+        if (character is Enemy enemy)
+        {
+            if (enemy.availableActions == null || enemy.availableActions.Count == 0)
+            {
+                Debug.LogWarning($"{enemy.characterName} has no available actions.");
+                yield break;
+            }
+
+
+            BossSkillBehavior bossAI = enemy.GetComponent<BossSkillBehavior>();
+
+            if (enemy.archetype == EnemyArchetype.Boss && bossAI != null)
+            {
+                CharacterActionData action = bossAI.DecideAction();
+
+                // Special case: handle summon or other unique behavior
+                if (bossAI.HandleSpecialAction(action))
+                {
+                    //yield return StartCoroutine(combatHandler.EndEnemyTurn());
+                    //yield break;
+                }
+
+                enemy.selectedAction = action;
+
+                if (action != null && action.delayTurns > 0 && action.delayedAction != null)
+                    enemy.pendingDelayedAction = action.delayedAction;
+            }
+            else
+            {
+                if (enemy.pendingDelayedAction != null)
+                {
+                    enemy.selectedAction = enemy.pendingDelayedAction;
+                    enemy.pendingDelayedAction = null;
+                }
+                else
+                {
+                    int index = Random.Range(0, enemy.availableActions.Count);
+                    enemy.selectedAction = enemy.availableActions[index];
+
+                    if (enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
+                        enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
+                }
+            }
+
+            if (enemy.selectedAction == null)
+            {
+                Debug.LogError($"{enemy.characterName} has a null selectedAction.");
+                yield break;
+            }
+
+            // Auto-activate enemy weapon
+            enemy.activeItem.Clear();
+            if (enemy.equippedWeapon != null)
+            {
+                enemy.equippedWeapon.isActive = true;
+                enemy.activeItem.Add(enemy.equippedWeapon);
+            }
+
+            Character target = player;
+            if (target != null)
+            {
+                Debug.Log($"Enemy {enemy.characterName} chosen action: {enemy.selectedAction.actionName}");
+                combatHandler.EnemyAttack(enemy, target, enemy.selectedAction);
+            }
+
+            // Simulate time for enemy action resolution
+            yield return new WaitForSeconds(1f);
+        }
+    }
+
+
+    public void EndPlayerTurn()
+    {
+        isActionPhase = false;
+        currentActingCharacter = null;
+        selectedTarget = null;
+        selectedParts.Clear();
+
+        //AddPendingCharacters(); // ✅ Process newly spawned characters
+
+        var inventoryUI = FindObjectOfType<BattleInventoryUI>();
+        inventoryUI?.RefreshUI();
+
+        chatAI.ShowInputUI();
+        Debug.Log("Player turn ended.");
+    }
+
+    private IEnumerator SkipTurn(Character character)
+    {
+        yield return new WaitForSeconds(1f);
+        Debug.Log($"{character.characterName}'s turn was skipped due to stun.");
+        isActionPhase = false;
+        currentActingCharacter = null;
+        //AddPendingCharacters(); // ✅ Still add new characters even on skipped turn
     }
 
     private EnemyGroup GetRandomEnemyGroup(NodeType type, EnemyDifficulty difficulty)
@@ -139,178 +325,6 @@ public class BattleManager : MonoBehaviour
         return pool[index];
     }
 
-    private void Update()
-    {
-        if (isActionPhase) return;
-
-        if (!battleActive) return;
-
-        if (isActionPhase && currentActingCharacter is Player)
-        {
-            return; // Wait for player's input
-        }
-
-        if (isActionPhase) return;
-
-        foreach (var character in allCharacters)
-        {
-            if (!character.IsAlive()) continue;
-
-            character.turnGauge += character.speed * Time.deltaTime * 10;
-
-            if (character.turnGauge >= gaugeThreshold)
-            {
-                currentActingCharacter = character;
-                isActionPhase = true;
-                character.turnGauge = 0f;
-
-                foreach (var ticker in character.GetComponentsInChildren<ITurnListener>())
-                {
-                    ticker.OnTurnStart(character);
-                }
-
-                // ⬇️ Process status effects BEFORE they take their action
-                character.ProcessStatusEffects();
-
-                foreach (var ticker in character.GetComponentsInChildren<ITurnListener>())
-                {
-                    ticker.OnTurnEnd(character);
-                }
-
-                // ⬇️ If stunned, skip action
-                if (character.HasStatusEffect(StatusEffectType.Stun))
-                {
-                    Debug.Log($"{character.characterName} is stunned and skips their turn.");
-                    StartCoroutine(SkipTurn(character));
-                    break;
-                }
-
-                if (character is Player)
-                    chatAI.ShowInputUI();
-                else
-                    chatAI.HideInputUI();
-
-                StartCoroutine(DoAction(character));
-                break;
-            }
-        }
-    }
-
-    private IEnumerator DoAction(Character character)
-    {
-        Debug.Log($"=== {character.characterName}'s Turn ===");
-
-        isActionPhase = true;
-        currentActingCharacter = character;
-
-        if (character is Player)
-        {
-            Debug.Log("Player's turn: waiting for player input.");
-            chatAI.ShowInputUI();
-            yield break;
-        }
-
-        if (character is Enemy enemy)
-        {
-            if (enemy.availableActions == null || enemy.availableActions.Count == 0)
-            {
-                Debug.LogWarning($"{enemy.characterName} has no available actions.");
-                yield break;
-            }
-
-            BossSkillBehavior bossAI = enemy.GetComponent<BossSkillBehavior>();
-
-            if (enemy.archetype == EnemyArchetype.Boss && bossAI != null)
-            {
-                CharacterActionData action = bossAI.DecideAction();
-
-                if (bossAI.HandleSpecialAction(action))
-                {
-                    yield return StartCoroutine(combatHandler.EndEnemyTurn());
-                    yield break;
-                }
-
-                enemy.selectedAction = action;
-
-                if (enemy.selectedAction != null && enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
-                {
-                    enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
-                }
-            }
-            else
-            {
-                // Use any previously charged attack if present, otherwise pick a random action
-                if (enemy.pendingDelayedAction != null)
-                {
-                    enemy.selectedAction = enemy.pendingDelayedAction;
-                    enemy.pendingDelayedAction = null;
-                }
-                else
-                {
-                    int index = Random.Range(0, enemy.availableActions.Count);
-                    enemy.selectedAction = enemy.availableActions[index];
-
-                    if (enemy.selectedAction.delayTurns > 0 && enemy.selectedAction.delayedAction != null)
-                    {
-                        enemy.pendingDelayedAction = enemy.selectedAction.delayedAction;
-                    }
-                }
-            }
-
-            if (enemy.selectedAction == null)
-            {
-                Debug.LogError($"{enemy.characterName} has a null selectedAction.");
-                yield break;
-            }
-
-            // ✅ Automatically activate the enemy's equipped weapon
-            enemy.activeItem.Clear();
-            if (enemy.equippedWeapon != null)
-            {
-                enemy.equippedWeapon.isActive = true;
-                enemy.activeItem.Add(enemy.equippedWeapon);
-            }
-
-            // 🎯 Perform normal attack
-            Character target = player;
-            if (target != null)
-            {
-                Debug.Log($"Enemy {enemy.characterName} chosen action: {enemy.selectedAction.actionName}");
-                combatHandler.EnemyAttack(enemy, target, enemy.selectedAction);
-            }
-        }
-    }
-
-    /*
-    private Character GetLowestHPTargetInTeam(Enemy user)
-    {
-        List<Character> allies = GetAlliesOf(user);
-
-        Character lowest = null;
-        int lowestHP = int.MaxValue;
-
-        foreach (var ally in allies)
-        {
-            if (ally.IsAlive() && ally.currentHP < ally.maxHP && ally.currentHP < lowestHP)
-            {
-                lowestHP = ally.currentHP;
-                lowest = ally;
-            }
-        }
-
-        return lowest;
-    }
-
-    // Replace with your actual method to get allies of a character
-    private List<Character> GetAlliesOf(Character character)
-    {
-        return allCharacters.FindAll(c =>
-            c.characterType == character.characterType &&
-            c.IsAlive());
-    }
-    */
-
-
     public Character GetRandomOpponent(Character self)
     {
         if (self is Player)
@@ -327,37 +341,22 @@ public class BattleManager : MonoBehaviour
         return null;
     }
 
-    // Add this field to your BattleManager (or wherever PlayerSelectedTarget lives)
-    private bool isResolvingAction = false;
-
-    // Replace your method with this:
     public void PlayerSelectedTarget(Character selectedCharacter)
     {
         if (player == null || !player.IsAlive()) return;
         if (selectedCharacter == null || !selectedCharacter.IsAlive()) return;
-
-        // Prevent re-entry / double-activation while an action is running
         if (isResolvingAction) return;
-
-        // If the same target is clicked again and nothing changed, ignore
-        if (selectedTarget == selectedCharacter)
-        {
-            // Optional: allow reselect only if mode changed; otherwise ignore
-            return;
-        }
+        if (selectedTarget == selectedCharacter) return;
 
         Debug.Log($"Player selected {selectedCharacter.characterName} as target!");
         selectedTarget = selectedCharacter;
-
-        // Wrap actions in one coroutine so we can safely guard against duplicates
         StartCoroutine(ExecuteSelectionOnTarget(selectedCharacter));
     }
 
-    private System.Collections.IEnumerator ExecuteSelectionOnTarget(Character target)
+    private IEnumerator ExecuteSelectionOnTarget(Character target)
     {
         isResolvingAction = true;
 
-        // Consumable action
         if (isUsingConsumableMode && player.activeItem.Count > 0)
         {
             Item active = player.activeItem[0];
@@ -365,69 +364,22 @@ public class BattleManager : MonoBehaviour
             {
                 yield return StartCoroutine(consumeItem.UseOnTarget(player, target, this));
             }
-            // If you want to auto-exit consumable mode after use:
-            // isUsingConsumableMode = false;
-            // player.activeItem.Clear();
         }
 
-        // Ultimate skill action
         if (player.isUsingUltimateSkill && player.currentSkill != null)
         {
             yield return StartCoroutine(player.currentSkill.UseOnTarget(player, target, this));
-            // Optionally turn off the skill after use:
-            // player.isUsingUltimateSkill = false;
-            // player.currentSkill = null;
         }
-
-        // Optionally clear selection so the same target can be picked again later
-        // selectedTarget = null;
 
         isResolvingAction = false;
-    }
-
-    private string GetRandomEnemyAction(Enemy enemy)
-    {
-        if (enemy.actions == null || enemy.actions.Count == 0)
-        {
-            Debug.LogWarning($"Enemy {enemy.characterName} has no actions defined, using default 'Punch'");
-            return "Punch";
-        }
-
-        int randomIndex = Random.Range(0, enemy.actions.Count);
-        return enemy.actions[randomIndex];
-    }
-
-    public void SetUserMessage(string message)
-    {
-        lastUserMessage = message;
-    }
-
-    public bool CheckBattleEnd()
-    {
-        if (!player.IsAlive())
-        {
-            Debug.Log("Player Defeated!");
-            SceneManager.LoadScene("GameOver");
-            return true;
-        }
-
-        bool anyEnemyAlive = enemies.Any(e => e.IsAlive());
-        if (!anyEnemyAlive)
-        {
-            Debug.Log("All Enemies Defeated!");
-            SceneManager.LoadScene("MapGenerate");
-        }
-
-        return !anyEnemyAlive;
     }
 
     public string GetBattleLog()
     {
         StringBuilder sb = new StringBuilder();
         foreach (var entry in battleLog)
-        {
             sb.AppendLine(entry);
-        }
+
         return sb.ToString();
     }
 
@@ -488,26 +440,56 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public void EndPlayerTurn()
+    public void SetUserMessage(string message)
     {
-        isActionPhase = false;
-        currentActingCharacter = null;
-        selectedTarget = null;
-        selectedParts.Clear();
-
-        // Refresh inventory visuals in case items were consumed or equipment changed
-        var inventoryUI = FindObjectOfType<BattleInventoryUI>();
-        inventoryUI?.RefreshUI();
-
-        chatAI.ShowInputUI(); // Reset UI
-        Debug.Log("Player turn ended.");
+        lastUserMessage = message;
     }
 
-    private IEnumerator SkipTurn(Character character)
+    public bool CheckBattleEnd()
     {
-        yield return new WaitForSeconds(1f); // Simulate a delay
-        Debug.Log($"{character.characterName}'s turn was skipped due to stun.");
-        isActionPhase = false;
+        if (!player.IsAlive())
+        {
+            Debug.Log("Player Defeated!");
+            SceneManager.LoadScene("GameOver");
+            return true;
+        }
+
+        bool anyEnemyAlive = enemies.Any(e => e.IsAlive());
+        if (!anyEnemyAlive)
+        {
+            Debug.Log("All Enemies Defeated!");
+            SceneManager.LoadScene("MapGenerate");
+        }
+
+        return !anyEnemyAlive;
     }
 
+    // ✅ Queuing methods
+    public void QueueCharacterForSpawn(Character newCharacter)
+    {
+        if (newCharacter == null) return;
+        if (pendingCharacters.Contains(newCharacter)) return;
+        pendingCharacters.Add(newCharacter);
+    }
+
+    private void AddPendingCharacters()
+    {
+        if (pendingCharacters.Count == 0) return;
+
+        foreach (var character in pendingCharacters)
+        {
+            if (!allCharacters.Contains(character))
+                allCharacters.Add(character);
+
+            if (character is Enemy enemy && !enemies.Contains(enemy))
+                enemies.Add(enemy);
+
+            character.turnGauge = 0f;
+            character.gameObject.SetActive(true);
+
+            Debug.Log($"[Spawned] {character.characterName} added to battle.");
+        }
+
+        pendingCharacters.Clear();
+    }
 }

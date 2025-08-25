@@ -78,14 +78,22 @@ public class BossSkillBehavior : MonoBehaviour
         if (action == summonThugs)
         {
             summonUseCount++;
-            int count = Random.Range(1, 3);
+
+            // Positions 0 and 1
+            int[] spawnIndexes = new int[] { 0, 1 };
+            int count = Mathf.Min(spawnIndexes.Length, Random.Range(1, 3)); // 1 or 2 minions
+
             for (int i = 0; i < count; i++)
             {
                 GameObject prefab = Random.value < 0.5f ? pipeManPrefab : robotPrefab;
-                battleManager?.SpawnExtraEnemy(prefab);
+                int index = spawnIndexes[i];
+
+                battleManager?.SpawnExtraEnemy(prefab, index);
             }
+
             return true;
         }
+
         return false;
     }
 }

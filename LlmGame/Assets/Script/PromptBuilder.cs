@@ -137,6 +137,7 @@ public static class PromptBuilder
 
         Important guidelines:
         - Characters can only utilize resources that are currently active and available to them
+         - If the action is a delayed warning that resolves on a later turn, respond with feasibility 10 and potential_damage 0
         - Actions using unavailable or inactive resources should be marked as not feasible
         - Focus on narrative outcomes rather than specific numerical damage values
         - Maintain appropriate adventure tone throughout

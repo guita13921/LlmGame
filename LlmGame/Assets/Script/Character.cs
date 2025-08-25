@@ -22,7 +22,7 @@ public class Character : MonoBehaviour
     public int focus;
     public int maxHP;
     public int maxMP;
-    public int speed;
+    public float speed;
     public int maxShield;
 
     [Header("Bonus Stats")]
@@ -31,7 +31,7 @@ public class Character : MonoBehaviour
     public int bonusFocus;
     public int bonusMaxHP;
     public int bonusMaxMP;
-    public int bonusSpeed;
+    public float bonusSpeed;
     public int bonusMaxShield;
 
     [Header("Resource")]
@@ -228,9 +228,8 @@ public class Character : MonoBehaviour
     {
         Debug.Log($"{characterName} animation complete (via Event)");
         animationFinished = true;
-
         // 🔥 Log the attack outcome here
-        LogAttackOutcome();
+        //LogAttackOutcome();
     }
 
     public void ApplyDamageAtHit()
@@ -277,7 +276,7 @@ public class Character : MonoBehaviour
         }
 
         string log = $"Turn {battleManager.turnCount}: {characterName} {actionText} → Target: {damageTarget.characterName} Result: {damageTarget.currentHP} / {damageTarget.maxHP} ({battleManager.chatAI.baseEffect})";
-        battleManager.battleLog.Add(log);
+        //battleManager.battleLog.Add(log);
 
         //Debug.Log(log);
         //Debug.Log(damageTarget.GetBodyPartStatus());
