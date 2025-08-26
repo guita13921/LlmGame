@@ -50,6 +50,7 @@ public class DamageModifierSkill : ScriptableObject
 
         user.currentMP -= mpCost;
         Debug.Log($"{user.characterName} uses {skillName} on {target.characterName}");
+        battleManager.chatAI.AppendResponse($"{user.characterName} uses {skillName}: {skillDescription}");
 
         // Apply specific skill effects
         if (skillName == "Radiant Collapse")

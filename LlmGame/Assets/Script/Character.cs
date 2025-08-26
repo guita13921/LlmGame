@@ -615,6 +615,43 @@ public class Character : MonoBehaviour
         return sb.ToString();
     }
 
+    public void ClearEndTurnEffects()
+    {
+        for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
+        {
+            TurnStatusEffect effect = activeStatusEffects[i];
+            if (effect.isPermanent) continue;
+            switch (effect.effectType)
+            {
+                case StatusEffectType.AttackUp:
+                    attack -= effect.magnitude;
+                    activeStatusEffects.RemoveAt(i);
+                    break;
+                case StatusEffectType.DefenseUp:
+                    defense -= effect.magnitude;
+                    activeStatusEffects.RemoveAt(i);
+                    break;
+                case StatusEffectType.SpeedUp:
+                    speed -= effect.magnitude;
+                    activeStatusEffects.RemoveAt(i);
+                    break;
+                case StatusEffectType.CritChanceUp:
+                    possibilityPool.AddModifier(StatusChanceType.Critical, -effect.magnitude / 100f);
+                    activeStatusEffects.RemoveAt(i);
+                    break;
+                case StatusEffectType.CritDamageUp:
+                    possibilityPool.AddCriticalMultiplierBonus(-effect.magnitude / 100f);
+                    activeStatusEffects.RemoveAt(i);
+                    break;
+                case StatusEffectType.Stun:
+                    activeStatusEffects.RemoveAt(i);
+                    break;
+            }
+        }
+
+        StatusEffectsChanged?.Invoke();
+    }
+
     private void TryApplyNerveRotVialDebuff(Character source)
     {
         if (source == null || !(source is Player playerSource)) return;

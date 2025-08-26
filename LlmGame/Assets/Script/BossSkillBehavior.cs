@@ -175,4 +175,19 @@ public class BossSkillBehavior : MonoBehaviour
 
         return false;
     }
+
+    public string GetSkillDescription(CharacterActionData action)
+    {
+        if (action == summonThugs)
+            return "Summons allies to the fight";
+        if (action == smokeVeil)
+            return "Becomes untargetable while allies remain";
+        if (action == rallyOrders)
+            return "Buffs allies with random attack or defense";
+        if (action == executionBullet)
+            return "A high powered shot with critical potential";
+        if (action == kingsFury)
+            return "Raises the boss's attack and speed";
+        return string.Empty;
+    }
 }

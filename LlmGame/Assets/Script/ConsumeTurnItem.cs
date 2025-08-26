@@ -31,58 +31,98 @@ public class ConsumeTurnItem : Item
         {
             case "Reinforced Plating":
                 target.defense += 10;
-                battleManager.battleLog.Add($"{user.characterName} used {itemName} on {target.characterName}, increasing defense by 10.");
+                {
+                    string msg = $"{user.characterName} used {itemName} on {target.characterName}, increasing defense by 10.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "HP Booster":
                 target.maxHP = Mathf.RoundToInt(target.maxHP * 1.2f);
                 target.currentHP = Mathf.RoundToInt(target.currentHP * 1.2f);
                 if (target.currentHP > target.maxHP) target.currentHP = target.maxHP;
-                battleManager.battleLog.Add($"{user.characterName} boosted {target.characterName}'s HP by 20%.");
+                {
+                    string msg = $"{user.characterName} boosted {target.characterName}'s HP by 20%.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "MP Cell":
                 target.maxMP = Mathf.RoundToInt(target.maxMP * 1.2f);
                 target.currentMP = Mathf.RoundToInt(target.currentMP * 1.2f);
                 if (target.currentMP > target.maxMP) target.currentMP = target.maxMP;
-                battleManager.battleLog.Add($"{user.characterName} boosted {target.characterName}'s MP by 20%.");
+                {
+                    string msg = $"{user.characterName} boosted {target.characterName}'s MP by 20%.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "Bandage":
                 target.activeStatusEffects.RemoveAll(e => e.effectType == StatusEffectType.Bleed && !e.isPermanent);
-                battleManager.battleLog.Add($"{user.characterName} bandaged {target.characterName}, removing bleeding.");
+                {
+                    string msg = $"{user.characterName} bandaged {target.characterName}, removing bleeding.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "Antidote":
                 target.activeStatusEffects.RemoveAll(e => e.effectType == StatusEffectType.Poison && !e.isPermanent);
-                battleManager.battleLog.Add($"{user.characterName} cured {target.characterName}'s poison.");
+                {
+                    string msg = $"{user.characterName} cured {target.characterName}'s poison.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "Shield Battery":
                 target.currentshield = Mathf.Min(target.maxShield, target.currentshield + 20);
-                battleManager.battleLog.Add($"{user.characterName} restored 20 shield to {target.characterName}.");
+                {
+                    string msg = $"{user.characterName} restored 20 shield to {target.characterName}.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "Focus Tonic":
                 target.ApplyStatusEffect(new TurnStatusEffect(StatusEffectType.CritChanceUp, 2, 25));
-                battleManager.battleLog.Add($"{user.characterName} increased {target.characterName}'s critical chance.");
+                {
+                    string msg = $"{user.characterName} increased {target.characterName}'s critical chance.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "Adrenaline Shot":
                 int heal25 = Mathf.RoundToInt(target.maxHP * 0.25f);
                 target.currentHP = Mathf.Min(target.maxHP, target.currentHP + heal25);
-                battleManager.battleLog.Add($"{user.characterName} healed {target.characterName} for {heal25} HP.");
+                {
+                    string msg = $"{user.characterName} healed {target.characterName} for {heal25} HP.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "Soul Patch":
                 int heal50 = Mathf.RoundToInt(target.maxHP * 0.5f);
                 target.currentHP = Mathf.Min(target.maxHP, target.currentHP + heal50);
-                battleManager.battleLog.Add($"{user.characterName} healed {target.characterName} for {heal50} HP.");
+                {
+                    string msg = $"{user.characterName} healed {target.characterName} for {heal50} HP.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             case "Overdrive Chip":
                 target.mpRegenPerTurn += 10;
-                battleManager.battleLog.Add($"{user.characterName} enhanced {target.characterName}'s MP regeneration by 10 per turn.");
+                {
+                    string msg = $"{user.characterName} enhanced {target.characterName}'s MP regeneration by 10 per turn.";
+                    battleManager.battleLog.Add(msg);
+                    battleManager.chatAI.AppendResponse(msg);
+                }
                 break;
 
             default:

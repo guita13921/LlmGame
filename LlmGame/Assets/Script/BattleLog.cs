@@ -9,6 +9,7 @@ public class BattleLog : MonoBehaviour
 
     public void Log(string message)
     {
+        message = message.Replace("\\n", "\n");
         responseText.text += message + "\n";
         Canvas.ForceUpdateCanvases(); // Force layout rebuild
         //ScrollToTop();
