@@ -342,12 +342,12 @@ public class ChatAI : MonoBehaviour
     private string FormatResult()
     {
         string feasLine = $"Feasibility: {baseFeasibility}";
-        if (SettingsManager.Instance == null || SettingsManager.Instance.showFeasibilityDesc)
+        if (SettingsManager.Instance != null && SettingsManager.Instance.showFeasibilityDesc)
             feasLine += $" ({baseFeasibilityDesc})";
         feasLine += "\n";
 
         string potLine = $"Potential: {basePotential}";
-        if (SettingsManager.Instance == null || SettingsManager.Instance.showPotentialDesc)
+        if (SettingsManager.Instance != null && SettingsManager.Instance.showPotentialDesc)
             potLine += $" ({basePotentialDesc})";
         potLine += "\n";
 

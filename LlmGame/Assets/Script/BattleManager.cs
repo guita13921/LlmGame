@@ -196,6 +196,7 @@ public class BattleManager : MonoBehaviour
                 foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
                     listener.OnTurnStart(character);
 
+                bool wasStunned = character.HasStatusEffect(StatusEffectType.Stun);
                 string statusLog = character.ProcessStatusEffects();
                 if (!string.IsNullOrEmpty(statusLog))
                 {
@@ -205,7 +206,7 @@ public class BattleManager : MonoBehaviour
                 foreach (var listener in character.GetComponentsInChildren<ITurnListener>())
                     listener.OnTurnEnd(character);
 
-                if (character.HasStatusEffect(StatusEffectType.Stun))
+                if (wasStunned)
                 {
                     Debug.Log($"{character.characterName} is stunned and skips their turn.");
                     StartCoroutine(SkipTurn(character));
