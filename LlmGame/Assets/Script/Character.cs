@@ -370,11 +370,12 @@ public class Character : MonoBehaviour
     }
 
 
-    public virtual string ProcessStatusEffects()
+    public virtual string ProcessStatusEffects(bool isTurnStart)
     {
         var sb = new StringBuilder();
 
-        if (mpRegenPerTurn > 0)
+        // Only regenerate MP on turn start
+        if (isTurnStart && mpRegenPerTurn > 0)
         {
             int before = currentMP;
             currentMP = Mathf.Min(maxMP, currentMP + mpRegenPerTurn);
@@ -393,8 +394,11 @@ public class Character : MonoBehaviour
             switch (effect.effectType)
             {
                 case StatusEffectType.Stun:
-                    Debug.Log($"{characterName} is stunned and will skip this turn.");
-                    sb.AppendLine($"{characterName} is stunned and will skip this turn.");
+                    if (isTurnStart)
+                    {
+                        Debug.Log($"{characterName} is stunned and will skip this turn.");
+                        sb.AppendLine($"{characterName} is stunned and will skip this turn.");
+                    }
                     break;
 
                 // 🔻 Debuffs
@@ -469,8 +473,9 @@ public class Character : MonoBehaviour
                     }
                     break;
 
-                // 🧪 Damage-over-time effects
+                // 🧪 Damage-over-time effects (only apply on turn start)
                 case StatusEffectType.Radiation:
+                    if (isTurnStart)
                     {
                         float radPercent = 0.05f;
                         if (effect.magnitude == 2) radPercent = 0.10f;
@@ -482,9 +487,10 @@ public class Character : MonoBehaviour
                         sb.AppendLine($"{characterName} suffers RADIATION for {radDamage} damage.");
                         TakeDamage(radDamage);
                         TryApplyHealReductionDebuff(effect.source);
-                        break;
                     }
+                    break;
                 case StatusEffectType.Bleed:
+                    if (isTurnStart)
                     {
                         float bleedPercent = 0.15f;
                         if (effect.magnitude == 2) bleedPercent = 0.20f;
@@ -534,10 +540,10 @@ public class Character : MonoBehaviour
                                 }
                             }
                         }
-
-                        break;
                     }
+                    break;
                 case StatusEffectType.Poison:
+                    if (isTurnStart)
                     {
                         float poisonPercent = 0.05f;
                         if (effect.magnitude == 2) poisonPercent = 0.10f;
@@ -547,12 +553,36 @@ public class Character : MonoBehaviour
                         sb.AppendLine($"{characterName} suffers POISON for {poisonDamage} damage.");
                         TakeDamage(poisonDamage);
                         TryApplyNerveRotVialDebuff(effect.source);
-                        break;
                     }
+                    break;
             }
 
-            // ⏳ Countdown
-            if (!effect.isPermanent)
+            // ⏳ Countdown based on turn timing
+            bool tickNow = false;
+            if (isTurnStart)
+            {
+                // Start-turn effects or any effect not in end-turn list
+                tickNow = effect.effectType == StatusEffectType.Bleed ||
+                          effect.effectType == StatusEffectType.Poison ||
+                          effect.effectType == StatusEffectType.Radiation ||
+                          effect.effectType == StatusEffectType.Contaminated ||
+                          effect.effectType == StatusEffectType.Stun;
+            }
+            else
+            {
+                // End-turn effects
+                tickNow = effect.effectType == StatusEffectType.AttackUp ||
+                          effect.effectType == StatusEffectType.DefenseUp ||
+                          effect.effectType == StatusEffectType.SpeedUp ||
+                          effect.effectType == StatusEffectType.CritChanceUp ||
+                          effect.effectType == StatusEffectType.CritDamageUp ||
+                          effect.effectType == StatusEffectType.HealReduction ||
+                          effect.effectType == StatusEffectType.DefenseDown ||
+                          effect.effectType == StatusEffectType.AttackDown ||
+                          effect.effectType == StatusEffectType.FocusDown;
+            }
+
+            if (tickNow && !effect.isPermanent)
                 effect.remainingTurns--;
 
             // 🧹 Expire effect
@@ -617,10 +647,8 @@ public class Character : MonoBehaviour
 
     public void ClearEndTurnEffects()
     {
-        // Buff and stun effects now persist across turns and expire naturally
-        // via ProcessStatusEffects. This method only triggers the update
-        // event so UI elements can refresh after a turn ends.
-        StatusEffectsChanged?.Invoke();
+        // Process effects that expire at the end of a character's turn.
+        ProcessStatusEffects(false);
     }
 
     private void TryApplyNerveRotVialDebuff(Character source)

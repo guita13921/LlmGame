@@ -197,7 +197,7 @@ public class BattleManager : MonoBehaviour
                     listener.OnTurnStart(character);
 
                 bool wasStunned = character.HasStatusEffect(StatusEffectType.Stun);
-                string statusLog = character.ProcessStatusEffects();
+                string statusLog = character.ProcessStatusEffects(true);
                 if (!string.IsNullOrEmpty(statusLog))
                 {
                     chatAI.AppendResponse($"Turn {turnCount} Start: {statusLog}");
