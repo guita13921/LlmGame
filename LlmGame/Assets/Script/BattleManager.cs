@@ -331,6 +331,7 @@ public class BattleManager : MonoBehaviour
 
     public void EndPlayerTurn()
     {
+        player?.ClearEndTurnEffects();
         isActionPhase = false;
         currentActingCharacter = null;
         selectedTarget = null;
@@ -351,6 +352,7 @@ public class BattleManager : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
         Debug.Log($"{character.characterName}'s turn was skipped due to stun.");
+        character?.ClearEndTurnEffects();
         isActionPhase = false;
         currentActingCharacter = null;
         //AddPendingCharacters(); // ✅ Still add new characters even on skipped turn

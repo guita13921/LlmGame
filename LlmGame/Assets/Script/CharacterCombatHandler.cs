@@ -261,6 +261,7 @@ public class CharacterCombatHandler : MonoBehaviour
         }
 
         Debug.Log("EndEnemyTurn");
+        battleManager.currentActingCharacter?.ClearEndTurnEffects();
         battleManager.turnCount++;
         battleManager.isActionPhase = false;
         battleManager.currentActingCharacter = null;

@@ -214,8 +214,9 @@ public class ChatAI : MonoBehaviour
             baseFeasibilityDesc = "Boss skill";
             basePotentialDesc = "No damage";
             baseEffect = action != null ? action.actionName : "";
-            baseEffectDesc = "";
+            baseEffectDesc = bossBehavior.GetSkillDescription(action);
 
+            AppendResponse($"{enemy.characterName} uses {baseEffect}: {baseEffectDesc}");
             AppendResponse(FormatResult());
             yield break;
         }
@@ -327,6 +328,8 @@ public class ChatAI : MonoBehaviour
     {
         if (responseText == null) return;
 
+        message = message.Replace("\\n", "\n");
+
         if (!string.IsNullOrEmpty(responseText.text))
             responseText.text += "\n";
 
@@ -341,16 +344,16 @@ public class ChatAI : MonoBehaviour
         string feasLine = $"Feasibility: {baseFeasibility}";
         if (SettingsManager.Instance == null || SettingsManager.Instance.showFeasibilityDesc)
             feasLine += $" ({baseFeasibilityDesc})";
-        feasLine += "\\n";
+        feasLine += "\n";
 
         string potLine = $"Potential: {basePotential}";
         if (SettingsManager.Instance == null || SettingsManager.Instance.showPotentialDesc)
             potLine += $" ({basePotentialDesc})";
-        potLine += "\\n";
+        potLine += "\n";
 
         string effectLine = $"Effect: {baseEffect}";
 
-        return $"\\n<color=#00ffcc><b>Result:</b></color>\\n" + feasLine + potLine + effectLine;
+        return $"\n<color=#00ffcc><b>Result:</b></color>\n" + feasLine + potLine + effectLine;
     }
 
     public string EscapeJsonString(string str)
