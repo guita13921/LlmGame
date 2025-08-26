@@ -531,7 +531,16 @@ public class BattleManager : MonoBehaviour
         if (!anyEnemyAlive)
         {
             Debug.Log("All Enemies Defeated!");
-            if (!rewardShown)
+            bool bossBattle = enemies.Any(e => e.archetype == EnemyArchetype.Boss);
+            if (bossBattle)
+            {
+                if (!rewardShown)
+                {
+                    CutsceneManager.Instance?.PlayEndGameCutscene();
+                    rewardShown = true;
+                }
+            }
+            else if (!rewardShown)
             {
                 int moneyGain = player.money - startMoney;
                 int itemGain = (player.inventoryItems != null ? player.inventoryItems.Count : 0) - startItemCount;
