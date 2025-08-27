@@ -12,8 +12,8 @@ public class SettingsManager : MonoBehaviour
     private const string ShowPotentialDescKey = "ShowPotentialDesc";
 
     [Header("Display Settings")]
-    public bool showFeasibilityDesc = true;
-    public bool showPotentialDesc = true;
+    public bool showFeasibilityDesc = false;
+    public bool showPotentialDesc = false;
 
     private void Awake()
     {
@@ -26,8 +26,9 @@ public class SettingsManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        showFeasibilityDesc = PlayerPrefs.GetInt(ShowFeasibilityDescKey, 1) == 1;
-        showPotentialDesc = PlayerPrefs.GetInt(ShowPotentialDescKey, 1) == 1;
+        // Default to FALSE (0) if keys don't exist
+        showFeasibilityDesc = PlayerPrefs.GetInt(ShowFeasibilityDescKey, 0) == 1;
+        showPotentialDesc = PlayerPrefs.GetInt(ShowPotentialDescKey, 0) == 1;
     }
 
     public void SetMusicVolume(float volume)

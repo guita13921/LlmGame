@@ -22,7 +22,7 @@ public class TurnStatusEffect
         this.remainingTurns = duration;
         this.magnitude = magnitude;
         this.source = source;
-        this.isPermanent = isPermanent;
+        this.isPermanent = isPermanent = false;
     }
 }
 
