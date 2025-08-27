@@ -65,6 +65,9 @@ public class BattleManager : MonoBehaviour
     public GameObject damagePopupPrefab;
     public LevelRewardsUI levelRewardsUI;
 
+    [Header("Rewards")]
+    public StoreSystem storeSystem;
+
     private GameObject activeTargetIndicator;
     private int startMoney;
     private int startItemCount;
@@ -77,7 +80,12 @@ public class BattleManager : MonoBehaviour
         allCharacters.Add(player);
 
         startMoney = player.money;
-        startItemCount = player.inventoryItems != null ? player.inventoryItems.Count : 0;
+        int itemCount = 0;
+        if (player.inventoryItems != null) itemCount += player.inventoryItems.Count;
+        if (player.inventoryArmors != null) itemCount += player.inventoryArmors.Count;
+        if (PlayerData.Instance != null && PlayerData.Instance.equippedPassiveItems != null)
+            itemCount += PlayerData.Instance.equippedPassiveItems.Count;
+        startItemCount = itemCount;
 
         SpawnEnemyForCurrentNode();
     }
@@ -521,6 +529,70 @@ public class BattleManager : MonoBehaviour
         lastUserMessage = message;
     }
 
+    private void GrantBattleRewards()
+    {
+        NodeType nodeType = PlayerData.Instance != null ? PlayerData.Instance.nextNodeType : NodeType.MinorEnemy;
+        int credits = 0;
+
+        switch (nodeType)
+        {
+            case NodeType.MinorEnemy:
+                credits = Random.Range(10, 21);
+                player.money += credits;
+                if (storeSystem != null && Random.value < 0.2f)
+                {
+                    var passive = GetRandomPassive(ItemRarity.Common);
+                    if (passive != null)
+                        storeSystem.BuyItem(player, passive);
+                }
+                break;
+
+            case NodeType.EliteEnemy:
+                credits = Random.Range(20, 51);
+                player.money += credits;
+                if (storeSystem != null)
+                {
+                    ScriptableObject drop;
+                    if (Random.value < 0.5f)
+                        drop = GetRandomPassive();
+                    else
+                        drop = GetRandomArmor();
+                    if (drop != null)
+                        storeSystem.BuyItem(player, drop);
+                }
+                break;
+
+            default:
+                credits = Random.Range(5, 11);
+                player.money += credits;
+                break;
+        }
+
+        Debug.Log($"Granted battle rewards: +{credits} credits.");
+    }
+
+    private PassiveItemData GetRandomPassive(ItemRarity? rarity = null)
+    {
+        if (storeSystem == null) return null;
+        IEnumerable<PassiveItemData> pool = storeSystem.passiveItems;
+        if (rarity.HasValue)
+            pool = pool.Where(p => p.rarity == rarity.Value);
+        var list = pool.ToList();
+        if (list.Count == 0) return null;
+        return list[Random.Range(0, list.Count)];
+    }
+
+    private ArmorData GetRandomArmor(ItemRarity? rarity = null)
+    {
+        if (storeSystem == null) return null;
+        IEnumerable<ArmorData> pool = storeSystem.armors;
+        if (rarity.HasValue)
+            pool = pool.Where(a => a.rarity == rarity.Value);
+        var list = pool.ToList();
+        if (list.Count == 0) return null;
+        return list[Random.Range(0, list.Count)];
+    }
+
     public bool CheckBattleEnd()
     {
         if (!player.IsAlive())
@@ -545,8 +617,14 @@ public class BattleManager : MonoBehaviour
             }
             else if (!rewardShown)
             {
+                GrantBattleRewards();
                 int moneyGain = player.money - startMoney;
-                int itemGain = (player.inventoryItems != null ? player.inventoryItems.Count : 0) - startItemCount;
+                int currentItemCount = 0;
+                if (player.inventoryItems != null) currentItemCount += player.inventoryItems.Count;
+                if (player.inventoryArmors != null) currentItemCount += player.inventoryArmors.Count;
+                if (PlayerData.Instance != null && PlayerData.Instance.equippedPassiveItems != null)
+                    currentItemCount += PlayerData.Instance.equippedPassiveItems.Count;
+                int itemGain = currentItemCount - startItemCount;
                 levelRewardsUI?.Show(moneyGain, itemGain);
                 rewardShown = true;
                 StartCoroutine(ReturnToMapAfterDelay());
