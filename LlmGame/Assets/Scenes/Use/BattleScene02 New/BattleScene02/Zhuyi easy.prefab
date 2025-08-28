@@ -177,9 +177,9 @@ MonoBehaviour:
   attack: 1
   defense: 0
   focus: 100
-  maxHP: 100
+  maxHP: 50
   maxMP: 20
-  speed: 0
+  speed: 10
   maxShield: 0
   bonusAttack: 0
   bonusDefense: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   availableActions:
-  - {fileID: 11400000, guid: bacaa1c7b2d4c6b4a95770244dd0eecd, type: 2}
+  - {fileID: 11400000, guid: c9e96ae2fbb1ab9438d4491344ae8a67, type: 2}
   selectedAction: {fileID: 0}
   pendingDelayedAction: {fileID: 0}
   pendingDamage: 0
@@ -240,7 +240,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemy: {fileID: 3146930504110307593}
-  hpFill: {fileID: 0}
+  hpSlider: {fileID: 0}
   hpText: {fileID: 0}
 --- !u!1 &7224462279624020182
 GameObject:

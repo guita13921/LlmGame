@@ -402,14 +402,18 @@ MonoBehaviour:
   characterName: Pipeman
   characterType: 1
   sprite: {fileID: 0}
-  description: A ragged slum dweller wielding a rusty metal pipe. His face is dirty,
-    and his eyes are filled with desperation.
+  description: 'Appearance: A ragged slum dweller wielding a rusty metal pipe. His
+    face is dirty, and his eyes are filled with desperation.
+
+    Behavior: Rushes
+    toward the player, swinging wildly with heavy, clumsy strikes. Sometimes feints
+    before striking.'
   attack: 10
   defense: 0
   focus: 100
   maxHP: 100
   maxMP: 20
-  speed: 0
+  speed: 10
   maxShield: 0
   bonusAttack: 0
   bonusDefense: 0
@@ -431,8 +435,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   availableActions:
-  - {fileID: 11400000, guid: 262caa434d9f6514eb94bdd024b3cc28, type: 2}
-  - {fileID: 11400000, guid: d5555bc18c7d5f4418a31595abae0725, type: 2}
+  - {fileID: 11400000, guid: 0a92430e3c7b77e4481593b251e903b0, type: 2}
   selectedAction: {fileID: 0}
   pendingDelayedAction: {fileID: 0}
   pendingDamage: 0

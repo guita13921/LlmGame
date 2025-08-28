@@ -302,6 +302,10 @@ public class ChatAI : MonoBehaviour
             basePotential = 0f;
 
             AppendResponse(FormatResult());
+            // Ensure the enemy's turn properly ends even for delayed actions
+            yield return battleManager.StartCoroutine(
+                battleManager.combatHandler.EndEnemyTurn()
+            );
 
             yield break;
         }
