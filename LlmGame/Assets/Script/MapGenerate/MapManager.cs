@@ -38,7 +38,31 @@ namespace Map
 
         public void GenerateNewMap()
         {
-            Map map = MapGenerator.GetMap(config);
+            Map map = null;
+            var attempts = 0;
+
+            // keep trying to generate a valid map to avoid crashes when
+            // random selection fails due to misconfigured blueprints
+            while (map == null)
+            {
+                try
+                {
+                    map = MapGenerator.GetMap(config);
+                }
+                catch (System.Exception e)
+                {
+                    // log the error and retry
+                    Debug.LogWarning($"Map generation failed: {e.Message}");
+                }
+
+                // safety net to avoid infinite loops in case config is wrong
+                if (map == null && ++attempts > 10)
+                {
+                    Debug.LogError("Unable to generate a valid map after multiple attempts.");
+                    return;
+                }
+            }
+
             CurrentMap = map;
             Debug.Log(map.ToJson());
             view.ShowMap(map);
