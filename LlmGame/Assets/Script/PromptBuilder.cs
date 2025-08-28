@@ -89,6 +89,8 @@ public static class PromptBuilder
     public static string BuildEnemyPrompt(BattleManager battleManager, Character enemy, Character target, CharacterActionData action, string effect)
     {
         string proposedAction = action.actionName;
+        if (!string.IsNullOrEmpty(action.description))
+            proposedAction += $" - {action.description}";
         string history = GetBattleHistory(battleManager);
 
         // Detect selected parts in player based on enemy's action

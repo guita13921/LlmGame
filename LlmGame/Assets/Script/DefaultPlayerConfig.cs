@@ -17,7 +17,7 @@ public class DefaultPlayerConfig : ScriptableObject
     public int startMoney = 0;
     public int startShield = 0; // usually 0
     public bool startWithFullHP = true;
-    public bool startWithFullMP = true;
+    public bool startWithFullMP = false;
 
     [Header("Starting Inventory & Equipment")]
     public List<Item> startingInventory = new List<Item>();

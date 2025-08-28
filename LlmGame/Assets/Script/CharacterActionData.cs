@@ -5,6 +5,8 @@ using UnityEngine;
 public class CharacterActionData : ScriptableObject
 {
     public string actionName;
+    [TextArea]
+    public string description;
     public string animationTrigger;
 
     [Tooltip("Number of turns before this action resolves. 0 means immediate.")]
