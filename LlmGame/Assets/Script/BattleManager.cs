@@ -685,6 +685,8 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ReturnToMapAfterDelay()
     {
         yield return new WaitForSeconds(2f);
+        PlayerData.Instance?.GainMPOnNodeExit(player);
+        PlayerData.Instance?.SavePlayer(player);
         SceneManager.LoadScene("MapGenerate");
     }
 }

@@ -208,6 +208,10 @@ public class RestEventUI : MonoBehaviour
                 sceneToLoad = "BattleScene02";
             }
 
+            var player = FindObjectOfType<Player>();
+            PlayerData.Instance?.GainMPOnNodeExit(player);
+            PlayerData.Instance?.SavePlayer(player);
+
             LoadScene(sceneToLoad);
         }
     }

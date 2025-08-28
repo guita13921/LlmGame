@@ -308,7 +308,10 @@ public class ShopSceneController : MonoBehaviour
         }
 
         if (PlayerData.Instance != null && player != null)
+        {
+            PlayerData.Instance.GainMPOnNodeExit(player);
             PlayerData.Instance.SavePlayer(player);
+        }
 
         Debug.Log($"[Shop] Loading next scene: {nextSceneName}");
         SceneManager.LoadScene(nextSceneName);

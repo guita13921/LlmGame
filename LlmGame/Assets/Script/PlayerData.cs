@@ -22,6 +22,9 @@ public class PlayerData : MonoBehaviour
     public int currentShield;
     public int money;
 
+    [Header("Progression")]
+    public int mpGainOnNodeExit = 10;
+
     // Inventory and equipment
     public List<Item> inventoryItems = new List<Item>();
     public List<ArmorData> inventoryArmors = new List<ArmorData>();
@@ -69,7 +72,7 @@ public class PlayerData : MonoBehaviour
 
         // Current values
         currentHP = config ? (config.startWithFullHP ? maxHP : Mathf.Min(currentHP, maxHP)) : 0;
-        currentMP = config ? (config.startWithFullMP ? maxMP : Mathf.Min(currentMP, maxMP)) : 0;
+        currentMP = config && config.startWithFullMP ? maxMP : 0;
         currentShield = config ? Mathf.Clamp(config.startShield, 0, maxShield) : 0;
         money = config ? config.startMoney : 0;
 
@@ -127,6 +130,15 @@ public class PlayerData : MonoBehaviour
         }
 
         initialized = true;
+    }
+
+    public void GainMPOnNodeExit(Player player = null)
+    {
+        int before = player != null ? player.currentMP : currentMP;
+        int after = Mathf.Min(maxMP, before + mpGainOnNodeExit);
+        if (player != null) player.currentMP = after;
+        currentMP = after;
+        Debug.Log($"Gained {after - before} MP (MP: {before} -> {after})");
     }
 
     /// <summary>

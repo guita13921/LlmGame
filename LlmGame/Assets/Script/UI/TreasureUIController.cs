@@ -98,6 +98,9 @@ public class TreasureUIController : MonoBehaviour
 
     private void OnClick_LoadMapGenerate()
     {
+        var player = FindObjectOfType<Player>();
+        PlayerData.Instance?.GainMPOnNodeExit(player);
+        PlayerData.Instance?.SavePlayer(player);
         SceneManager.LoadScene("MapGenerate");
     }
 }
