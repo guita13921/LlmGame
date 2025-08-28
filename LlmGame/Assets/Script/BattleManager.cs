@@ -532,13 +532,25 @@ public class BattleManager : MonoBehaviour
     private void GrantBattleRewards()
     {
         NodeType nodeType = PlayerData.Instance != null ? PlayerData.Instance.nextNodeType : NodeType.MinorEnemy;
-        int credits = 0;
+        EnemyDifficulty difficulty = PlayerData.Instance != null ? PlayerData.Instance.nextEnemyDifficulty : EnemyDifficulty.Normal;
+
+        int baseCredits = enemies.Sum(e => e.currencyReward);
+        float multiplier = 1f;
+        switch (difficulty)
+        {
+            case EnemyDifficulty.Easy:
+                multiplier = 0.90f;
+                break;
+            case EnemyDifficulty.Hard:
+                multiplier = 1.15f;
+                break;
+        }
+        int credits = Mathf.RoundToInt(baseCredits * multiplier);
+        player.money += credits;
 
         switch (nodeType)
         {
             case NodeType.MinorEnemy:
-                credits = Random.Range(10, 21);
-                player.money += credits;
                 if (storeSystem != null && Random.value < 0.2f)
                 {
                     var passive = GetRandomPassive(ItemRarity.Common);
@@ -548,8 +560,6 @@ public class BattleManager : MonoBehaviour
                 break;
 
             case NodeType.EliteEnemy:
-                credits = Random.Range(20, 51);
-                player.money += credits;
                 if (storeSystem != null)
                 {
                     ScriptableObject drop;
@@ -560,11 +570,6 @@ public class BattleManager : MonoBehaviour
                     if (drop != null)
                         storeSystem.BuyItem(player, drop);
                 }
-                break;
-
-            default:
-                credits = Random.Range(5, 11);
-                player.money += credits;
                 break;
         }
 
