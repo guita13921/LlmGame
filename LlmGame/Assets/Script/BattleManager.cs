@@ -72,6 +72,7 @@ public class BattleManager : MonoBehaviour
     private int startMoney;
     private int startItemCount;
     private bool rewardShown = false;
+    private int pendingCurrencyReward = 0;
 
     private void Start()
     {
@@ -86,6 +87,7 @@ public class BattleManager : MonoBehaviour
         if (PlayerData.Instance != null && PlayerData.Instance.equippedPassiveItems != null)
             itemCount += PlayerData.Instance.equippedPassiveItems.Count;
         startItemCount = itemCount;
+        pendingCurrencyReward = 0;
 
         SpawnEnemyForCurrentNode();
     }
@@ -529,12 +531,17 @@ public class BattleManager : MonoBehaviour
         lastUserMessage = message;
     }
 
+    public void AddEnemyReward(int amount)
+    {
+        pendingCurrencyReward += amount;
+    }
+
     private void GrantBattleRewards()
     {
         NodeType nodeType = PlayerData.Instance != null ? PlayerData.Instance.nextNodeType : NodeType.MinorEnemy;
         EnemyDifficulty difficulty = PlayerData.Instance != null ? PlayerData.Instance.nextEnemyDifficulty : EnemyDifficulty.Normal;
 
-        int baseCredits = enemies.Sum(e => e.currencyReward);
+        int baseCredits = pendingCurrencyReward;
         float multiplier = 1f;
         switch (difficulty)
         {

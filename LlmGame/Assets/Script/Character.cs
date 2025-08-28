@@ -14,7 +14,7 @@ public class Character : MonoBehaviour
     [Header("Basic Info")]
     public string characterName;
     public CharacterType characterType;
-    public GameObject sprite;
+    public SpriteRenderer sprite;
     [TextArea] public string description;
 
     [Header("Stats")]
@@ -117,6 +117,9 @@ public class Character : MonoBehaviour
         currentMP = maxMP;
         currentshield = maxShield;
 
+        if (sprite == null)
+            sprite = GetComponentInChildren<SpriteRenderer>();
+
         if (bodyPartConfig != null)
         {
             //Debug.Log("GenerateBodyParts");
@@ -199,15 +202,22 @@ public class Character : MonoBehaviour
             }
         }
 
+        if (this is Enemy enemy)
+        {
+            if (sprite != null)
+                sprite.enabled = false;
+            var hpBar = GetComponentInChildren<EnemyHealthBar>();
+            if (hpBar != null)
+                hpBar.gameObject.SetActive(false);
+            battleManager?.AddEnemyReward(enemy.currencyReward);
+        }
+
         if (battleManager != null)
         {
             if (this is Enemy enemy)
                 battleManager.enemies.Remove(enemy);
             battleManager.allCharacters.Remove(this);
         }
-
-        if (this is Enemy)
-            Destroy(gameObject);
     }
 
     private void OnMouseDown()
