@@ -14,6 +14,10 @@ public class Enemy : Character
     [Header("Enemy Info")]
     public EnemyArchetype archetype;
 
+    [Header("Rewards")]
+    [Tooltip("Base currency granted when this enemy is defeated.")]
+    public int currencyReward = 10;
+
     [Header("Action")]
     public List<string> actions;
 

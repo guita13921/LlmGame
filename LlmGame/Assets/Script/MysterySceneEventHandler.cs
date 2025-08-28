@@ -13,8 +13,8 @@ public class MysterySceneEventHandler : MonoBehaviour
 
     [Header("Config")]
     public int smallCreditCost = 50;
-    public int droneMpCost = 20;
-    public int hackMpCost = 20;
+    public int droneMpCost = 30; // ≈45 credits of value
+    public int hackMpCost = 30;  // ≈45 credits of value
     public PassiveItemData msgNoodleItem;
     public List<Weapon> weaponPool = new();
 
@@ -168,7 +168,7 @@ public class MysterySceneEventHandler : MonoBehaviour
         ChangeMP(-droneMpCost);
         if (Random.value < 0.5f)
         {
-            int credits = Random.Range(5, 16);
+            int credits = Random.Range(10, 21);
             ChangeMoney(credits);
             Log($"Drone revealed hidden credits: +{credits}");
         }
@@ -199,7 +199,7 @@ public class MysterySceneEventHandler : MonoBehaviour
             }
             else
             {
-                int credits = Random.Range(5, 16);
+                int credits = Random.Range(10, 21);
                 ChangeMoney(credits);
                 Log($"Cloaked man: slipped you credits (+{credits}).");
             }
@@ -225,7 +225,7 @@ public class MysterySceneEventHandler : MonoBehaviour
     {
         if (Random.value < 0.5f)
         {
-            int credits = Random.Range(10, 21);
+            int credits = Random.Range(15, 31);
             ChangeMoney(credits);
             GrantRandomItem(ItemRarity.Rare);
             Log($"Intimidation succeeded: stole +{credits} credits and rare loot.");
@@ -290,7 +290,7 @@ public class MysterySceneEventHandler : MonoBehaviour
         {
             if (Random.value < 0.5f)
             {
-                int credits = Random.Range(20, 41);
+                int credits = Random.Range(30, 51);
                 ChangeMoney(credits);
                 Log($"Pickpocket succeeded: +{credits} credits.");
             }
