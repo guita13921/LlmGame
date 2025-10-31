@@ -1,0 +1,15 @@
+### ตรวจสอบสถานะของ API
+GET http://localhost:4000/api/health
+
+### ดึงรายการงานทั้งหมด
+GET http://localhost:4000/api/tasks
+Accept: application/json
+
+### สร้างงานใหม่
+POST http://localhost:4000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "ทดสอบ API",
+  "description": "ลองยิงคำขอ POST เพื่อสร้างงานใหม่"
+}
